@@ -1,0 +1,34 @@
+<ion-content>
+  <main class="welcome">
+    <header>
+      <a class="brand" href="/" aria-label="Made in Minas, início">MADE IN MINAS<span>HAMBURGUERIA</span></a>
+      <a routerLink="/entrar" class="coming-soon">Área da equipe</a>
+    </header>
+
+    <section class="hero" aria-labelledby="welcome-title">
+      <span class="eyebrow">TEM SABOR DE MINAS.</span>
+      <h1 id="welcome-title">Uma nova forma<br>de pedir o seu<br><em>favorito.</em></h1>
+      <p>Estamos preparando nosso atendimento online.<br>O mesmo sabor, com ainda mais praticidade.</p>
+      <div class="connection" aria-live="polite" role="status">
+        @switch (connection()) {
+          @case ('checking') {
+            <ion-spinner name="dots" aria-hidden="true" />
+            <span>Verificando conexão…</span>
+          }
+          @case ('online') {
+            <span class="status-dot" aria-hidden="true"></span>
+            <span>Conexão disponível. Novidades em breve.</span>
+          }
+          @case ('offline') {
+            <span>Não foi possível conectar agora.</span>
+          }
+        }
+      </div>
+      @if (connection() === 'offline') {
+        <ion-button fill="outline" (click)="checkConnection()">Tentar novamente</ion-button>
+      }
+    </section>
+
+    <footer>Made in Minas <span>Feito com cuidado. Do início ao último pedaço.</span></footer>
+  </main>
+</ion-content>

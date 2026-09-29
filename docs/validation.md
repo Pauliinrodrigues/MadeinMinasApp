@@ -1,0 +1,170 @@
+# Validação da Fase 1
+
+Executada em 29/09/2026, Windows, SDK .NET 10.0.300 e Node 24.19.0.
+
+## Resultados
+
+| Verificação | Resultado |
+| --- | --- |
+| dotnet restore / build | Sucesso; zero erros e avisos de compilação |
+| dotnet tool restore | dotnet-ef 10.0.12 restaurado |
+| dotnet ef dbcontext info | AppDbContext reconhecido com provedor Npgsql |
+| npm install / auditoria | Dependências instaladas; zero vulnerabilidades reportadas na execução |
+| npm run build | Sucesso; bundle inicial de aproximadamente 452 kB |
+| npm start | Disponível em localhost:8101 |
+| Liveness sem banco | 200 / Healthy |
+| Readiness sem configuração | 503 / Unhealthy |
+| Readiness com PostgreSQL autenticado | 200 / Healthy |
+| Readiness após desligar PostgreSQL | 503 / Unhealthy; liveness continua 200 |
+| CORS | Origem 8101 aceita; origem não autorizada sem cabeçalho de permissão |
+| Erro de rota inexistente | 404 application/problem+json |
+| OpenAPI Development | Documento gerado contendo /api/system/status |
+| Navegador Edge headless | Tela renderizada, chamada real da API com CORS |
+| Desktop 1280x900 e celular 390x844 | Sem estouro horizontal na largura mobile |
+| Falha da API simulada no navegador | Mensagem de indisponibilidade e botão de nova tentativa |
+| Recuperação de conexão | Nova tentativa real retorna ao estado conectado |
+| Exceções JavaScript | Nenhuma nos cenários verificados |
+
+O comando EF pode emitir aviso de ausência de IEntityTypeConfiguration: ainda não há entidades na Fase 1.
+
+## Isolamento dos testes
+
+O PostgreSQL existente em localhost:5432 exigiu senha não disponível nesta sessão e não foi alterado.
+
+A verificação positiva utilizou uma instância temporária PostgreSQL 17 em 127.0.0.1:55432, banco made_in_minas_validation, senha aleatória e autenticação SCRAM. Uma segunda API em 5081 recebeu a conexão por variável de ambiente. O servidor temporário foi desligado após os testes; sua credencial foi removida. Nenhuma tabela de negócio foi criada.
+
+Os testes de navegador utilizaram Playwright apenas em .local, sem adicionar dependência ao produto. Capturas de desktop e celular ficaram nessa pasta ignorada pelo Git.
+
+## Ajustes confirmados durante a execução
+
+- Ionic 9 usa exports específicos como @ionic/angular/ion-app e @ionic/angular/provide; o caminho /standalone de versões anteriores não existe nesse pacote.
+- Porta 8100 ocupada por outro projeto: esta aplicação usa 8101.
+- O sandbox bloqueou leitura de diretório pai no servidor Angular. O mesmo comando foi autorizado fora do sandbox e iniciou corretamente; nenhuma alteração de permissões da máquina foi feita.
+- O teste HTTP do frontend usa Accept: text/html, conforme esperado pelo servidor de desenvolvimento.
+
+## Reproduzir
+
+Siga o README para iniciar a API e o frontend. Execute:
+
+```powershell
+powershell -NoProfile -File scripts/Test-Foundation.ps1
+```
+
+Após configurar sua conexão permanente:
+
+```powershell
+powershell -NoProfile -File scripts/Test-Foundation.ps1 -ExpectDatabaseReady
+```
+
+No navegador, confira a mensagem de conexão, desligue somente a API e recarregue. A página deve mostrar indisponibilidade. Reinicie a API e clique em Tentar novamente; a conexão deve se recuperar.
+
+## Conexão permanente validada
+
+A conexão permanente foi configurada pelo assistente local de [database/README.md](../database/README.md), com a senha digitada pelo responsável no terminal. A connection string foi confirmada em User Secrets sem exibir seu conteúdo.
+
+Após reiniciar a API no perfil Development, `scripts/Test-Foundation.ps1 -ExpectDatabaseReady` passou em todas as verificações: liveness e readiness retornaram 200/Healthy, e contrato HTTP, CORS, ProblemDetails, OpenAPI e frontend responderam conforme esperado. A pendência de conexão permanente está resolvida.
+
+## Limites
+
+Na Fase 1 não foram implementados autenticação, entidades ou migrations de negócio. A evolução está registrada abaixo. Nenhum commit foi criado e o índice Git preexistente foi preservado.
+
+## Fase 2A — Autenticação do backend
+
+Validada em 29/09/2026:
+
+- Build Release da solução: zero erros e zero avisos.
+- Restore com --locked-mode: sucesso para API e testes.
+- 24 testes de integração aprovados em PostgreSQL temporário com SCRAM, sem utilizar o banco da aplicação.
+- Cenários: validação de entrada, login, proteção de endpoints, perfis, tokens expirados/assinatura/emissor/audiência/algoritmo inválidos, inativação e troca de perfil, logout, bloqueio e recuperação da conta, tentativas concorrentes, rate limiting e bootstrap.
+- Migration InitialAccessControl revisada e aplicada ao PostgreSQL de desenvolvimento; cria Users, Roles, índices e quatro perfis. Nenhuma conta com senha padrão é inserida.
+- EF confirmou ausência de alterações de modelo sem migration.
+- API reiniciada; /health/live e /health/ready retornaram 200/Healthy.
+- Smoke test da Fase 1 passou integralmente após a atualização.
+- /api/auth/me e /api/roles retornaram 401 sem credenciais na API em execução.
+
+A primeira migration em banco vazio pode registrar uma tentativa de consulta a __EFMigrationsHistory antes de criá-la; o comando terminou com sucesso e a migration aplicada foi confirmada por migrations list.
+
+A chave JWT local foi gerada em User Secrets sem exibir seu conteúdo. O cadastro do administrador real exige nome, login e senha no comando interativo descrito em [authentication.md](authentication.md). O bootstrap foi validado automaticamente no banco de testes.
+
+A tentativa de abrir o bootstrap pela ferramenta automatizada do Rider recebeu entrada redirecionada e foi recusada. O comando foi ajustado para retornar uma orientação clara com código 1 nesse caso; esse comportamento e o build foram verificados. O administrador real ainda não foi criado por esta implementação.
+
+A tela de login e a administração de usuários ainda não fazem parte deste incremento.
+
+## Fase 2B — Gestão de funcionários
+
+Validada em 29/09/2026:
+
+- 52 testes de integração aprovados: os 24 de autenticação e 28 novos casos de gestão de funcionários.
+- Verificados cadastro/leitura sem campos sensíveis, permissões para os quatro perfis e anônimos, validação, paginação, filtros e unicidade de login.
+- Verificados inativação/reativação, mudança de perfil/login, preservação de sessão em edição apenas de nome, troca/reset de senha e revogação dos tokens antigos.
+- Testadas duas criações simultâneas com o mesmo login e duas inativações simultâneas de administradores; preservadas unicidade e existência de administrador ativo.
+- Testada revalidação do autor dentro da transação após revogação anterior da sessão.
+- Testes executados em PostgreSQL temporário autenticado; contas do banco de desenvolvimento não foram alteradas.
+- Build Release: zero erros e zero avisos. Restore com --locked-mode passou.
+- EF confirmou que não há alteração de modelo pendente: nenhuma migration nova foi criada ou aplicada.
+- API atualizada na porta 5080; health checks retornaram 200/Healthy, e o smoke test da Fase 1 passou.
+- /api/users respondeu 401 sem token; preflight CORS permitiu PUT somente para a origem configurada; novas rotas confirmadas no OpenAPI.
+
+O comando de testes agora usa .local/test-build, evitando conflito com os binários da API em execução. Os dois grupos de testes compartilham uma coleção sequencial para que a limpeza de usuários do banco isolado não interfira em outra suíte.
+
+Escopo e contratos: [users.md](users.md). A interface de login e administração será o próximo incremento (2C).
+
+## Fase 2C — Interface da equipe
+
+Validada em 29/09/2026:
+
+- Build de produção Angular aprovado, sem erros ou avisos; bundle inicial de aproximadamente 463 kB.
+- 28 testes Playwright aprovados: 14 cenários em desktop e os mesmos 14 em viewport móvel, usando Edge/Chromium.
+- Cobertura: rotas protegidas, credenciais inválidas, limite de tentativas, perfis de atendente/cozinha/expedição, sessão somente em memória e novo login após recarregar.
+- Verificados listagem, filtros, paginação, cadastro com confirmação de senha, login duplicado, edição, confirmação/cancelamento de inativação, reativação, reset e troca da própria senha.
+- Verificados erro do último administrador, recuperação após indisponibilidade, 403 sem encerrar sessão, 401 com remoção de acesso, expiração automática, alteração do próprio login e logout com falha de conexão.
+- Testes de interface usam respostas simuladas conforme os contratos documentados da API; não criam, editam ou removem contas reais. Não equivalem a um teste completo de login autenticado pelo navegador contra o PostgreSQL real.
+- Smoke test da fundação aprovado com PostgreSQL permanente disponível: liveness/readiness Healthy, CORS, contrato público, ProblemDetails, OpenAPI e frontend.
+- Página pública verificada no navegador contra a API real em desktop e celular, incluindo falha de conexão e recuperação. Nenhuma exceção JavaScript nesses testes.
+- Capturas locais de login desktop/móvel em .local; ajuste da classe ion-page validado após trocar o outlet para destruir páginas entre navegações.
+- Nenhuma alteração no backend, migration ou credencial real. Os 52 testes de integração do backend permanecem os validados na Fase 2B e não foram reexecutados neste incremento.
+
+Playwright foi adicionado como dependência de desenvolvimento fixada, com configuração e testes versionáveis. Comandos de reprodução, arquivos alterados e limites da sessão: [staff-frontend.md](staff-frontend.md). O aceite com a conta real do responsável permanece como validação manual antes da Fase 3.
+
+## Fase 3A — Categorias
+
+O usuário validou o acesso à área da equipe e autorizou o próximo incremento.
+
+Validada em 29/09/2026:
+
+- Build Release da solução: zero erros e zero avisos. Build de produção Angular aprovado sem avisos; bundle inicial de aproximadamente 463 kB.
+- 73 testes de backend aprovados em PostgreSQL temporário: 52 existentes e 21 casos novos de categorias.
+- Casos novos verificam os quatro perfis e acesso anônimo, criação/leitura/edição, inativação/reativação, defaults, limites e campos obrigatórios, paginação, busca, ordenação, inexistência e revalidação da sessão do autor dentro da transação.
+- Unicidade validada com caixa diferente, espaços externos, composição Unicode equivalente, categoria inativa, atualização para nome existente e duas criações simultâneas.
+- Datas padronizadas em UTC com milissegundos após identificar a diferença de precisão entre .NET e PostgreSQL; respostas de gravação e leitura agora correspondem integralmente nos testes.
+- 44 testes Playwright aprovados: 28 existentes e 16 novos (oito cenários de categorias em desktop e os mesmos em viewport móvel).
+- Interface validada para nome/ordem obrigatórios com explicação visível, criação, edição e reabertura, ativação/inativação com confirmação/cancelamento, filtros, paginação, estado vazio, nome duplicado, indisponibilidade, categoria inexistente e restrição por perfil.
+- Navegador usa API simulada. Os testes de backend usam HTTP e PostgreSQL isolado; nenhuma categoria de exemplo foi inserida no banco real.
+- Migration 20260929190440_AddCategories revisada: Up somente cria Categories, chave primária, constraint de ordem e índice único. Aplicada ao banco de desenvolvimento; migrations list confirma InitialAccessControl e AddCategories aplicadas.
+- EF confirmou ausência de alterações de modelo pendentes. Nenhuma conta, senha ou perfil persistido foi alterado pelo incremento.
+- API Release reiniciada na porta 5080; frontend permanece em 8101. Smoke test completo aprovado com banco Healthy, CORS, ProblemDetails, OpenAPI e frontend.
+- /api/categories presente no OpenAPI e retornando 401 sem credenciais na API atualizada.
+
+Arquivos, contratos e comandos: [categories.md](categories.md). O próximo aceite manual é cadastrar e editar uma categoria na área administrativa. Produtos continuam para o próximo incremento, após essa validação.
+
+## Fase 3B — Produtos
+
+Implementada após autorização do usuário para continuar o catálogo.
+
+Validada em 29/09/2026:
+
+- Build Release da solução aprovado, sem erros ou avisos. Build de produção Angular aprovado, bundle inicial de aproximadamente 464 kB.
+- 98 casos de backend validados em PostgreSQL temporário: 73 anteriores e 25 novos de produtos. Na execução completa, 97 passaram; o restante identificou uma leitura repetida do mesmo stream no próprio teste. O teste foi corrigido para ler a resposta uma vez e passou na reexecução isolada, sem alteração adicional na implementação.
+- Testes novos verificam autorização dos quatro perfis/anônimos em todas as operações, CRUD sem exclusão física, preço exato, rejeição de preços inválidos sem arredondamento, limites/omissões, URL HTTPS, categoria existente/ativa e produto inexistente.
+- Verificados disponibilidade derivada, efeito da inativação/reativação de categoria, independência e idempotência dos flags do produto, unicidade por categoria, Unicode, mudança de categoria e criações simultâneas.
+- Verificados filtros/paginação, proteção da FK contra exclusão de categoria com produtos e revalidação do autor após revogação da sessão.
+- A validação de limite decimal foi corrigida após identificar dependência de configuração regional no RangeAttribute. A implementação compara valores decimal diretamente; preços válidos e inválidos passaram em HTTP no ambiente pt-BR.
+- 64 testes Playwright aprovados: 44 existentes e 20 novos (dez cenários de produtos em desktop e em viewport móvel).
+- Navegador verificou cadastro/edição, preço com vírgula/ponto, categoria além da primeira página, pausa/liberação/inativação, confirmação/cancelamento, filtros, paginação, erros, campo inválido com explicação, categoria inativa, URL inválida e prévia de imagem indisponível.
+- Testes de navegador usam respostas simuladas; os testes de backend usam HTTP e PostgreSQL real isolado. Nenhum produto de exemplo foi inserido no banco de desenvolvimento pelos testes.
+- Migration 20260929194633_AddProducts revisada e aplicada ao banco de desenvolvimento. Up somente cria Products, FK restrita para Categories, índice único por categoria/nome e constraint de preço. Migrations anteriores permanecem aplicadas.
+- EF confirmou ausência de alterações de modelo pendentes. Nenhum cadastro de categoria, funcionário ou credencial foi alterado pelo incremento.
+- API Release reiniciada em 5080; frontend disponível em 8101. Smoke test aprovado com PostgreSQL Healthy, CORS, ProblemDetails, OpenAPI e frontend.
+- Rotas de produtos, status e disponibilidade confirmadas no OpenAPI; /api/products retorna 401 sem credenciais.
+
+Arquivos, contratos, limites e comandos: [products.md](products.md). O próximo aceite manual é cadastrar um produto em categoria ativa, editar preço e testar sua disponibilidade. Ingredientes e fichas técnicas ainda não foram implementados.

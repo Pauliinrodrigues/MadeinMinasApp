@@ -1,0 +1,38 @@
+# API — Fundação e autenticação
+
+Base local: `http://localhost:5080`.
+
+| Método | Rota | Resposta |
+| --- | --- | --- |
+| GET | /api/system/status | 200, `{"status":"available"}` |
+| GET | /health/live | 200, `{"status":"Healthy","checks":{}}` |
+| GET | /health/ready | 200 quando conectado; 503 sem conexão |
+| GET | /openapi/v1.json | Documento OpenAPI, somente Development |
+
+Readiness saudável:
+
+```json
+{"status":"Healthy","checks":{"database":"Healthy"}}
+```
+
+Sem configuração ou com PostgreSQL inacessível:
+
+```json
+{"status":"Unhealthy","checks":{"database":"Unhealthy"}}
+```
+
+O status da aplicação não informa prontidão do banco. Liveness não depende do banco, evitando reinícios indevidos durante uma indisponibilidade do PostgreSQL.
+
+Respostas públicas de saúde não incluem host, senha, stack trace ou mensagens de exceção. As verificações de saúde têm prazo de cinco segundos.
+
+Rotas desconhecidas retornam 404 em ProblemDetails para requisições JSON. Erros não tratados usam ProblemDetails sem detalhes internos.
+
+Os endpoints técnicos acima são públicos. Os controllers de autenticação e perfis foram adicionados na Fase 2A; consulte [authentication.md](authentication.md) para contratos e permissões. Health checks são middleware e estão documentados aqui.
+
+CORS em Development aceita origem `http://localhost:8101`, métodos GET/POST/PUT e cabeçalhos de requisição, incluindo Authorization.
+
+A Fase 2B adiciona /api/users e PUT /api/auth/password. Contratos, paginação, permissões e erros estão em [users.md](users.md).
+
+A Fase 3A adiciona GET/POST /api/categories, GET/PUT /api/categories/{id} e PUT /api/categories/{id}/status. Todos exigem catalog.manage. Contratos e regras: [categories.md](categories.md).
+
+A Fase 3B adiciona GET/POST /api/products, GET/PUT /api/products/{id}, PUT /api/products/{id}/status e PUT /api/products/{id}/availability. Todos exigem catalog.manage; a API calcula a disponibilidade considerando a categoria. Contratos e regras: [products.md](products.md).

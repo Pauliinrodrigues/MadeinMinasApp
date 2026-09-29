@@ -1,0 +1,72 @@
+<section>
+  <div class="page-heading"><div><p class="eyebrow">CATÁLOGO</p><h1>Produtos</h1></div>
+    <a routerLink="novo" class="button primary">Novo produto</a></div>
+  <p>Gerencie os produtos e a disponibilidade. O cardápio público será disponibilizado em uma próxima etapa.</p>
+  @if (notice()) { <p role="status" class="notice">{{ notice() }}</p> }
+  @if (error()) { <p role="alert" class="error">{{ error() }}</p> }
+  @if (categoryError()) {
+    <p role="alert" class="error">Não foi possível carregar as categorias. {{ categoryError() }}</p>
+    <button type="button" (click)="loadCategories()">Carregar categorias novamente</button>
+  }
+  <form class="panel filters" (ngSubmit)="load()">
+    <label>Buscar produto<input name="search" [(ngModel)]="search" maxlength="120" type="search"></label>
+    <label>Categoria<select name="category" [(ngModel)]="categoryId">
+      <option value="">Todas</option>
+      @for (category of categories(); track category.id) { <option [value]="category.id">{{ category.name }}{{ category.isActive ? '' : ' (inativa)' }}</option> }
+    </select></label>
+    <label>Status<select name="active" [(ngModel)]="active">
+      <option value="">Todos</option><option value="true">Ativos</option><option value="false">Inativos</option>
+    </select></label>
+    <label>Venda<select name="available" [(ngModel)]="available">
+      <option value="">Todos</option><option value="true">Disponíveis</option><option value="false">Indisponíveis</option>
+    </select></label>
+    <button class="primary" [disabled]="loading() || saving()">Buscar</button>
+  </form>
+  @if (pending(); as change) {
+    <section class="panel confirmation" role="region" aria-label="Confirmar alteração do produto">
+      <h2>{{ change.kind === 'status' ? (change.value ? 'Ativar' : 'Inativar') : (change.value ? 'Liberar venda de' : 'Pausar venda de') }} {{ change.product.name }}?</h2>
+      <p>O cadastro será preservado. A venda exige produto e categoria ativos, além da disponibilidade ligada.</p>
+      <div class="actions">
+        <button type="button" class="primary" (click)="confirm()" [disabled]="saving()">{{ saving() ? 'Salvando…' : 'Confirmar' }}</button>
+        <button type="button" (click)="pending.set(null)" [disabled]="saving()">Cancelar</button>
+      </div>
+    </section>
+  }
+  @if (loading()) { <p role="status">Carregando produtos…</p> }
+  @if (!loading() && !result()) { <button type="button" (click)="load(page)">Tentar novamente</button> }
+  @if (result(); as data) {
+    <p role="status">{{ data.totalCount }} produto(s) encontrado(s).</p>
+    @if (data.items.length) {
+      <div class="table-scroll panel">
+        <table><caption class="sr-only">Lista de produtos</caption>
+          <thead><tr><th scope="col">Produto</th><th scope="col">Preço</th><th scope="col">Situação</th><th scope="col">Ações</th></tr></thead>
+          <tbody>
+            @for (product of data.items; track product.id) {
+              <tr><td><strong>{{ product.name }}</strong><span class="cell-detail">{{ product.categoryName }}</span></td>
+                <td class="price-cell">{{ formatPrice(product.price) }}</td>
+                <td>
+                  <span class="badge" [class.inactive]="!product.isAvailableForSale">{{ product.isAvailableForSale ? 'Disponível' : 'Indisponível' }}</span>
+                  @if (!product.isActive) { <span class="cell-detail">Produto inativo</span> }
+                  @if (!product.categoryIsActive) { <span class="cell-detail">Categoria inativa</span> }
+                  @if (!product.isAvailable) { <span class="cell-detail">Venda pausada</span> }
+                </td>
+                <td><div class="actions">
+                  <a [routerLink]="[product.id]" class="button" [attr.aria-label]="'Editar ' + product.name">Editar</a>
+                  <button type="button" (click)="requestChange(product, 'status')" [disabled]="saving()"
+                    [attr.aria-label]="(product.isActive ? 'Inativar ' : 'Ativar ') + product.name">{{ product.isActive ? 'Inativar' : 'Ativar' }}</button>
+                  <button type="button" (click)="requestChange(product, 'availability')" [disabled]="saving()"
+                    [attr.aria-label]="(product.isAvailable ? 'Pausar venda de ' : 'Liberar venda de ') + product.name">{{ product.isAvailable ? 'Pausar venda' : 'Liberar venda' }}</button>
+                </div></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else { <p class="panel">Nenhum produto nesta página. Cadastre um produto, ajuste os filtros ou volte à página anterior.</p> }
+    <div class="pagination">
+      <button type="button" (click)="load(page - 1)" [disabled]="page <= 1 || saving()">Anterior</button><span>Página {{ page }}</span>
+      <button type="button" (click)="load(page + 1)" [disabled]="page * data.pageSize >= data.totalCount || saving()">Próxima</button>
+    </div>
+  }
+</section>
+

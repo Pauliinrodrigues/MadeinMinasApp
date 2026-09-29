@@ -1,0 +1,17 @@
+@use './staff';
+
+@import '@ionic/angular/css/core.css';
+@import '@ionic/angular/css/normalize.css';
+@import '@ionic/angular/css/structure.css';
+@import '@ionic/angular/css/typography.css';
+
+:root {
+  --ion-font-family: Arial, Helvetica, sans-serif;
+  --ion-color-primary: #722f27;
+  --ion-color-primary-rgb: 114, 47, 39;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #642922;
+  --ion-color-primary-tint: #80443d;
+}
+* { box-sizing: border-box; }

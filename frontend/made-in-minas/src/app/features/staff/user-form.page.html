@@ -1,0 +1,58 @@
+<a routerLink="/equipe/funcionarios" class="back-link">← Funcionários</a>
+<section class="panel narrow">
+  <p class="eyebrow">ADMINISTRAÇÃO</p><h1>{{ id() ? 'Editar funcionário' : 'Novo funcionário' }}</h1>
+  @if (error()) { <p role="alert" class="error">{{ error() }}</p> }
+  @if (notice()) { <p role="status" class="notice">{{ notice() }}</p> }
+  @if (loading()) { <p role="status">Carregando cadastro…</p> }
+  @if (!loading() && !ready()) { <button (click)="load()">Tentar novamente</button> }
+  @if (ready()) {
+    <form #form="ngForm" (ngSubmit)="save()" class="form-stack">
+      <fieldset [disabled]="busy() || resetOpen()">
+        <label>Nome<input name="name" [(ngModel)]="name" required maxlength="120" autocomplete="off"></label>
+        <label>Login<input name="username" [(ngModel)]="username" required minlength="3" maxlength="64"
+          pattern="[A-Za-z0-9._\-]+" autocomplete="off" autocapitalize="none" spellcheck="false"></label>
+        <p class="hint">Use letras sem acento, números, ponto, hífen ou sublinhado.</p>
+        <label>Perfil<select name="roleId" [(ngModel)]="roleId" required>
+          <option [ngValue]="0" disabled>Selecione um perfil</option>
+          @for (role of roles(); track role.id) { <option [ngValue]="role.id">{{ role.name }}</option> }
+        </select></label>
+        <label class="checkbox"><input type="checkbox" name="isActive" [(ngModel)]="isActive">Conta ativa</label>
+        @if (!id()) {
+          <label>Senha inicial<input type="password" name="password" [(ngModel)]="password"
+            required minlength="15" maxlength="128" autocomplete="new-password"></label>
+          <p class="hint">De 15 a 128 caracteres. Compartilhe a senha com o funcionário por um canal seguro.</p>
+          <label>Confirme a senha<input type="password" name="confirmation" [(ngModel)]="confirmation"
+            required maxlength="128" autocomplete="new-password"></label>
+          @if (confirmation && confirmation !== password) { <p class="error">As senhas não coincidem.</p> }
+        } @else {
+          <p class="hint">Alterar login, perfil ou status encerra as sessões deste funcionário.
+            @if (id() === session.user()?.id) { Você está alterando sua própria conta. }</p>
+        }
+        <button class="primary" [disabled]="form.invalid || !name.trim() || !roleId || (!id() && (!password.trim() || password !== confirmation))">
+          {{ busy() ? 'Salvando…' : 'Salvar funcionário' }}</button>
+      </fieldset>
+    </form>
+    @if (id() && id() !== session.user()?.id) {
+      <hr>
+      @if (!resetOpen()) {
+        <button type="button" (click)="resetOpen.set(true); error.set(''); notice.set('')" [disabled]="busy()">Redefinir senha</button>
+      } @else {
+        <form #resetForm="ngForm" (ngSubmit)="reset()" class="form-stack">
+          <h2>Redefinir senha</h2>
+          <p>As sessões do funcionário serão encerradas. Esta ação não ativa uma conta inativa.</p>
+          <label>Nova senha<input type="password" name="resetPassword" [(ngModel)]="resetPassword" required minlength="15"
+            maxlength="128" autocomplete="new-password" [disabled]="busy()"></label>
+          <label>Confirme a nova senha<input type="password" name="resetConfirmation" [(ngModel)]="resetConfirmation"
+            required maxlength="128" autocomplete="new-password" [disabled]="busy()"></label>
+          @if (resetConfirmation && resetConfirmation !== resetPassword) { <p class="error">As senhas não coincidem.</p> }
+          <div class="actions">
+            <button class="primary" [disabled]="busy() || resetForm.invalid || !resetPassword.trim() || resetPassword !== resetConfirmation">
+              Confirmar nova senha</button>
+            <button type="button" (click)="closeReset()" [disabled]="busy()">Cancelar</button>
+          </div>
+        </form>
+      }
+    }
+  }
+</section>
+

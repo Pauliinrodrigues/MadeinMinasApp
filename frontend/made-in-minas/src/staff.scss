@@ -1,0 +1,63 @@
+.staff-page {
+  min-height: 100%; padding: 28px clamp(16px, 5vw, 64px) 56px;
+  background: #faf5ec; color: #342923; line-height: 1.5;
+  h1, h2 { line-height: 1.2; overflow-wrap: anywhere; }
+  h1 { font: 600 clamp(26px, 4vw, 38px)/1.15 Georgia, serif; margin: 8px 0 20px; }
+  h2 { font-size: 20px; }
+  a { color: #722f27; }
+  label { display: flex; flex-direction: column; gap: 6px; font-weight: 600; }
+  input, select, textarea, button, .button { font: inherit; min-height: 44px; border-radius: 8px; }
+  input, select, textarea { width: 100%; padding: 10px 12px; border: 1px solid #9d9187; color: #342923; background: white; }
+  textarea { resize: vertical; }
+  button, .button { padding: 9px 16px; border: 1px solid #b8a89b; background: white; color: #722f27;
+    cursor: pointer; display: inline-flex; align-items: center; justify-content: center; text-decoration: none; }
+  button:hover:not(:disabled), .button:hover { background: #f1e5d7; }
+  .primary { background: #722f27; border-color: #722f27; color: white; }
+  .primary:hover:not(:disabled) { background: #59241f; }
+  button:disabled { opacity: .55; cursor: default; }
+  :focus-visible { outline: 3px solid #a35c11; outline-offset: 3px; }
+  fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: 16px; min-width: 0; }
+  hr { border: 0; border-top: 1px solid #e4d8ca; margin: 28px 0; }
+  .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .14em; color: #722f27; margin: 0 0 8px; }
+  .hint { color: #65584e; font-size: 14px; }
+  .error, .notice { padding: 14px 16px; border-radius: 8px; overflow-wrap: anywhere; }
+  .error { background: #fbe8e5; color: #8d241b; border: 1px solid #d79f98; }
+  .notice { background: #eaf1e4; color: #345027; border: 1px solid #afc49e; }
+}
+.staff-brand { display: inline-flex; flex-direction: column; font-weight: 800; letter-spacing: .08em; text-decoration: none;
+  span { font-size: 10px; letter-spacing: .22em; margin-top: 4px; } }
+.staff-header, .staff-identity, .page-heading, .actions, .pagination { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.staff-header, .page-heading { justify-content: space-between; }
+.staff-identity { overflow-wrap: anywhere; }
+.staff-nav { display: flex; gap: 6px; flex-wrap: wrap; padding: 24px 0; margin-bottom: 8px;
+  a { padding: 10px 14px; text-decoration: none; border-radius: 8px; }
+  .selected { background: #eadccc; font-weight: 700; } }
+.panel { background: #fffdf9; border: 1px solid #e4d8ca; border-radius: 16px; padding: clamp(18px, 3vw, 32px); margin-bottom: 20px; }
+.narrow { max-width: 640px; }
+.form-stack { display: grid; gap: 16px; }
+.login-page { display: grid; align-content: center; justify-items: center; gap: 24px; }
+.login-panel { width: min(100%, 460px); margin: 0; }
+.filters { display: flex; align-items: end; gap: 16px; flex-wrap: wrap;
+  label { flex: 1; min-width: 160px; } }
+.staff-page .checkbox { flex-direction: row; align-items: center;
+  input { width: 20px; min-height: 20px; margin-right: 6px; accent-color: #722f27; } }
+.table-scroll { padding: 0; overflow-x: auto;
+  table { width: 100%; border-collapse: collapse; min-width: 620px; text-align: left; }
+  th, td { padding: 16px; border-bottom: 1px solid #e4d8ca; }
+  th { font-size: 13px; color: #65584e; }
+  td:first-child { overflow-wrap: anywhere; max-width: 320px; } }
+.cell-detail { display: block; color: #65584e; font-size: 14px; }
+.badge { background: #eaf1e4; color: #345027; padding: 4px 8px; border-radius: 6px; font-size: 13px;
+  &.inactive { background: #eee8e0; color: #65584e; } }
+.pagination { justify-content: center; margin-top: 20px; }
+.back-link { display: inline-block; margin-bottom: 20px; }
+.product-preview { width: 100%; max-width: 280px; max-height: 200px; object-fit: contain; border-radius: 8px; }
+.price-cell { white-space: nowrap; }
+.confirmation { border: 2px solid #a35c11; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+@media (max-width: 600px) {
+  .staff-header { align-items: flex-start; }
+  .staff-identity { width: 100%; justify-content: space-between; }
+  .staff-nav a { padding: 8px 10px; }
+  .page-heading { margin-bottom: 20px; }
+}

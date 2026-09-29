@@ -1,0 +1,26 @@
+<a routerLink="/equipe/categorias" class="back-link">← Categorias</a>
+<section class="panel narrow">
+  <p class="eyebrow">CATÁLOGO</p><h1>{{ id ? 'Editar categoria' : 'Nova categoria' }}</h1>
+  @if (error()) { <p role="alert" class="error">{{ error() }}</p> }
+  @if (notice()) { <p role="status" class="notice">{{ notice() }}</p> }
+  @if (loading()) { <p role="status">Carregando categoria…</p> }
+  @if (!loading() && !ready()) { <button (click)="load()">Tentar novamente</button> }
+  @if (ready()) {
+    <form #form="ngForm" (ngSubmit)="save()" class="form-stack">
+      <fieldset [disabled]="busy()">
+        <label>Nome<input name="name" [(ngModel)]="name" #nameField="ngModel" required maxlength="80"
+          autocomplete="off" aria-describedby="category-name-help"></label>
+        <p id="category-name-help" class="hint">Obrigatório, até 80 caracteres. O nome deve ser único, inclusive entre categorias inativas.</p>
+        @if ((nameField.dirty || nameField.touched) && !name.trim()) { <p class="error" role="alert">Informe o nome da categoria.</p> }
+        <label>Descrição (opcional)<textarea name="description" [(ngModel)]="description" maxlength="500" rows="3"></textarea></label>
+        <label>Ordem de exibição<input name="displayOrder" [(ngModel)]="displayOrder" type="number" required min="0" max="9999" step="1"
+          aria-describedby="category-order-help"></label>
+        <p id="category-order-help" class="hint">Número inteiro de 0 a 9999. Valores menores aparecem primeiro; empates seguem a ordem do nome.</p>
+        @if (!validOrder()) { <p class="error" role="alert">Informe uma ordem inteira entre 0 e 9999.</p> }
+        <label class="checkbox"><input name="isActive" [(ngModel)]="isActive" type="checkbox">Categoria ativa</label>
+        <button class="primary" [disabled]="form.invalid || !name.trim() || !validOrder()">{{ busy() ? 'Salvando…' : 'Salvar categoria' }}</button>
+      </fieldset>
+    </form>
+  }
+</section>
+
