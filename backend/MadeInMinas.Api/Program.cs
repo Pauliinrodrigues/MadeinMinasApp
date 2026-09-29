@@ -13,6 +13,8 @@ builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<UserManagementExceptionHandler>();
 builder.Services.AddExceptionHandler<CategoryExceptionHandler>();
 builder.Services.AddExceptionHandler<ProductExceptionHandler>();
+builder.Services.AddExceptionHandler<IngredientExceptionHandler>();
+builder.Services.AddScoped<MadeInMinas.Api.Services.IngredientService>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.ProductService>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.CategoryService>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.UserService>();

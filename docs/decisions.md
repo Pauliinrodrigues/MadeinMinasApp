@@ -53,3 +53,9 @@ catalog.manage é exclusiva de Administrator e independente de users.manage. A s
 Produtos têm categoria obrigatória, preço decimal validado antes do numeric(8,2) e nome único dentro da categoria. Ativação e disponibilidade manual são independentes. A API calcula IsAvailableForSale combinando produto ativo, categoria ativa e disponibilidade manual; não considera estoque ou pedidos ainda inexistentes.
 
 Novos vínculos exigem categoria ativa, mas uma edição pode manter a categoria original inativa. Não há exclusão física. Imagens são links HTTPS opcionais, com prévia e tratamento de falha; uploads e armazenamento de mídia ficam para incremento próprio. Detalhes: [products.md](products.md).
+
+## 010 — Ingredientes com unidade-base estável
+
+A Fase 3C usa kg, l e un. Custo é por unidade-base, com quatro casas decimais; mínimo usa três. Não há conversão automática de pacote/preço de compra. A unidade fica fixa após salvar, evitando reinterpretar custos e futuras quantidades de receita. Uma conversão futura deverá ser uma operação explícita que considere todos os vínculos.
+
+Nome único inclui registros inativos. Fornecedor é texto opcional; não se cria tabela própria neste incremento. Custo zero é aceito explicitamente e destacado na interface para revisão. O mínimo é configuração, sem saldo ou alertas fictícios. Estoque transacional e CMV seguem para a fase 6. Regras, limites e testes: [ingredients.md](ingredients.md).

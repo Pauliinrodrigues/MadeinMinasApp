@@ -19,6 +19,7 @@ import { StaffApi } from '../../core/services/staff-api.service';
       @if (session.canManageUsers()) { <a routerLink="/equipe/funcionarios" routerLinkActive="selected">Funcionários</a> }
       @if (session.canManageCatalog()) { <a routerLink="/equipe/categorias" routerLinkActive="selected">Categorias</a> }
       @if (session.canManageCatalog()) { <a routerLink="/equipe/produtos" routerLinkActive="selected">Produtos</a> }
+      @if (session.canManageCatalog()) { <a routerLink="/equipe/ingredientes" routerLinkActive="selected">Ingredientes</a> }
       <a routerLink="/equipe/senha" routerLinkActive="selected">Minha senha</a>
     </nav>
     @if (session.user()) { <router-outlet /> }

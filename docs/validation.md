@@ -168,3 +168,23 @@ Validada em 29/09/2026:
 - Rotas de produtos, status e disponibilidade confirmadas no OpenAPI; /api/products retorna 401 sem credenciais.
 
 Arquivos, contratos, limites e comandos: [products.md](products.md). O próximo aceite manual é cadastrar um produto em categoria ativa, editar preço e testar sua disponibilidade. Ingredientes e fichas técnicas ainda não foram implementados.
+
+## Fase 3C — Ingredientes
+
+Implementada após autorização do usuário para continuar o desenvolvimento. Validação em 29/09/2026:
+
+- Build Release da solução aprovado com zero erros e zero avisos. Build de produção Angular aprovado, bundle inicial de aproximadamente 464 kB.
+- 119 testes de backend aprovados em uma execução completa no PostgreSQL temporário: 98 existentes e 21 casos novos de ingredientes.
+- Casos novos cobrem permissões em todas as rotas, três unidades, criação/leitura/edição, precisão de custo e quantidade, normalização de fornecedor, datas e status idempotente.
+- Testados nome duplicado incluindo inativo/Unicode, criação concorrente, busca/paginação/filtros, campos obrigatórios, intervalos e excesso de casas decimais sem arredondar, ausência do registro e inexistência de DELETE.
+- Verificadas imutabilidade da unidade, preservação dos dados em conflitos e revalidação de sessão/perfil dentro da transação. Constraints de custo, mínimo e unidade também testadas diretamente no banco isolado.
+- A primeira tentativa de build Release encontrou o executável em uso pela instância local da API. Migration gerada em Debug; o build Release passou após encerrar somente a API deste projeto.
+- A primeira execução de navegador encontrou o servidor Angular antigo sem o menu novo e foi interrompida. O servidor deste projeto foi reiniciado para carregar o código atual. Nenhum servidor de outro projeto foi encerrado.
+- A execução completa de 84 testes Playwright terminou com 83 aprovados e um timeout no cenário existente de categoria inativa de produtos em celular. Os 20 casos novos de ingredientes passaram, com dez cenários em desktop e celular: cadastro/edição, envio correto de decimais, três unidades, bloqueio da unidade na edição, status com confirmação/cancelamento, busca/paginação, duplicidade, API indisponível, registro inexistente, permissões e sessão expirada.
+- O cenário de produtos que excedeu cinco segundos já mostrava o elemento esperado no snapshot final da falha. Sua reexecução isolada em celular passou em 4,3 segundos, sem alterar código ou testes. Assim, os 84 casos foram validados entre a execução completa e a reexecução; não se declara uma execução completa de 84/84 sem falhas. Reprodução: `npm.cmd run test:e2e -- products.spec.ts --project=mobile --grep 'categoria inativa pode' --workers=1`.
+- Navegador usa API simulada; backend usa HTTP e PostgreSQL real temporário. Nenhum ingrediente de exemplo ou conta real foi criado ou alterado no banco da hamburgueria pelos testes.
+- Migration 20260929205733_AddIngredients revisada e aplicada ao banco de desenvolvimento. A listagem do EF confirmou as quatro migrations aplicadas e ausência de alterações de modelo pendentes.
+- API Release reiniciada em 5080 e frontend em 8101. A primeira consulta de readiness excedeu o limite de cinco segundos ao abrir conexão; a inspeção confirmou o serviço PostgreSQL ativo, aceitando conexões, e a nova consulta retornou Healthy. A reexecução completa do smoke test passou, incluindo readiness, liveness, CORS, ProblemDetails, OpenAPI e frontend.
+- Rotas de ingredientes confirmadas no OpenAPI. GET /api/ingredients retorna 401 sem credenciais. git diff --check sem erros.
+
+Escopo, arquivos e reprodução: [ingredients.md](ingredients.md). O aceite manual é cadastrar ingredientes reais, conferir custo por unidade-base, editar fornecedor/custo e testar ativação/inativação. Fichas técnicas serão o próximo incremento; estoque e CMV permanecem na fase 6.

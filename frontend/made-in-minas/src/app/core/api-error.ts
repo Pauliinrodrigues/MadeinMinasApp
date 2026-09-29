@@ -3,6 +3,9 @@ import { HttpErrorResponse } from '@angular/common/http';
 export function apiError(error: unknown, login = false): string {
   if (!(error instanceof HttpErrorResponse)) return 'Não foi possível concluir. Verifique a conexão e tente novamente.';
   const codes: Record<string, string> = {
+    IngredientNotFound: 'Ingrediente não encontrado.',
+    DuplicateIngredientName: 'Já existe um ingrediente com esse nome. Verifique também os ingredientes inativos.',
+    IngredientUnitImmutable: 'A unidade não pode ser alterada após o cadastro. Reabra o ingrediente para conferir os dados.',
     ProductNotFound: 'Produto não encontrado.',
     DuplicateProductName: 'Já existe um produto com esse nome nesta categoria. Verifique também os inativos.',
     InvalidProductCategory: 'A categoria não existe mais. Reabra o cadastro e selecione outra.',

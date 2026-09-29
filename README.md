@@ -2,7 +2,7 @@
 
 Sistema de gestão e pedidos da hamburgueria Made in Minas, desenvolvido por fases.
 
-**Fases 1 e 2 implementadas; Fases 3A e 3B implementadas:** infraestrutura, autenticação, permissões, funcionários, categorias e produtos na API e no frontend. Ingredientes, fichas técnicas, pedidos, pagamentos e atendimento por IA seguem para os próximos incrementos.
+**Fases 1 e 2 implementadas; Fases 3A, 3B e 3C implementadas:** infraestrutura, autenticação, permissões, funcionários, categorias, produtos e ingredientes na API e no frontend. Fichas técnicas, pedidos, pagamentos e atendimento por IA seguem para os próximos incrementos. A Fase 3C aguarda aceite manual.
 
 ## Estrutura
 
@@ -63,6 +63,8 @@ Detalhes e arquivos da interface: [Fase 2C](docs/staff-frontend.md). Na pasta do
 **Categorias:** entre como administrador e abra **Categorias** no menu. Cadastre nome, descrição opcional, ordem e status. A listagem oferece busca, filtros e ativação/inativação. Entre novamente se a sessão começou antes da atualização. Contratos, migration e arquivos: [Fase 3A](docs/categories.md).
 
 **Produtos:** abra **Produtos → Novo produto**, escolha uma categoria ativa e informe o preço (exemplo: 29,90). Nome, descrição, imagem por link HTTPS, status e disponibilidade podem ser editados. A disponibilidade considera os estados do produto e da categoria. Contratos, migration e arquivos: [Fase 3B](docs/products.md).
+
+**Ingredientes:** abra **Ingredientes → Novo ingrediente**. Cadastre unidade-base (kg, L ou un), custo por unidade, mínimo desejado, fornecedor e status. A unidade fica fixa após salvar. Saldo e movimentações de estoque virão na fase 6. Contratos, migration, testes e arquivos: [Fase 3C](docs/ingredients.md).
 
 ## Verificar a fase
 

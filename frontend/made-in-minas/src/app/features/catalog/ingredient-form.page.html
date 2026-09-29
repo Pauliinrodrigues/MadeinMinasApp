@@ -1,0 +1,36 @@
+<a routerLink="/equipe/ingredientes" class="back-link">← Ingredientes</a>
+<section class="panel narrow">
+  <p class="eyebrow">CATÁLOGO</p><h1>{{ id ? 'Editar ingrediente' : 'Novo ingrediente' }}</h1>
+  @if (error()) { <p role="alert" class="error">{{ error() }}</p> }
+  @if (notice()) { <p role="status" class="notice">{{ notice() }}</p> }
+  @if (loading()) { <p role="status">Carregando ingrediente…</p> }
+  @if (!loading() && !ready()) { <button (click)="load()">Tentar novamente</button> }
+  @if (ready()) {
+    <form #form="ngForm" (ngSubmit)="save()" class="form-stack">
+      <fieldset [disabled]="busy()">
+        <label>Nome<input name="name" [(ngModel)]="name" #nameField="ngModel" required maxlength="120" autocomplete="off"></label>
+        <p class="hint">Nome único, inclusive entre ingredientes inativos. Embalagens também podem ser cadastradas.</p>
+        @if ((nameField.dirty || nameField.touched) && !name.trim()) { <p class="error" role="alert">Informe o nome do ingrediente.</p> }
+        <label>Unidade-base<select name="unit" [(ngModel)]="unit" required [disabled]="!!id" aria-describedby="ingredient-unit-help">
+          @for (option of units; track option.value) { <option [value]="option.value">{{ option.label }}</option> }
+        </select></label>
+        <p id="ingredient-unit-help" class="hint">A unidade fica fixa após salvar. Use kg para peso, L para volume e un para contagem.</p>
+        <label>Custo por {{ unitLabel(unit) }} (R$)<input name="unitCost" [(ngModel)]="unitCost" #costField="ngModel" required
+          inputmode="decimal" maxlength="11" aria-describedby="ingredient-cost-help"></label>
+        <p id="ingredient-cost-help" class="hint">Custo de 1 {{ unitLabel(unit) }}, até quatro casas decimais. Se 5 kg custam R$ 150, informe 30 por kg. Use vírgula ou ponto, sem separador de milhar.</p>
+        @if ((costField.dirty || costField.touched) && costValue() === null) {
+          <p class="error" role="alert">Informe um custo de 0 a 999999,9999, com até quatro casas decimais.</p>
+        }
+        @if (costValue() === 0) { <p class="hint">O custo informado é zero. Revise antes de usar este ingrediente em cálculos de custo.</p> }
+        <label>Estoque mínimo ({{ unitLabel(unit) }})<input name="minimumStock" [(ngModel)]="minimumStock" required
+          inputmode="decimal" maxlength="10" aria-describedby="ingredient-minimum-help"></label>
+        <p id="ingredient-minimum-help" class="hint">Quantidade mínima desejada, até três casas decimais. Exemplo: 0,500 kg = 500 g. Este cadastro não registra saldo nem movimentações de estoque.</p>
+        @if (minimumValue() === null) { <p class="error" role="alert">Informe um mínimo de 0 a 999999,999, com até três casas decimais.</p> }
+        <label>Fornecedor (opcional)<input name="supplier" [(ngModel)]="supplier" maxlength="150" autocomplete="off"></label>
+        <label class="checkbox"><input name="isActive" [(ngModel)]="isActive" type="checkbox">Ingrediente ativo</label>
+        <button class="primary" [disabled]="form.invalid || !name.trim() || costValue() === null || minimumValue() === null">
+          {{ busy() ? 'Salvando…' : 'Salvar ingrediente' }}</button>
+      </fieldset>
+    </form>
+  }
+</section>

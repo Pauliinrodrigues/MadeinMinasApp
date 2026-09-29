@@ -1,6 +1,6 @@
 # Modelo conceitual inicial
 
-Modelagem incremental. InitialAccessControl implementa Users e Roles; AddCategories implementa Categories; AddProducts implementa Products com FK restrita para Categories. As demais entidades continuam propostas.
+Modelagem incremental. InitialAccessControl implementa Users e Roles; AddCategories implementa Categories; AddProducts implementa Products com FK restrita para Categories; AddIngredients implementa Ingredients. As demais entidades continuam propostas.
 
 | Entidade | Dados e relações previstos | Fase |
 | --- | --- | --- |
@@ -8,7 +8,7 @@ Modelagem incremental. InitialAccessControl implementa Users e Roles; AddCategor
 | Users | Login único, nome, hash de senha, ativo, RoleId | 2 |
 | Categories | Nome único normalizado, descrição opcional, ordem, ativo, criação/atualização UTC | 3A implementada |
 | Products | Categoria obrigatória, nome único por categoria, descrição, preço numeric(8,2), URL de imagem, ativo, disponibilidade manual, datas UTC | 3B implementada |
-| Ingredients | Nome, unidade-base, custo unitário, mínimo, fornecedor, ativo | 3 |
+| Ingredients | Nome único normalizado, unidade-base fixa (kg/l/un), custo numeric(10,4), mínimo numeric(9,3), fornecedor textual opcional, ativo, datas UTC; sem saldo nesta etapa | 3C implementada |
 | Recipes | Produto e rendimento | 3 |
 | RecipeItems | Receita, ingrediente, quantidade na unidade-base | 3 |
 | Combos | Nome, descrição, preço e disponibilidade próprios | Catálogo, incremento específico |

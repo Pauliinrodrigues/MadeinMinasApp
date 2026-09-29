@@ -9,6 +9,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Product> Products => Set<Product>();
+    public DbSet<Ingredient> Ingredients => Set<Ingredient>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

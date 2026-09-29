@@ -6,7 +6,7 @@ Cada fase exige implementação, testes e validação antes da próxima.
 | --- | --- | --- |
 | 1 | Estrutura, API, frontend, banco/configuração, Git e documentação | Implementada; ver docs/validation.md |
 | 2 | Autenticação, usuários e permissões | 2A, 2B e 2C implementadas; acesso validado pelo usuário |
-| 3 | Categorias, produtos, ingredientes e fichas técnicas | 3A e 3B: categorias e produtos implementados; ingredientes e fichas técnicas pendentes |
+| 3 | Categorias, produtos, ingredientes e fichas técnicas | 3A, 3B e 3C implementadas; ingredientes aguardam aceite manual; fichas técnicas pendentes |
 | 4 | Clientes, pedidos, carrinho e pagamentos | Planejada |
 | 5 | Cozinha/KDS, expedição e impressão | Planejada |
 | 6 | Estoque e CMV | Planejada |
@@ -30,4 +30,4 @@ Combos e adicionais terão incrementos próprios associados ao catálogo e à mo
 - Repositório ignora dependências, builds e segredos.
 - Configuração do PostgreSQL permanente documentada; credenciais fornecidas localmente pelo responsável.
 
-Os incrementos da Fase 2 estão descritos em [authentication.md](authentication.md), [users.md](users.md) e [staff-frontend.md](staff-frontend.md). O usuário autorizou continuar após categorias. A [Fase 3A](categories.md) implementa categorias e a [Fase 3B](products.md), produtos vinculados. Após validar produtos, o próximo incremento será ingredientes, antes das fichas técnicas.
+Os incrementos da Fase 2 estão descritos em [authentication.md](authentication.md), [users.md](users.md) e [staff-frontend.md](staff-frontend.md). A [Fase 3A](categories.md) implementa categorias; a [Fase 3B](products.md), produtos vinculados; e a [Fase 3C](ingredients.md), ingredientes. Após validar ingredientes, o próximo incremento será fichas técnicas, vinculando produtos e quantidades de insumos.

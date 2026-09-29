@@ -12,6 +12,9 @@ export const routes: Routes = [
     path: 'equipe', canActivate: [staffGuard], canActivateChild: [staffGuard],
     loadComponent: () => import('./features/staff/staff-layout.page').then(page => page.StaffLayoutPage),
     children: [
+      { path: 'ingredientes', canActivate: [catalogGuard], loadComponent: () => import('./features/catalog/ingredients.page').then(page => page.IngredientsPage) },
+      { path: 'ingredientes/novo', canActivate: [catalogGuard], loadComponent: () => import('./features/catalog/ingredient-form.page').then(page => page.IngredientFormPage) },
+      { path: 'ingredientes/:id', canActivate: [catalogGuard], loadComponent: () => import('./features/catalog/ingredient-form.page').then(page => page.IngredientFormPage) },
       { path: 'produtos', canActivate: [catalogGuard], loadComponent: () => import('./features/catalog/products.page').then(page => page.ProductsPage) },
       { path: 'produtos/novo', canActivate: [catalogGuard], loadComponent: () => import('./features/catalog/product-form.page').then(page => page.ProductFormPage) },
       { path: 'produtos/:id', canActivate: [catalogGuard], loadComponent: () => import('./features/catalog/product-form.page').then(page => page.ProductFormPage) },
