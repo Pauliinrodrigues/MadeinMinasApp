@@ -5,6 +5,11 @@ export function apiError(error: unknown, login = false): string {
     return 'Não foi possível concluir. Verifique a conexão e tente novamente.';
   }
   const codes: Record<string, string> = {
+    CustomerNotFound: 'Cliente não encontrado.',
+    AddressNotFound: 'Endereço não encontrado para este cliente.',
+    DuplicateCustomerPhone:
+      'Já existe um cliente com esse telefone. Verifique também os clientes inativos.',
+    InvalidCustomerPhone: 'Informe um telefone brasileiro completo com DDD.',
     RecipeNotFound: 'Este produto ainda não possui ficha técnica.',
     InvalidRecipeIngredient:
       'Um ingrediente não existe mais. Reabra a ficha para atualizar as opções.',

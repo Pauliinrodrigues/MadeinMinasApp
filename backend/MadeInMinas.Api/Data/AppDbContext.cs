@@ -12,6 +12,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<Ingredient> Ingredients => Set<Ingredient>();
     public DbSet<Recipe> Recipes => Set<Recipe>();
     public DbSet<RecipeItem> RecipeItems => Set<RecipeItem>();
+    public DbSet<Customer> Customers => Set<Customer>();
+    public DbSet<Address> Addresses => Set<Address>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

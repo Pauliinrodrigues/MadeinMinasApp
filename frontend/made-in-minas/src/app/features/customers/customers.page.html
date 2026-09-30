@@ -1,0 +1,118 @@
+<section>
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">ATENDIMENTO</p>
+      <h1>Clientes</h1>
+    </div>
+    <a routerLink="novo" class="button primary">Novo cliente</a>
+  </div>
+  @if (notice()) {
+  <p role="status" class="notice">{{ notice() }}</p>
+  } @if (error()) {
+  <p role="alert" class="error">{{ error() }}</p>
+  }
+  <form class="panel filters" (ngSubmit)="load()">
+    <label
+      >Buscar por nome ou telefone<input
+        name="search"
+        [(ngModel)]="search"
+        maxlength="120"
+        type="search"
+    /></label>
+    <label
+      >Status<select name="active" [(ngModel)]="active">
+        <option value="">Todos</option>
+        <option value="true">Ativos</option>
+        <option value="false">Inativos</option>
+      </select></label
+    >
+    <button class="primary" [disabled]="loading() || saving()">Buscar</button>
+  </form>
+  @if (pending(); as customer) {
+  <section class="panel confirmation" aria-label="Confirmar mudança de status">
+    <h2>{{ customer.isActive ? 'Inativar' : 'Ativar' }} {{ customer.name }}?</h2>
+    <p>O cadastro e os endereços serão preservados. Os endereços mantêm seus próprios status.</p>
+    <div class="actions">
+      <button type="button" class="primary" (click)="changeStatus()" [disabled]="saving()">
+        {{ saving() ? 'Salvando…' : 'Confirmar' }}
+      </button>
+      <button type="button" (click)="pending.set(null)" [disabled]="saving()">Cancelar</button>
+    </div>
+  </section>
+  } @if (loading()) {
+  <p role="status">Carregando clientes…</p>
+  } @if (!loading() && !result()) {
+  <button type="button" (click)="load(page)">Tentar novamente</button> } @if (result(); as data) {
+  <p role="status">{{ data.totalCount }} cliente(s) encontrado(s).</p>
+  @if (data.items.length) {
+  <div class="table-scroll panel">
+    <table>
+      <caption class="sr-only">
+        Lista de clientes
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Cliente</th>
+          <th scope="col">Telefone</th>
+          <th scope="col">Status</th>
+          <th scope="col">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (customer of data.items; track customer.id) {
+        <tr>
+          <td><strong>{{ customer.name }}</strong></td>
+          <td>{{ customer.phone }}</td>
+          <td>
+            <span class="badge" [class.inactive]="!customer.isActive"
+              >{{ customer.isActive ? 'Ativo' : 'Inativo' }}</span
+            >
+          </td>
+          <td>
+            <div class="actions">
+              <a
+                [routerLink]="[customer.id]"
+                class="button"
+                [attr.aria-label]="'Editar ' + customer.name"
+                >Editar</a
+              >
+              <a
+                [routerLink]="[customer.id, 'enderecos']"
+                class="button"
+                [attr.aria-label]="'Endereços de ' + customer.name"
+                >Endereços</a
+              >
+              <button
+                type="button"
+                (click)="requestStatus(customer)"
+                [disabled]="saving()"
+                [attr.aria-label]="(customer.isActive ? 'Inativar ' : 'Ativar ') + customer.name"
+              >
+                {{ customer.isActive ? 'Inativar' : 'Ativar' }}
+              </button>
+            </div>
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  } @else {
+  <p class="panel">
+    Nenhum cliente nesta página. Ajuste os filtros, cadastre um cliente ou volte à página anterior.
+  </p>
+  }
+  <div class="pagination">
+    <button type="button" (click)="load(page - 1)" [disabled]="page <= 1 || saving()">
+      Anterior</button
+    ><span>Página {{ page }}</span>
+    <button
+      type="button"
+      (click)="load(page + 1)"
+      [disabled]="page * data.pageSize >= data.totalCount || saving()"
+    >
+      Próxima
+    </button>
+  </div>
+  }
+</section>

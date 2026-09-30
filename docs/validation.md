@@ -227,3 +227,24 @@ Contratos, arquivos, comandos e roteiro de aceite: [recipes.md](recipes.md). Est
 - A atualização do Node global 22.16.0 → 22.23.3 possui instalador oficial verificado. A primeira tentativa retornou erro 1925 por falta de privilégio administrativo; a repetição usa a confirmação padrão de elevação do Windows. As validações do frontend acima usaram o Node 24.19.0 do Rider, compatível com Angular 22.
 
 Arquivos, comandos e procedimento de atualização compartilhada: [maintenance.md](maintenance.md). Próximo incremento proposto: [clientes e endereços](customers-plan.md).
+
+## Aceite das fichas técnicas e integração — 30/09/2026
+
+- O usuário aprovou as fichas técnicas. O [PR #1](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/1) passou no GitHub Actions com 135 testes HTTP e 106 testes de navegador em Linux/Chromium, além dos builds, lint e formatação.
+- O PR foi integrado por squash na `master`, commit `b35ebcc`. A branch `feat/customers-addresses` foi criada dessa base para a Fase 4A.
+- A confirmação administrativa da atualização global do Node foi cancelada; essa atualização é opcional. O Node 24.19.0 do Rider é compatível e foi usado nas verificações locais.
+
+## Clientes e endereços — Fase 4A
+
+- Backend: **161/161 testes aprovados em uma execução completa**, incluindo 26 novos casos de clientes/endereços. PostgreSQL temporário em 127.0.0.1:55433, sem usar os bancos permanentes. Log: `.local/customers-backend-tests.log`.
+- Casos novos incluem permissões em todas as operações, telefone formatado/duplicado/inválido, conflito concorrente, rollback de edição, paginação/filtros, vínculo de endereço, validações e rechecagem de sessão/perfil nas seis gravações. O teste existente do atendente foi atualizado para exigir também customers.manage, mantendo a restrição à administração de funcionários.
+- Lint aprovado, formatação frontend/C# verificada e build de produção do frontend aprovado, com aproximadamente 479 kB iniciais. Nenhuma dependência adicionada.
+- A primeira execução de navegador foi interrompida após identificar seletores ambíguos dos novos testes: duas mensagens role=status coexistiam ao criar cliente, e getByLabel com exact não localizava selects cujo label inclui as opções. Os testes passaram a selecionar a mensagem específica e usar o papel combobox. Não se mascarou falha com retries nem se alterou regra do produto para satisfazer o teste. Log inicial: `.local/customers-browser-initial.log`.
+- A migration `20260930205926_AddCustomersAndAddresses` foi revisada e validada no PostgreSQL isolado: cria somente Customers, Addresses, índices, constraints e FK restrita.
+- Migration aplicada ao `made_in_minas` após confirmar banco, host, porta e usuário próprios. Backup anterior em `.local/backups/made_in_minas-before-customers-20260930-181856.dump`, com índice conferido por pg_restore; não foi realizado ensaio de restauração desse backup. A primeira aplicação usou um binário anterior à geração da migration e não a encontrou; recompilar antes de aplicar resolveu. Verificação posterior confirmou a migration no histórico e zero clientes/endereços, sem inserção de dados de demonstração.
+- Solução Release compilada com zero avisos e zero erros. API reiniciada em 5080 e frontend disponível em 8101. Test-Foundation com ExpectDatabaseReady passou, incluindo conexão autenticada saudável, CORS, ProblemDetails e frontend. OpenAPI contém as seis rotas de clientes/endereços; GET /api/customers sem credenciais retorna 401.
+- O PostgreSQL compartilhado não foi parado nem atualizado. Nenhum comando de migration ou backup foi dirigido ao `parsmartmanager`.
+- EF confirmou ausência de alterações de modelo pendentes após a migration.
+- Navegador: a execução completa terminou com **127 aprovados e um caso de produtos interrompido ao criar a página**, com `browserContext.newPage: Target page, context or browser has been closed`. Os 22 novos casos de clientes/endereços passaram em desktop e celular. O único caso restante passou isoladamente com `--last-failed --workers=1` (8,9 s), sem alteração no produto nem aumento de timeout. Assim, os 128 casos foram validados entre a execução completa e a reexecução; não se declara uma execução local única de 128/128. Logs: `.local/customers-browser-full.log` e `.local/customers-browser-recheck.log`; trace original preservado em `.local/customers-browser-product-context-failure.zip`.
+
+O usuário concluiu o aceite manual e autorizou a publicação/integração da Fase 4A. O [PR #2](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/2) registra esse aceite e as verificações remotas. O commit de implementação `de07c7e` passou no GitHub Actions com **161/161 testes de backend e 128/128 de navegador em uma execução completa**, além de builds, lint e formatação; [execução Quality](https://github.com/Pauliinrodrigues/MadeinMinasApp/actions/runs/36780008053). O roteiro em [customers.md](customers.md) permanece como referência.

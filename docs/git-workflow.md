@@ -17,7 +17,7 @@ Uma branch representa um incremento que pode ser revisado e validado em conjunto
 
 As fichas técnicas e a manutenção já estavam juntas no diretório, sem commit. Foram preservadas na branch `feat/recipes-and-maintenance`, baseada no commit `780df71` da `master`, e registradas no commit `1e151c3`. Esse agrupamento preserva o estado que passou pelos testes; os próximos incrementos começam em branches próprias.
 
-A ficha técnica ainda depende de aceite manual antes da integração. Criar a branch e fazer commits locais não publica o trabalho no GitHub nem altera a `master`.
+A ficha técnica foi aprovada pelo usuário, e o [PR #1](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/1) foi integrado por squash no commit `b35ebcc`, após 135 testes do backend e 106 do frontend aprovados no GitHub. A branch `feat/customers-addresses` foi criada dessa `master` atualizada. Criar uma branch e fazer commits locais não publica automaticamente o trabalho.
 
 ## Iniciar a próxima atividade
 
@@ -56,10 +56,10 @@ A identidade de autoria e a conta autenticada no GitHub são configurações dif
 
 ## Publicar e revisar
 
-Na primeira publicação, use o nome da branch em que está trabalhando. Para o incremento atual:
+Na primeira publicação, use o nome da branch em que está trabalhando. Para clientes e endereços:
 
 ```powershell
-git push -u origin feat/recipes-and-maintenance
+git push -u origin feat/customers-addresses
 ```
 
 Abra um pull request com destino à `master`. Pode ser um rascunho enquanto a validação manual estiver pendente. Use o modelo do repositório para informar o resultado, os testes e eventuais migrations.

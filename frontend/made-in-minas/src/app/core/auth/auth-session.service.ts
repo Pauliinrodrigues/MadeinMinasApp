@@ -17,6 +17,9 @@ export class AuthSession {
     () => this.profile()?.permissions.includes('catalog.manage') ?? false,
   );
   readonly notice = signal('');
+  readonly canManageCustomers = computed(
+    () => this.profile()?.permissions.includes('customers.manage') ?? false,
+  );
 
   token(): string | null {
     if (this.accessToken && Date.now() >= this.expiration) {

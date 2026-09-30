@@ -1,6 +1,6 @@
 # Próximo incremento: clientes e endereços — Fase 4A
 
-Proposta preparada durante a manutenção técnica. Ainda não há entidades, migration, endpoints ou telas deste módulo. Implementação após concluir a manutenção e confirmar a validação manual das fichas técnicas.
+Proposta preparada durante a manutenção técnica e aceita após a validação das fichas técnicas em 30/09/2026. A implementação na branch `feat/customers-addresses` está descrita em [customers.md](customers.md), incluindo o GET de endereço individual acrescentado para consulta e Location do cadastro. Este documento preserva o escopo planejado.
 
 ## Entrega
 
