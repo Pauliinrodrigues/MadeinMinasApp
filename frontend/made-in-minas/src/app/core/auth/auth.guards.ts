@@ -24,3 +24,12 @@ export const catalogGuard: CanActivateFn = () => {
   }
   return session.canManageCatalog() ? true : router.createUrlTree(['/equipe']);
 };
+
+export const customersGuard: CanActivateFn = () => {
+  const session = inject(AuthSession);
+  const router = inject(Router);
+  if (!session.token()) {
+    return router.createUrlTree(['/entrar']);
+  }
+  return session.canManageCustomers() ? true : router.createUrlTree(['/equipe']);
+};

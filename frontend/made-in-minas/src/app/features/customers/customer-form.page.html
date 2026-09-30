@@ -1,0 +1,57 @@
+<a routerLink="/equipe/clientes" class="back-link">← Clientes</a>
+<section class="panel narrow">
+  <p class="eyebrow">ATENDIMENTO</p>
+  <h1>{{ id ? 'Editar cliente' : 'Novo cliente' }}</h1>
+  @if (error()) {
+  <p role="alert" class="error">{{ error() }}</p>
+  } @if (notice()) {
+  <p role="status" class="notice">{{ notice() }}</p>
+  } @if (loading()) {
+  <p role="status">Carregando cliente…</p>
+  } @if (!loading() && !ready()) {
+  <button type="button" (click)="load()">Tentar novamente</button> } @if (ready()) {
+  <form #form="ngForm" (ngSubmit)="save()" class="form-stack">
+    <fieldset [disabled]="busy()">
+      <label
+        >Nome<input
+          name="name"
+          [(ngModel)]="name"
+          #nameField="ngModel"
+          required
+          maxlength="120"
+          autocomplete="off"
+      /></label>
+      @if ((nameField.dirty || nameField.touched) && !name.trim()) {
+      <p role="alert" class="error">Informe o nome do cliente.</p>
+      }
+      <label
+        >Telefone com DDD<input
+          name="phone"
+          [(ngModel)]="phone"
+          #phoneField="ngModel"
+          type="tel"
+          required
+          maxlength="30"
+          autocomplete="off"
+          aria-describedby="phone-help"
+      /></label>
+      <p id="phone-help" class="hint">
+        Exemplos: (31) 99999-1234 ou (31) 3333-1234. Aceita +55. O telefone deve ser único,
+        inclusive entre clientes inativos.
+      </p>
+      @if ((phoneField.dirty || phoneField.touched) && !validPhone(phone)) {
+      <p role="alert" class="error">Informe um telefone brasileiro completo com DDD.</p>
+      }
+      <label class="checkbox"
+        ><input name="isActive" [(ngModel)]="isActive" type="checkbox" />Cliente ativo</label
+      >
+      <button class="primary" [disabled]="form.invalid || !name.trim() || !validPhone(phone)">
+        {{ busy() ? 'Salvando…' : 'Salvar cliente' }}
+      </button>
+    </fieldset>
+  </form>
+  @if (id && !busy()) {
+  <hr />
+  <a [routerLink]="['/equipe/clientes', id, 'enderecos']" class="button">Gerenciar endereços</a>
+  } }
+</section>

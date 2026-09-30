@@ -1,0 +1,172 @@
+<a [routerLink]="['/equipe/clientes', customerId]" class="back-link">← Cadastro do cliente</a>
+<section>
+  <p class="eyebrow">ATENDIMENTO</p>
+  <h1>Endereços</h1>
+  @if (error()) {
+  <p role="alert" class="error">{{ error() }}</p>
+  } @if (notice()) {
+  <p role="status" class="notice">{{ notice() }}</p>
+  } @if (loading()) {
+  <p role="status">Carregando endereços…</p>
+  } @if (!loading() && !result()) {
+  <button type="button" (click)="load(page)">Tentar novamente</button> } @if (customer(); as owner)
+  {
+  <p><strong>{{ owner.name }}</strong> · {{ owner.phone }}</p>
+  @if (!owner.isActive) {
+  <p class="hint">Cliente inativo. Seus endereços continuam disponíveis para manutenção.</p>
+  } @if (formOpen()) {
+  <section class="panel narrow" aria-label="Formulário de endereço">
+    <h2>{{ editingId ? 'Editar endereço' : 'Novo endereço' }}</h2>
+    <form #form="ngForm" (ngSubmit)="save()" class="form-stack">
+      <fieldset [disabled]="busy()">
+        <label
+          >Rua ou avenida<input
+            name="street"
+            [(ngModel)]="input.street"
+            required
+            maxlength="120"
+            autocomplete="off"
+        /></label>
+        <label
+          >Número<input
+            name="number"
+            [(ngModel)]="input.number"
+            required
+            maxlength="20"
+            aria-describedby="number-help"
+        /></label>
+        <p id="number-help" class="hint">Para endereço sem número, informe S/N.</p>
+        <label
+          >Complemento (opcional)<input
+            name="complement"
+            [(ngModel)]="input.complement"
+            maxlength="120"
+        /></label>
+        <label
+          >Bairro<input
+            name="neighborhood"
+            [(ngModel)]="input.neighborhood"
+            required
+            maxlength="80"
+        /></label>
+        <label>Cidade<input name="city" [(ngModel)]="input.city" required maxlength="80" /></label>
+        <label
+          >UF<select name="state" [(ngModel)]="input.state" required>
+            <option value="">Selecione</option>
+            @for (state of states; track state) {
+            <option [value]="state">{{ state }}</option>
+            }
+          </select></label
+        >
+        <label
+          >CEP (opcional)<input
+            name="postalCode"
+            [(ngModel)]="input.postalCode"
+            maxlength="9"
+            inputmode="numeric"
+        /></label>
+        @if (!validPostalCode()) {
+        <p role="alert" class="error">Informe CEP com oito dígitos, com ou sem hífen.</p>
+        }
+        <label
+          >Referência (opcional)<textarea
+            name="reference"
+            [(ngModel)]="input.reference"
+            maxlength="250"
+            rows="3"
+          ></textarea>
+        </label>
+        <label class="checkbox"
+          ><input name="isActive" [(ngModel)]="input.isActive" type="checkbox" />Endereço
+          ativo</label
+        >
+        <div class="actions">
+          <button class="primary" [disabled]="form.invalid || !validAddress()">
+            {{ busy() ? 'Salvando…' : 'Salvar endereço' }}
+          </button>
+          <button type="button" (click)="formOpen.set(false)">Cancelar edição</button>
+        </div>
+      </fieldset>
+    </form>
+  </section>
+  } @else {
+  <div class="page-heading">
+    <button type="button" class="primary" (click)="openForm()" [disabled]="busy()">
+      Novo endereço
+    </button>
+  </div>
+  <form class="panel filters" (ngSubmit)="load()">
+    <label
+      >Status dos endereços<select name="active" [(ngModel)]="active">
+        <option value="">Todos</option>
+        <option value="true">Ativos</option>
+        <option value="false">Inativos</option>
+      </select></label
+    >
+    <button [disabled]="busy()">Filtrar</button>
+  </form>
+  @if (pending(); as address) {
+  <section class="panel confirmation" aria-label="Confirmar mudança de status">
+    <h2>
+      {{ address.isActive ? 'Inativar' : 'Ativar' }} {{ address.street }}, {{ address.number }}?
+    </h2>
+    <p>O endereço será preservado e poderá ser reativado depois.</p>
+    <div class="actions">
+      <button type="button" class="primary" (click)="changeStatus()" [disabled]="busy()">
+        Confirmar</button
+      ><button type="button" (click)="pending.set(null)" [disabled]="busy()">Cancelar</button>
+    </div>
+  </section>
+  } @if (result(); as data) {
+  <p role="status">{{ data.totalCount }} endereço(s) encontrado(s).</p>
+  @for (address of data.items; track address.id) {
+  <section class="panel" [attr.aria-label]="address.street + ', ' + address.number">
+    <h2>{{ address.street }}, {{ address.number }}</h2>
+    <p>{{ address.neighborhood }} · {{ address.city }}/{{ address.state }}</p>
+    @if (address.complement) {
+    <p>{{ address.complement }}</p>
+    } @if (address.postalCode) {
+    <p>CEP: {{ address.postalCode }}</p>
+    } @if (address.reference) {
+    <p>Referência: {{ address.reference }}</p>
+    }
+    <p>
+      <span class="badge" [class.inactive]="!address.isActive"
+        >{{ address.isActive ? 'Ativo' : 'Inativo' }}</span
+      >
+    </p>
+    <div class="actions">
+      <button
+        type="button"
+        (click)="openForm(address)"
+        [disabled]="busy()"
+        [attr.aria-label]="'Editar endereço ' + address.street + ', ' + address.number"
+      >
+        Editar
+      </button>
+      <button
+        type="button"
+        (click)="requestStatus(address)"
+        [disabled]="busy()"
+        [attr.aria-label]="(address.isActive ? 'Inativar endereço ' : 'Ativar endereço ') + address.street + ', ' + address.number"
+      >
+        {{ address.isActive ? 'Inativar' : 'Ativar' }}
+      </button>
+    </div>
+  </section>
+  } @empty {
+  <p class="panel">Nenhum endereço nesta página. Cadastre um endereço ou ajuste o filtro.</p>
+  }
+  <div class="pagination">
+    <button type="button" (click)="load(page - 1)" [disabled]="page <= 1 || busy()">Anterior</button
+    ><span>Página {{ page }}</span>
+    <button
+      type="button"
+      (click)="load(page + 1)"
+      [disabled]="page * data.pageSize >= data.totalCount || busy()"
+    >
+      Próxima
+    </button>
+  </div>
+  } } }
+</section>

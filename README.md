@@ -2,7 +2,7 @@
 
 Sistema de gestão e pedidos da hamburgueria Made in Minas, desenvolvido por fases.
 
-**Fases 1, 2 e 3 implementadas:** infraestrutura, autenticação, permissões, funcionários, categorias, produtos, ingredientes e fichas técnicas na API e no frontend. Ingredientes foram validados pelo usuário; a Fase 3D (fichas técnicas) aguarda aceite manual. Pedidos, pagamentos, estoque/CMV e atendimento por IA seguem para os próximos incrementos.
+**Fases 1, 2 e 3 implementadas e fichas técnicas validadas.** A Fase 4A adiciona clientes e endereços na API e no frontend, em branch própria e aguardando aceite manual. Pedidos, pagamentos, estoque/CMV e atendimento por IA seguem para os próximos incrementos.
 
 ## Estrutura
 
@@ -68,6 +68,8 @@ Detalhes e arquivos da interface: [Fase 2C](docs/staff-frontend.md). Na pasta do
 
 **Fichas técnicas:** abra **Produtos → Ficha técnica**. Informe rendimento, ingredientes, quantidades totais na unidade-base e instruções de preparo. A gravação preserva a composição inteira e alerta sobre ingredientes inativos. Contratos, limites, testes e arquivos: [Fase 3D](docs/recipes.md).
 
+**Clientes e endereços:** faça novo login como administrador ou atendente e abra **Clientes**. Cadastre nome e telefone com DDD; depois abra **Gerenciar endereços** para manter os locais de entrega. Busca por nome/telefone, paginação, inativação e reativação estão disponíveis. Contratos, migration e roteiro de aceite: [Fase 4A](docs/customers.md).
+
 ## Verificar a fase
 
 Com os dois processos iniciados:
@@ -101,7 +103,7 @@ O fluxo local completo está em `scripts/Test-Quality.ps1`: formatação, testes
 powershell -NoProfile -File scripts/Test-Quality.ps1
 ```
 
-O GitHub Actions executará as verificações em pushes para `master` e pull requests após o envio do workflow ao repositório. Detalhes, ferramentas e limites: [manutenção técnica](docs/maintenance.md). O próximo módulo está descrito na [proposta de clientes e endereços](docs/customers-plan.md).
+O GitHub Actions executa as verificações em pushes para `master` e pull requests. O PR #1 passou com 135 testes do backend e 106 do frontend antes da integração. Detalhes e limites: [manutenção técnica](docs/maintenance.md). O incremento atual está em [clientes e endereços](docs/customers.md).
 
 ## Configuração e segurança
 
@@ -118,6 +120,7 @@ O GitHub Actions executará as verificações em pushes para `master` e pull req
 ## Documentação
 
 - [Fluxo de Git e branches](docs/git-workflow.md)
+- [Clientes e endereços](docs/customers.md)
 - [Arquitetura](docs/architecture.md)
 - [Autenticação, administrador inicial e testes](docs/authentication.md)
 - [Gestão de funcionários e permissões](docs/users.md)

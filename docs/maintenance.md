@@ -7,7 +7,7 @@ Incremento autorizado em 30/09/2026: atualizar ferramentas compatíveis, melhora
 - .NET SDK 10.0.401, fixado em `global.json`, e runtimes .NET/ASP.NET Core 10.0.12 instalados. Instalador obtido da Microsoft, com SHA512 e assinatura digital conferidos. Resultado 3010: instalação concluída, com reinicialização do Windows pendente por arquivos em uso.
 - Angular atualizado sequencialmente 20 → 21 → 22, usando as migrations oficiais. Destino: framework 22.2.1, CLI/build 22.2.0 e TypeScript 6.0.3. Preservado o `provideZoneChangeDetection` já utilizado pelo aplicativo; `withXhr()` mantém o transporte HTTP anterior. A verificação estrita de templates permanece habilitada, sem as supressões de diagnósticos opcionais adicionadas pela migration.
 - Node recomendado/CI: 24.21.0. Node do Rider usado localmente: 24.19.0, compatível com a faixa exigida. Nenhum runtime gerenciado pelo Rider foi sobrescrito. O antigo Node global 22.16.0 não atende à nova versão do Angular.
-- O instalador oficial de atualização do Node global para 22.23.3 está em `.local/installers/node-v22.23.3-x64.msi`, com SHA256 e assinatura OpenJS verificados. A tentativa sem elevação retornou erro 1925 (privilégio administrativo necessário). A nova tentativa solicita a confirmação padrão do Windows; enquanto não for concluída, use o Node compatível do Rider. Não reiniciar a máquina durante uma instalação em andamento.
+- O instalador oficial de atualização do Node global para 22.23.3 está em `.local/installers/node-v22.23.3-x64.msi`, com SHA256 e assinatura OpenJS verificados. A tentativa sem elevação retornou erro 1925; a confirmação administrativa posterior foi cancelada. A atualização global é opcional: o Node compatível do Rider permite executar o projeto.
 - Ionic mantido em 9.0.5, com dependências pares compatíveis. PostgreSQL compartilhado segue 17.5 até combinar a parada descrita abaixo.
 - Ferramentas adicionadas: ESLint 10.11.0, `@eslint/js` 10.0.1, typescript-eslint 8.71.0, angular-eslint 22.5.0 e Prettier 3.9.9. São dependências de desenvolvimento, fixadas no manifest/lock. `.npmrc` exige Node compatível e salva versões exatas.
 
@@ -45,7 +45,7 @@ O Playwright usa Edge localmente, com um worker para reduzir disputa por recurso
 
 `.github/workflows/quality.yml` roda em pushes para `master`, pull requests e execução manual. Dois jobs independentes verificam backend e frontend. O backend usa um PostgreSQL 17 efêmero, restrito ao loopback do runner e ao nome/porta aceitos pelo fixture. Não usa credenciais da aplicação. O frontend usa API simulada nos testes de navegador.
 
-O workflow só poderá ser confirmado no GitHub depois de enviado ao repositório. Sua existência não configura automaticamente proteção de branches; isso depende das configurações do repositório. Os testes de navegador simulados não substituem a validação manual com a API real.
+O workflow foi confirmado no [PR #1](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/1): 135 testes de backend e 106 de navegador passaram em Linux/Chromium, além dos builds, lint e formatação. Após o aceite manual, o PR foi integrado. A existência do workflow não configura automaticamente proteção de branches; isso depende das configurações do repositório. Os testes de navegador simulados não substituem a validação manual com a API real.
 
 ## PostgreSQL compartilhado
 

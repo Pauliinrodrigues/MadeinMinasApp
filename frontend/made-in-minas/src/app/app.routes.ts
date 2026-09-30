@@ -1,5 +1,10 @@
 import { Routes } from '@angular/router';
-import { administratorGuard, catalogGuard, staffGuard } from './core/auth/auth.guards';
+import {
+  administratorGuard,
+  catalogGuard,
+  customersGuard,
+  staffGuard,
+} from './core/auth/auth.guards';
 
 export const routes: Routes = [
   {
@@ -18,6 +23,30 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/staff/staff-layout.page').then((page) => page.StaffLayoutPage),
     children: [
+      {
+        path: 'clientes',
+        canActivate: [customersGuard],
+        loadComponent: () =>
+          import('./features/customers/customers.page').then((page) => page.CustomersPage),
+      },
+      {
+        path: 'clientes/novo',
+        canActivate: [customersGuard],
+        loadComponent: () =>
+          import('./features/customers/customer-form.page').then((page) => page.CustomerFormPage),
+      },
+      {
+        path: 'clientes/:customerId/enderecos',
+        canActivate: [customersGuard],
+        loadComponent: () =>
+          import('./features/customers/addresses.page').then((page) => page.AddressesPage),
+      },
+      {
+        path: 'clientes/:id',
+        canActivate: [customersGuard],
+        loadComponent: () =>
+          import('./features/customers/customer-form.page').then((page) => page.CustomerFormPage),
+      },
       {
         path: 'ingredientes',
         canActivate: [catalogGuard],

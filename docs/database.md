@@ -1,6 +1,6 @@
 # Modelo conceitual inicial
 
-Modelagem incremental. InitialAccessControl implementa Users e Roles; AddCategories implementa Categories; AddProducts implementa Products com FK restrita para Categories; AddIngredients implementa Ingredients; AddRecipes implementa Recipes e RecipeItems. As demais entidades continuam propostas.
+Modelagem incremental. InitialAccessControl implementa Users e Roles; AddCategories implementa Categories; AddProducts implementa Products com FK restrita para Categories; AddIngredients implementa Ingredients; AddRecipes implementa Recipes e RecipeItems; AddCustomersAndAddresses implementa Customers e Addresses. As demais entidades continuam propostas.
 
 | Entidade | Dados e relações previstos | Fase |
 | --- | --- | --- |
@@ -13,8 +13,8 @@ Modelagem incremental. InitialAccessControl implementa Users e Roles; AddCategor
 | RecipeItems | PK composta receita/ingrediente, quantidade numeric(9,3), posição; FK restrita de ingrediente e cascade de receita para seus itens | 3D implementada |
 | Combos | Nome, descrição, preço e disponibilidade próprios | Catálogo, incremento específico |
 | ComboItems | Combo, produto e quantidade | Catálogo, incremento específico |
-| Customers | Nome, telefone normalizado, datas | 4 |
-| Addresses | Cliente e dados de entrega | 4 |
+| Customers | Nome, nome normalizado, telefone brasileiro único com +55, ativo e datas UTC | 4A implementada |
+| Addresses | Cliente com FK restrita; rua, número textual, bairro, cidade, UF; complemento/CEP/referência opcionais, ativo e datas UTC | 4A implementada |
 | Orders | Número único, cliente, origem, status, totais, observações, cópia do endereço, datas | 4 |
 | OrderItems | Pedido, produto ou combo, quantidade, nome/preço da compra, observações | 4 |
 | Payments | Pedido, método, valor, status, referência externa, datas | 4 |

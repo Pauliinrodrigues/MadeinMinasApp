@@ -40,6 +40,9 @@ import { StaffApi } from '../../core/services/staff-api.service';
           <a routerLink="/equipe/ingredientes" routerLinkActive="selected">Ingredientes</a>
         }
         <a routerLink="/equipe/senha" routerLinkActive="selected">Minha senha</a>
+        @if (session.canManageCustomers()) {
+          <a routerLink="/equipe/clientes" routerLinkActive="selected">Clientes</a>
+        }
       </nav>
       @if (session.user()) {
         <router-outlet />

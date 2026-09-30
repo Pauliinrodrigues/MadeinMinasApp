@@ -71,3 +71,9 @@ Novos vínculos exigem ingredientes ativos. Um ingrediente inativo já vinculado
 A `master` recebe trabalho testado e validado por pull request. Funcionalidades, correções e manutenção usam branches curtas, sem uma branch `develop` permanente. O incremento atual de fichas técnicas e manutenção foi preservado em `feat/recipes-and-maintenance`; os próximos começam na `master` atualizada após a integração anterior.
 
 Branches não isolam o banco de dados. Migrations exigem conferir o destino e o esquema independentemente da branch. O fluxo, a publicação e a política desejada de proteção remota estão em [git-workflow.md](git-workflow.md).
+
+## 013 — Clientes e endereços sem cadastro público
+
+Clientes exigem somente nome e telefone brasileiro normalizado; o índice único cobre também inativos e concorrência. Identificação por telefone não autentica nem expõe o cadastro publicamente. Administrador e atendente recebem customers.manage, enquanto o catálogo mantém sua política própria.
+
+Endereços pertencem a um cliente e só podem ser acessados pelo vínculo correto. Cliente e endereço têm inativação independente; uma futura compra copiará os dados de entrega. Gravações revalidam sessão e perfil na transação, e serializam alterações pelo cliente. Não há exclusão física, pedido antecipado, consulta externa de CEP ou abstração de repositório. Contratos e limites: [customers.md](customers.md).
