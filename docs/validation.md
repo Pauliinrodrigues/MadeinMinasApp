@@ -188,3 +188,42 @@ Implementada após autorização do usuário para continuar o desenvolvimento. V
 - Rotas de ingredientes confirmadas no OpenAPI. GET /api/ingredients retorna 401 sem credenciais. git diff --check sem erros.
 
 Escopo, arquivos e reprodução: [ingredients.md](ingredients.md). O aceite manual é cadastrar ingredientes reais, conferir custo por unidade-base, editar fornecedor/custo e testar ativação/inativação. Fichas técnicas serão o próximo incremento; estoque e CMV permanecem na fase 6.
+
+## Fase 3D — Fichas técnicas
+
+O usuário concluiu a validação de ingredientes em 30/09/2026 e autorizou a próxima etapa.
+
+- Build de produção Angular aprovado, bundle inicial de aproximadamente 465 kB.
+- A primeira execução completa do backend teve 135 casos: 134 passaram e um falhou por comparar a serialização textual de decimais (`2` e `2.000`). O teste foi corrigido para comparar campos e valores tipados, sem modificar a regra de negócio.
+- Os 16 casos de RecipeTests passaram na reexecução após essa correção. Os 135 casos foram validados entre a execução completa e a reexecução; não se declara uma execução completa sem falhas de 135/135.
+- Casos novos verificam autorização dos quatro perfis/anônimo, produto inexistente versus ficha ausente, criação/substituição/remoção de itens, identidade/datas, instruções, unidades e ausência de efeitos sobre produto e ingrediente.
+- Verificados ingredientes inativos novos versus vínculos existentes, preservação integral em falhas, campos obrigatórios/nested null, precisão sem arredondar, duplicatas, máximos de itens/rendimento/quantidade, PUT repetido e duas primeiras gravações concorrentes sem misturar composições.
+- Revalidação da sessão/perfil dentro da transação e constraints/FKs/cascade foram testadas no banco isolado.
+- Build Release da solução aprovado com zero erros e zero avisos.
+- A primeira execução dos testes de navegador de fichas foi interrompida ao identificar seletores de teste que não localizavam os campos dinâmicos. Os testes passaram a identificar os seletores por papel e nome acessível. O cenário de criar/editar/remover/reabrir passou na execução isolada antes da regressão completa.
+- Migration 20260930174555_AddRecipes revisada: Up adiciona somente Recipes e RecipeItems, com unicidade de produto e ingrediente por ficha, limites, FKs restritas para produto/ingrediente e cascade da receita para seus itens.
+- Fixtures de categorias, produtos e ingredientes removem receitas primeiro apenas no banco isolado de testes, respeitando os novos vínculos.
+- A execução completa de navegador teve 106 casos: 101 passaram e cinco falharam. Três falhas ocorreram na criação/encerramento do contexto do navegador em testes existentes; duas eram o mesmo cenário novo de ingrediente inativo em desktop/celular. Nesse cenário, o HTML já continha `option disabled`, mas o matcher de estado reportava habilitado; o teste foi ajustado para conferir diretamente a propriedade nativa `disabled` da opção.
+- Os cinco casos restantes passaram com `npm.cmd run test:e2e -- --last-failed --workers=1` (25,1 s). Assim, 106 casos foram validados entre execução completa e reexecução, incluindo os 22 novos casos de fichas (11 cenários em desktop e celular); não se declara uma execução completa sem falhas de 106/106. Testes de navegador usam API simulada e não alteram o banco real.
+- Casos de interface incluem criar/editar/remover/reabrir, rendimento e quantidades, repetição, lista vazia, ingrediente em página posterior, inativo já vinculado, inativação durante edição, preservação de campos em erro, recuperação de carregamento, produto inexistente e restrição por perfil/sessão.
+- Migration aplicada ao banco de desenvolvimento; EF confirmou as cinco migrations aplicadas e nenhuma mudança de modelo pendente. Não foram inseridos dados de demonstração ou alteradas credenciais/cadastros reais.
+- API Release reiniciada em 5080, frontend em 8101. A primeira consulta de readiness após iniciar a API excedeu o limite; uma nova consulta retornou Healthy e a reexecução completa de Test-Foundation passou, incluindo liveness/readiness, CORS, ProblemDetails, OpenAPI e frontend.
+- GET/PUT /api/products/{productId}/recipe confirmados no OpenAPI; GET sem credenciais retorna 401 na API atualizada.
+
+Contratos, arquivos, comandos e roteiro de aceite: [recipes.md](recipes.md). Estoque e CMV não fazem parte deste incremento. O próximo aceite manual é montar, salvar e reabrir fichas técnicas de produtos reais; clientes e endereços iniciarão a Fase 4 após essa validação.
+
+## Manutenção técnica — 30/09/2026
+
+- Angular migrado oficialmente 20 → 21 → 22.2.1; CLI/build 22.2.0 e TypeScript 6.0.3. Ionic permanece 9.0.5. Build de produção aprovado, com aproximadamente 478 kB no bundle inicial.
+- SDK .NET 10.0.401 e runtime .NET/ASP.NET Core 10.0.12 instalados após conferir SHA512 e assinatura Microsoft. O instalador retornou 3010: reinicialização do Windows pendente para arquivos em uso.
+- `dotnet restore --locked-mode` e verificação de formatação C# aprovados. Build Release da solução com zero avisos e zero erros. EF confirmou ausência de alterações de modelo desde a última migration; nenhuma migration criada ou aplicada nesta manutenção.
+- Backend: **135/135 casos aprovados em uma execução completa no runtime 10.0.12**, após centralizar a autorização/transação do catálogo. Log local: `.local/maintenance-backend-net10.0.12.log`. A execução anterior no runtime 10.0.8 também passou 135/135.
+- Frontend: `format:check`, ESLint com zero avisos e build aprovados. Mantida a verificação estrita de templates, sem suprimir os diagnósticos de navegação opcional/nullish.
+- Navegador: **106/106 casos aprovados em uma única execução**, sem reexecuções, com um worker, Edge e cenários desktop/celular. Tempo: 7,6 minutos. Log local: `.local/maintenance-browser-tests.log`. O navegador utiliza API simulada; os testes HTTP do backend utilizam PostgreSQL real isolado.
+- Instalação das dependências npm informou zero vulnerabilidades conhecidas entre os 344 pacotes auditados naquele momento. Isso não equivale a uma auditoria completa de segurança.
+- Sintaxe PowerShell de `Test-Quality.ps1` e sintaxe YAML do workflow verificadas. Os comandos de qualidade foram executados localmente; a execução do GitHub Actions ainda depende de enviar o workflow ao repositório. Linux/Chromium no runner remoto ainda não foi executado.
+- O serviço PostgreSQL 17.5 é compartilhado com `parsmartmanager`. Foi criado backup local da Made in Minas em `.local/backups`; não houve atualização ou parada desse serviço. A atualização para 17.11 depende de combinar a janela e obter backups administrativos dos dois bancos e objetos globais.
+- API reiniciada em 5080 e frontend em 8101. O servidor Angular encontrou uma restrição de leitura de diretórios no sandbox ao reiniciar; iniciar fora dessa restrição resolveu, sem alterar código. `Test-Foundation.ps1 -ExpectDatabaseReady` passou integralmente, incluindo readiness saudável, CORS, ProblemDetails, OpenAPI e frontend.
+- A atualização do Node global 22.16.0 → 22.23.3 possui instalador oficial verificado. A primeira tentativa retornou erro 1925 por falta de privilégio administrativo; a repetição usa a confirmação padrão de elevação do Windows. As validações do frontend acima usaram o Node 24.19.0 do Rider, compatível com Angular 22.
+
+Arquivos, comandos e procedimento de atualização compartilhada: [maintenance.md](maintenance.md). Próximo incremento proposto: [clientes e endereços](customers-plan.md).

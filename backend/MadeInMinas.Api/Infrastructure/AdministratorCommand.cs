@@ -48,10 +48,12 @@ public static class AdministratorCommand
         while (true)
         {
             var key = Console.ReadKey(intercept: true);
-            if (key.Key == ConsoleKey.Enter) break;
+            if (key.Key == ConsoleKey.Enter)
+                break;
             if (key.Key == ConsoleKey.Backspace)
             {
-                if (password.Length > 0) password.Length--;
+                if (password.Length > 0)
+                    password.Length--;
             }
             else if (!char.IsControl(key.KeyChar))
             {

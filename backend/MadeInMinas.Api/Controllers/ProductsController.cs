@@ -28,7 +28,10 @@ public sealed class ProductsController(ProductService products) : ControllerBase
     public async Task<ActionResult<ProductResponse>> Create(ProductRequest request, CancellationToken cancellationToken)
     {
         var product = await products.CreateAsync(ActorId, ActorStamp, request, cancellationToken);
-        return CreatedAtAction(nameof(Get), new { id = product.Id }, product);
+        return CreatedAtAction(nameof(Get), new
+        {
+            id = product.Id
+        }, product);
     }
 
     [HttpPut("{id:guid}")]

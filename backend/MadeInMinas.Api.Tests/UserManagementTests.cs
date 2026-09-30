@@ -93,9 +93,15 @@ public sealed class UserManagementTests(AuthenticationFactory factory) : IClassF
     public async Task DuplicateUsernameIsCaseInsensitiveIncludingInactiveUsers()
     {
         using var client = await SignInAsync(await factory.CreateUserAsync());
-        var request = NewUser() with { IsActive = false };
+        var request = NewUser() with
+        {
+            IsActive = false
+        };
         Assert.Equal(HttpStatusCode.Created, (await client.PostAsJsonAsync("/api/users", request)).StatusCode);
-        await AssertProblemAsync(await client.PostAsJsonAsync("/api/users", request with { Username = request.Username.ToUpperInvariant() }),
+        await AssertProblemAsync(await client.PostAsJsonAsync("/api/users", request with
+        {
+            Username = request.Username.ToUpperInvariant()
+        }),
             HttpStatusCode.Conflict, "DuplicateUsername");
     }
 
@@ -117,7 +123,10 @@ public sealed class UserManagementTests(AuthenticationFactory factory) : IClassF
     public async Task InvalidNewPasswordIsRejected(string password)
     {
         using var client = await SignInAsync(await factory.CreateUserAsync());
-        var response = await client.PostAsJsonAsync("/api/users", NewUser() with { Password = password });
+        var response = await client.PostAsJsonAsync("/api/users", NewUser() with
+        {
+            Password = password
+        });
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
@@ -128,8 +137,15 @@ public sealed class UserManagementTests(AuthenticationFactory factory) : IClassF
         var target = await factory.CreateUserAsync(2);
         using var client = await SignInAsync(admin);
         Assert.Equal(HttpStatusCode.BadRequest, (await client.PutAsJsonAsync($"/api/users/{target.Id}",
-            new { name = "Changed", username = target.Username, roleId = 2 })).StatusCode);
-        Assert.Equal(HttpStatusCode.BadRequest, (await client.PutAsJsonAsync($"/api/users/{target.Id}/status", new { })).StatusCode);
+            new
+            {
+                name = "Changed",
+                username = target.Username,
+                roleId = 2
+            })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.PutAsJsonAsync($"/api/users/{target.Id}/status", new
+        {
+        })).StatusCode);
         await AssertProblemAsync(await client.PostAsJsonAsync("/api/users", NewUser(int.MaxValue)),
             HttpStatusCode.BadRequest, "InvalidRole");
         var saved = (await client.GetFromJsonAsync<UserResponse>($"/api/users/{target.Id}"))!;

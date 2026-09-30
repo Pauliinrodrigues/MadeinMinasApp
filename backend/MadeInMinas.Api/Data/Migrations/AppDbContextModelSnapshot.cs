@@ -176,6 +176,66 @@ namespace MadeInMinas.Api.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("MadeInMinas.Api.Models.Recipe", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Instructions")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("YieldQuantity")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId")
+                        .IsUnique();
+
+                    b.ToTable("Recipes", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Recipes_YieldQuantity", "\"YieldQuantity\" BETWEEN 1 AND 10000");
+                        });
+                });
+
+            modelBuilder.Entity("MadeInMinas.Api.Models.RecipeItem", b =>
+                {
+                    b.Property<Guid>("RecipeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("IngredientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(9, 3)
+                        .HasColumnType("numeric(9,3)");
+
+                    b.HasKey("RecipeId", "IngredientId");
+
+                    b.HasIndex("IngredientId");
+
+                    b.ToTable("RecipeItems", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_RecipeItems_Position", "\"Position\" BETWEEN 0 AND 99");
+
+                            t.HasCheckConstraint("CK_RecipeItems_Quantity", "\"Quantity\" BETWEEN 0.001 AND 999999.999");
+                        });
+                });
+
             modelBuilder.Entity("MadeInMinas.Api.Models.Role", b =>
                 {
                     b.Property<int>("Id")
@@ -296,6 +356,36 @@ namespace MadeInMinas.Api.Data.Migrations
                     b.Navigation("Category");
                 });
 
+            modelBuilder.Entity("MadeInMinas.Api.Models.Recipe", b =>
+                {
+                    b.HasOne("MadeInMinas.Api.Models.Product", "Product")
+                        .WithOne()
+                        .HasForeignKey("MadeInMinas.Api.Models.Recipe", "ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("MadeInMinas.Api.Models.RecipeItem", b =>
+                {
+                    b.HasOne("MadeInMinas.Api.Models.Ingredient", "Ingredient")
+                        .WithMany()
+                        .HasForeignKey("IngredientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("MadeInMinas.Api.Models.Recipe", "Recipe")
+                        .WithMany("Items")
+                        .HasForeignKey("RecipeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Ingredient");
+
+                    b.Navigation("Recipe");
+                });
+
             modelBuilder.Entity("MadeInMinas.Api.Models.User", b =>
                 {
                     b.HasOne("MadeInMinas.Api.Models.Role", "Role")
@@ -305,6 +395,11 @@ namespace MadeInMinas.Api.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("MadeInMinas.Api.Models.Recipe", b =>
+                {
+                    b.Navigation("Items");
                 });
 #pragma warning restore 612, 618
         }

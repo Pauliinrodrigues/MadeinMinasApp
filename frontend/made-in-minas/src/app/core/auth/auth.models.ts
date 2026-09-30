@@ -23,14 +23,30 @@ export interface StaffUser {
   createdAt: string;
 }
 
-export interface StaffRole { id: number; code: string; name: string; }
-export interface UserPage { items: StaffUser[]; page: number; pageSize: number; totalCount: number; }
-export interface UserInput { name: string; username: string; roleId: number; isActive: boolean; }
+export interface StaffRole {
+  id: number;
+  code: string;
+  name: string;
+}
+export interface UserPage {
+  items: StaffUser[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+}
+export interface UserInput {
+  name: string;
+  username: string;
+  roleId: number;
+  isActive: boolean;
+}
 
 export function roleLabel(role: string): string {
   const labels: Record<string, string> = {
-    Administrator: 'Administrador', Attendant: 'Atendente', Kitchen: 'Cozinha', Dispatch: 'Expedição',
+    Administrator: 'Administrador',
+    Attendant: 'Atendente',
+    Kitchen: 'Cozinha',
+    Dispatch: 'Expedição',
   };
   return labels[role] ?? role;
 }
-

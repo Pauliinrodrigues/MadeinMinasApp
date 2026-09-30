@@ -8,7 +8,8 @@ public sealed class UserManagementExceptionHandler(IProblemDetailsService proble
 {
     public async ValueTask<bool> TryHandleAsync(HttpContext context, Exception exception, CancellationToken cancellationToken)
     {
-        if (exception is not UserManagementException failure) return false;
+        if (exception is not UserManagementException failure)
+            return false;
         var status = failure.Error switch
         {
             UserManagementError.UserNotFound => StatusCodes.Status404NotFound,

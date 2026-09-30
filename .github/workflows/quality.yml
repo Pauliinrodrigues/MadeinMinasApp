@@ -1,0 +1,77 @@
+name: Quality
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17.11-alpine
+        env:
+          POSTGRES_USER: auth_tests
+          POSTGRES_DB: made_in_minas_auth_tests
+          # Cluster efêmero de testes, acessível somente pelo loopback do runner.
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 127.0.0.1:55433:5432
+        options: >-
+          --health-cmd "pg_isready -U auth_tests -d made_in_minas_auth_tests"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      AuthTests__ConnectionString: Host=127.0.0.1;Port=55433;Database=made_in_minas_auth_tests;Username=auth_tests;Timeout=5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+          cache: true
+          cache-dependency-path: backend/**/packages.lock.json
+      - run: dotnet restore MadeinMinasApp.sln --locked-mode
+      - run: dotnet format whitespace MadeinMinasApp.sln --no-restore --verify-no-changes --exclude backend/MadeInMinas.Api/Data/Migrations
+      - run: dotnet build MadeinMinasApp.sln --configuration Release --no-restore
+      - run: dotnet test backend/MadeInMinas.Api.Tests --configuration Release --no-build --logger "trx;LogFileName=backend.trx" --results-directory TestResults
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: backend-test-results
+          path: TestResults
+
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend/made-in-minas
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: frontend/made-in-minas/.nvmrc
+          cache: npm
+          cache-dependency-path: frontend/made-in-minas/package-lock.json
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-test-results
+          path: frontend/made-in-minas/test-results

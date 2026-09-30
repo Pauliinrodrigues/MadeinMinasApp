@@ -16,6 +16,7 @@ public sealed class IngredientTests(AuthenticationFactory factory) : IClassFixtu
 {
     public Task InitializeAsync() => factory.WithDatabaseAsync(async database =>
     {
+        await database.Recipes.ExecuteDeleteAsync();
         await database.Ingredients.ExecuteDeleteAsync();
         await database.Users.ExecuteDeleteAsync();
     });
@@ -50,7 +51,10 @@ public sealed class IngredientTests(AuthenticationFactory factory) : IClassFixtu
     }
 
     [Theory]
-    [InlineData(0)] [InlineData(2)] [InlineData(3)] [InlineData(4)]
+    [InlineData(0)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
     public async Task OnlyAdministratorCanAccessEveryOperation(int roleId)
     {
         using var client = roleId == 0 ? factory.CreateStaffClient() : await SignInAsync(roleId);
@@ -64,7 +68,9 @@ public sealed class IngredientTests(AuthenticationFactory factory) : IClassFixtu
     }
 
     [Theory]
-    [InlineData("kg")] [InlineData("l")] [InlineData("un")]
+    [InlineData("kg")]
+    [InlineData("l")]
+    [InlineData("un")]
     public async Task CreateEditReadAndStatusPreservePrecisionAndIdentity(string unit)
     {
         using var client = await SignInAsync();
@@ -76,7 +82,12 @@ public sealed class IngredientTests(AuthenticationFactory factory) : IClassFixtu
         Assert.Equal(1.125m, item.MinimumStock);
         var path = $"/api/ingredients/{item.Id}";
         Assert.Equal(item, await client.GetFromJsonAsync<IngredientResponse>(path));
-        var response = await client.PutAsJsonAsync(path, Input("Carne fresca", unit) with { UnitCost = 0.0001m, MinimumStock = 0.001m, Supplier = " " });
+        var response = await client.PutAsJsonAsync(path, Input("Carne fresca", unit) with
+        {
+            UnitCost = 0.0001m,
+            MinimumStock = 0.001m,
+            Supplier = " "
+        });
         response.EnsureSuccessStatusCode();
         var edited = (await response.Content.ReadFromJsonAsync<IngredientResponse>())!;
         Assert.Null(edited.Supplier);
@@ -160,8 +171,12 @@ public sealed class IngredientTests(AuthenticationFactory factory) : IClassFixtu
             Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/ingredients", request)).StatusCode);
             Assert.Equal(HttpStatusCode.BadRequest, (await client.PutAsJsonAsync($"/api/ingredients/{item.Id}", request)).StatusCode);
         }
-        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/ingredients", new { })).StatusCode);
-        Assert.Equal(HttpStatusCode.BadRequest, (await client.PutAsJsonAsync($"/api/ingredients/{item.Id}/status", new { })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/ingredients", new
+        {
+        })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.PutAsJsonAsync($"/api/ingredients/{item.Id}/status", new
+        {
+        })).StatusCode);
         Assert.Equal(item, await client.GetFromJsonAsync<IngredientResponse>($"/api/ingredients/{item.Id}"));
         await factory.WithDatabaseAsync(async database => Assert.Equal(1, await database.Ingredients.CountAsync()));
     }
@@ -170,14 +185,25 @@ public sealed class IngredientTests(AuthenticationFactory factory) : IClassFixtu
     public async Task ZeroAndMaximumCostsAndQuantitiesAreAccepted()
     {
         using var client = await SignInAsync();
-        var zero = await CreateAsync(client, Input("Zero") with { UnitCost = 0, MinimumStock = 0 });
-        var maximum = await CreateAsync(client, Input("Máximo") with { UnitCost = 999999.9999m, MinimumStock = 999999.999m });
+        var zero = await CreateAsync(client, Input("Zero") with
+        {
+            UnitCost = 0,
+            MinimumStock = 0
+        });
+        var maximum = await CreateAsync(client, Input("Máximo") with
+        {
+            UnitCost = 999999.9999m,
+            MinimumStock = 999999.999m
+        });
         Assert.Equal(zero, await client.GetFromJsonAsync<IngredientResponse>($"/api/ingredients/{zero.Id}"));
         Assert.Equal(maximum, await client.GetFromJsonAsync<IngredientResponse>($"/api/ingredients/{maximum.Id}"));
     }
 
     [Theory]
-    [InlineData("?page=0")] [InlineData("?pageSize=101")] [InlineData("?isActive=invalid")] [InlineData("?page=1000001")]
+    [InlineData("?page=0")]
+    [InlineData("?pageSize=101")]
+    [InlineData("?isActive=invalid")]
+    [InlineData("?page=1000001")]
     public async Task InvalidQueriesReturnBadRequest(string query)
     {
         using var client = await SignInAsync();
@@ -195,14 +221,18 @@ public sealed class IngredientTests(AuthenticationFactory factory) : IClassFixtu
     }
 
     [Theory]
-    [InlineData(true)] [InlineData(false)]
+    [InlineData(true)]
+    [InlineData(false)]
     public async Task WriteRechecksRevokedSessionOrChangedRole(bool revokeSession)
     {
         var actor = await factory.CreateUserAsync();
         await factory.WithDatabaseAsync(async database =>
         {
             var stored = await database.Users.SingleAsync(user => user.Id == actor.Id);
-            if (revokeSession) stored.SecurityStamp = Guid.NewGuid(); else stored.RoleId = 2;
+            if (revokeSession)
+                stored.SecurityStamp = Guid.NewGuid();
+            else
+                stored.RoleId = 2;
             await database.SaveChangesAsync();
         });
         await using var scope = factory.Services.CreateAsyncScope();

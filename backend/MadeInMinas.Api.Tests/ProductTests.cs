@@ -17,6 +17,7 @@ public sealed class ProductTests(AuthenticationFactory factory) : IClassFixture<
 {
     public Task InitializeAsync() => factory.WithDatabaseAsync(async database =>
     {
+        await database.Recipes.ExecuteDeleteAsync();
         await database.Products.ExecuteDeleteAsync();
         await database.Categories.ExecuteDeleteAsync();
         await database.Users.ExecuteDeleteAsync();
@@ -83,7 +84,10 @@ public sealed class ProductTests(AuthenticationFactory factory) : IClassFixture<
     {
         using var client = await SignInAsync();
         var category = await CategoryAsync(client);
-        var input = Input(category.Id) with { Name = "  Uai Sô  " };
+        var input = Input(category.Id) with
+        {
+            Name = "  Uai Sô  "
+        };
         var product = await CreateAsync(client, input);
         Assert.Equal("Uai Sô", product.Name);
         Assert.Equal(29.90m, product.Price);
@@ -93,7 +97,12 @@ public sealed class ProductTests(AuthenticationFactory factory) : IClassFixture<
         Assert.Equal(product, await get.Content.ReadFromJsonAsync<ProductResponse>());
         Assert.DoesNotContain("normalizedName", await get.Content.ReadAsStringAsync());
         var update = await client.PutAsJsonAsync($"/api/products/{product.Id}", input with
-        { Name = "Uai Especial", Price = 0.01m, Description = "  ", ImageUrl = null });
+        {
+            Name = "Uai Especial",
+            Price = 0.01m,
+            Description = "  ",
+            ImageUrl = null
+        });
         Assert.Equal(HttpStatusCode.OK, update.StatusCode);
         var edited = (await update.Content.ReadFromJsonAsync<ProductResponse>())!;
         Assert.Equal(0.01m, edited.Price);
@@ -113,7 +122,10 @@ public sealed class ProductTests(AuthenticationFactory factory) : IClassFixture<
         var category = await CategoryAsync(client);
         var input = Input(category.Id);
         var product = await CreateAsync(client, input);
-        var invalid = input with { Price = price };
+        var invalid = input with
+        {
+            Price = price
+        };
         foreach (var response in new[] {
             await client.PostAsJsonAsync("/api/products", invalid),
             await client.PutAsJsonAsync($"/api/products/{product.Id}", invalid) })
@@ -132,7 +144,10 @@ public sealed class ProductTests(AuthenticationFactory factory) : IClassFixture<
     {
         using var client = await SignInAsync();
         var category = await CategoryAsync(client);
-        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/products", Input(category.Id) with { ImageUrl = imageUrl })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/products", Input(category.Id) with
+        {
+            ImageUrl = imageUrl
+        })).StatusCode);
     }
 
     [Fact]
@@ -151,10 +166,19 @@ public sealed class ProductTests(AuthenticationFactory factory) : IClassFixture<
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         }
         var product = await CreateAsync(client, valid);
-        Assert.Equal(HttpStatusCode.BadRequest, (await client.PutAsJsonAsync($"/api/products/{product.Id}/status", new { })).StatusCode);
-        Assert.Equal(HttpStatusCode.BadRequest, (await client.PutAsJsonAsync($"/api/products/{product.Id}/availability", new { })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.PutAsJsonAsync($"/api/products/{product.Id}/status", new
+        {
+        })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.PutAsJsonAsync($"/api/products/{product.Id}/availability", new
+        {
+        })).StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, (await client.PutAsJsonAsync($"/api/products/{product.Id}",
-            new { name = "Uai", categoryId = category.Id, price = 10 })).StatusCode);
+            new
+            {
+                name = "Uai",
+                categoryId = category.Id,
+                price = 10
+            })).StatusCode);
     }
 
     [Fact]
@@ -185,7 +209,10 @@ public sealed class ProductTests(AuthenticationFactory factory) : IClassFixture<
         Assert.Empty((await client.GetFromJsonAsync<ProductPageResponse>("/api/products?isAvailableForSale=true"))!.Items);
         Assert.Single((await client.GetFromJsonAsync<ProductPageResponse>("/api/products?isAvailableForSale=false"))!.Items);
         // É possível corrigir dados mantendo a categoria original, mesmo inativa.
-        var updated = await client.PutAsJsonAsync($"/api/products/{product.Id}", Input(category.Id) with { Price = 30m });
+        var updated = await client.PutAsJsonAsync($"/api/products/{product.Id}", Input(category.Id) with
+        {
+            Price = 30m
+        });
         Assert.Equal(HttpStatusCode.OK, updated.StatusCode);
         (await client.PutAsJsonAsync($"/api/categories/{category.Id}/status", new CategoryStatusRequest(true))).EnsureSuccessStatusCode();
         Assert.True((await client.GetFromJsonAsync<ProductResponse>($"/api/products/{product.Id}"))!.IsAvailableForSale);
@@ -219,7 +246,10 @@ public sealed class ProductTests(AuthenticationFactory factory) : IClassFixture<
         using var client = await SignInAsync();
         var first = await CategoryAsync(client);
         var second = await CategoryAsync(client, "Especiais");
-        await CreateAsync(client, Input(first.Id) with { IsActive = false });
+        await CreateAsync(client, Input(first.Id) with
+        {
+            IsActive = false
+        });
         await ProblemAsync(await client.PostAsJsonAsync("/api/products", Input(first.Id, " UAI SO\u0302 ")),
             HttpStatusCode.Conflict, "DuplicateProductName");
         var other = await CreateAsync(client, Input(second.Id));
@@ -248,8 +278,14 @@ public sealed class ProductTests(AuthenticationFactory factory) : IClassFixture<
         var a = await CategoryAsync(client);
         var b = await CategoryAsync(client, "Bebidas");
         var first = await CreateAsync(client, Input(a.Id, "A lanche"));
-        await CreateAsync(client, Input(a.Id, "B lanche") with { IsAvailable = false });
-        await CreateAsync(client, Input(b.Id, "C bebida") with { IsActive = false });
+        await CreateAsync(client, Input(a.Id, "B lanche") with
+        {
+            IsAvailable = false
+        });
+        await CreateAsync(client, Input(b.Id, "C bebida") with
+        {
+            IsActive = false
+        });
         var page = (await client.GetFromJsonAsync<ProductPageResponse>("/api/products?pageSize=1&page=1"))!;
         Assert.Equal(3, page.TotalCount);
         Assert.Equal(first.Id, Assert.Single(page.Items).Id);

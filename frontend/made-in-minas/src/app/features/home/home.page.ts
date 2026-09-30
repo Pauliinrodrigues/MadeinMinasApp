@@ -25,9 +25,13 @@ export class HomePage {
 
   checkConnection(): void {
     this.connection.set('checking');
-    this.systemApi.getStatus().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (response) => this.connection.set(response.status === 'available' ? 'online' : 'offline'),
-      error: () => this.connection.set('offline'),
-    });
+    this.systemApi
+      .getStatus()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (response) =>
+          this.connection.set(response.status === 'available' ? 'online' : 'offline'),
+        error: () => this.connection.set('offline'),
+      });
   }
 }

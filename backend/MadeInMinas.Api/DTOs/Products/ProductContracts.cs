@@ -33,7 +33,8 @@ public sealed class ProductListQuery
 {
     [Range(1, 1_000_000)] public int Page { get; init; } = 1;
     [Range(1, 100)] public int PageSize { get; init; } = 20;
-    [StringLength(120)] public string? Search { get; init; }
+    [StringLength(120)]
+    public string? Search { get; init; }
     public Guid? CategoryId { get; init; }
     public bool? IsActive { get; init; }
     public bool? IsAvailableForSale { get; init; }

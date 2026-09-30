@@ -28,7 +28,10 @@ public sealed class UsersController(UserService users) : ControllerBase
     public async Task<ActionResult<UserResponse>> Create(CreateUserRequest request, CancellationToken cancellationToken)
     {
         var user = await users.CreateAsync(ActorId, ActorStamp, request, cancellationToken);
-        return CreatedAtAction(nameof(Get), new { id = user.Id }, user);
+        return CreatedAtAction(nameof(Get), new
+        {
+            id = user.Id
+        }, user);
     }
 
     [HttpPut("{id:guid}")]

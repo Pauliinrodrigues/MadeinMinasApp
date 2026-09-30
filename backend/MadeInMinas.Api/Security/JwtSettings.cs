@@ -11,8 +11,12 @@ public sealed class JwtSettings
 
     public bool HasValidSigningKey()
     {
-        if (string.IsNullOrWhiteSpace(SigningKey)) return false;
-        try { return Convert.FromBase64String(SigningKey).Length >= 32; }
+        if (string.IsNullOrWhiteSpace(SigningKey))
+            return false;
+        try
+        {
+            return Convert.FromBase64String(SigningKey).Length >= 32;
+        }
         catch (FormatException) { return false; }
     }
 }

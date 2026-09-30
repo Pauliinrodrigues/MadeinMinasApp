@@ -38,3 +38,5 @@ A Fase 3A adiciona GET/POST /api/categories, GET/PUT /api/categories/{id} e PUT 
 A Fase 3B adiciona GET/POST /api/products, GET/PUT /api/products/{id}, PUT /api/products/{id}/status e PUT /api/products/{id}/availability. Todos exigem catalog.manage; a API calcula a disponibilidade considerando a categoria. Contratos e regras: [products.md](products.md).
 
 A Fase 3C adiciona GET/POST /api/ingredients, GET/PUT /api/ingredients/{id} e PUT /api/ingredients/{id}/status. Todos exigem catalog.manage. Custos e quantidades são validados sem arredondamento; alterações de unidade são rejeitadas. Contratos: [ingredients.md](ingredients.md).
+
+A Fase 3D adiciona GET/PUT /api/products/{productId}/recipe, com catalog.manage. PUT cria ou substitui integralmente a composição em transação. GET distingue produto inexistente e produto sem ficha. Contratos e exemplos: [recipes.md](recipes.md).

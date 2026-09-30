@@ -13,7 +13,8 @@ public sealed class IngredientService(AppDbContext database, TimeProvider clock,
     public async Task<IngredientPageResponse> ListAsync(IngredientListQuery request, CancellationToken cancellationToken)
     {
         var query = database.Ingredients.AsNoTracking();
-        if (request.IsActive is not null) query = query.Where(ingredient => ingredient.IsActive == request.IsActive);
+        if (request.IsActive is not null)
+            query = query.Where(ingredient => ingredient.IsActive == request.IsActive);
         if (!string.IsNullOrWhiteSpace(request.Search))
         {
             var search = NormalizeName(request.Search);
@@ -44,9 +45,13 @@ public sealed class IngredientService(AppDbContext database, TimeProvider clock,
         {
             Name = request.Name.Trim().Normalize(NormalizationForm.FormC),
             NormalizedName = NormalizeName(request.Name),
-            Unit = request.Unit, UnitCost = request.UnitCost!.Value, MinimumStock = request.MinimumStock!.Value,
+            Unit = request.Unit,
+            UnitCost = request.UnitCost!.Value,
+            MinimumStock = request.MinimumStock!.Value,
             Supplier = CleanSupplier(request.Supplier),
-            IsActive = request.IsActive!.Value, CreatedAt = now, UpdatedAt = now
+            IsActive = request.IsActive!.Value,
+            CreatedAt = now,
+            UpdatedAt = now
         };
         database.Ingredients.Add(ingredient);
         await SaveAsync(cancellationToken);
@@ -91,26 +96,12 @@ public sealed class IngredientService(AppDbContext database, TimeProvider clock,
         return ToResponse(ingredient);
     }
 
-    private async Task<IDbContextTransaction> BeginWriteAsync(Guid actorId, Guid actorStamp, CancellationToken cancellationToken)
-    {
-        var transaction = await database.Database.BeginTransactionAsync(cancellationToken);
-        try
-        {
-            // Bloqueia revogação/alteração do autor até o término desta gravação.
-            var actor = await database.Users.FromSqlInterpolated(
-                $"SELECT * FROM \"Users\" WHERE \"Id\" = {actorId} FOR SHARE").AsNoTracking().SingleOrDefaultAsync(cancellationToken);
-            if (actor is null || !actor.IsActive || actor.SecurityStamp != actorStamp)
-                throw new IngredientException(IngredientError.InvalidSession, "Sessão inválida. Faça login novamente.");
-            if (!await database.Roles.AnyAsync(role => role.Id == actor.RoleId && role.Code == "Administrator", cancellationToken))
-                throw new IngredientException(IngredientError.PermissionDenied, "Acesso restrito ao administrador.");
-            return transaction;
-        }
-        catch
-        {
-            await transaction.DisposeAsync();
-            throw;
-        }
-    }
+    private async Task<IDbContextTransaction> BeginWriteAsync(Guid actorId, Guid actorStamp, CancellationToken cancellationToken) =>
+        await CatalogWriteTransaction.BeginAsync(
+            database, actorId, actorStamp,
+            () => new IngredientException(IngredientError.InvalidSession, "Sessão inválida. Faça login novamente."),
+            () => new IngredientException(IngredientError.PermissionDenied, "Acesso restrito ao administrador."),
+            cancellationToken);
 
     private async Task<Ingredient> RequireForUpdateAsync(Guid id, CancellationToken cancellationToken) =>
         await database.Ingredients.FromSqlInterpolated(
@@ -119,9 +110,12 @@ public sealed class IngredientService(AppDbContext database, TimeProvider clock,
 
     private async Task SaveAsync(CancellationToken cancellationToken)
     {
-        try { await database.SaveChangesAsync(cancellationToken); }
+        try
+        {
+            await database.SaveChangesAsync(cancellationToken);
+        }
         catch (DbUpdateException exception) when (exception.InnerException is PostgresException
-            { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: "IX_Ingredients_NormalizedName" })
+        { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: "IX_Ingredients_NormalizedName" })
         {
             throw new IngredientException(IngredientError.DuplicateIngredientName, "Já existe um ingrediente com esse nome, inclusive entre os inativos.");
         }

@@ -163,9 +163,12 @@ public sealed class AuthenticationTests(AuthenticationFactory factory) : IClassF
         await factory.WithDatabaseAsync(async database =>
         {
             var saved = await database.Users.SingleAsync(item => item.Id == user.Id);
-            if (change == "inactive") saved.IsActive = false;
-            if (change == "role") saved.RoleId = 3;
-            if (change == "stamp") saved.SecurityStamp = Guid.NewGuid();
+            if (change == "inactive")
+                saved.IsActive = false;
+            if (change == "role")
+                saved.RoleId = 3;
+            if (change == "stamp")
+                saved.SecurityStamp = Guid.NewGuid();
             await database.SaveChangesAsync();
         });
         Authenticate(client, login.AccessToken);
@@ -198,7 +201,8 @@ public sealed class AuthenticationTests(AuthenticationFactory factory) : IClassF
     {
         var user = await factory.CreateUserAsync();
         var claims = new List<Claim> { new("sub", user.Id.ToString()), new("role", "Administrator") };
-        if (kind != "stamp") claims.Add(new Claim("auth_stamp", user.SecurityStamp.ToString()));
+        if (kind != "stamp")
+            claims.Add(new Claim("auth_stamp", user.SecurityStamp.ToString()));
         var key = kind == "signature" ? RandomNumberGenerator.GetBytes(32) : Convert.FromBase64String(factory.SigningKey);
         var now = DateTime.UtcNow;
         var token = new JwtSecurityToken(

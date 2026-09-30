@@ -13,8 +13,10 @@ public sealed class ProductService(AppDbContext database, TimeProvider clock, IL
     public async Task<ProductPageResponse> ListAsync(ProductListQuery request, CancellationToken cancellationToken)
     {
         var query = database.Products.AsNoTracking();
-        if (request.CategoryId is not null) query = query.Where(product => product.CategoryId == request.CategoryId);
-        if (request.IsActive is not null) query = query.Where(product => product.IsActive == request.IsActive);
+        if (request.CategoryId is not null)
+            query = query.Where(product => product.CategoryId == request.CategoryId);
+        if (request.IsActive is not null)
+            query = query.Where(product => product.IsActive == request.IsActive);
         if (request.IsAvailableForSale is not null)
             query = query.Where(product => (product.IsActive && product.IsAvailable && product.Category.IsActive) == request.IsAvailableForSale);
         if (!string.IsNullOrWhiteSpace(request.Search))
@@ -103,21 +105,12 @@ public sealed class ProductService(AppDbContext database, TimeProvider clock, IL
         product.UpdatedAt = now;
     }
 
-    private async Task<IDbContextTransaction> BeginWriteAsync(Guid actorId, Guid actorStamp, CancellationToken cancellationToken)
-    {
-        var transaction = await database.Database.BeginTransactionAsync(cancellationToken);
-        try
-        {
-            var actor = await database.Users.FromSqlInterpolated(
-                $"SELECT * FROM \"Users\" WHERE \"Id\" = {actorId} FOR SHARE").AsNoTracking().SingleOrDefaultAsync(cancellationToken);
-            if (actor is null || !actor.IsActive || actor.SecurityStamp != actorStamp)
-                throw new ProductException(ProductError.InvalidSession, "Sessão inválida. Faça login novamente.");
-            if (!await database.Roles.AnyAsync(role => role.Id == actor.RoleId && role.Code == "Administrator", cancellationToken))
-                throw new ProductException(ProductError.PermissionDenied, "Acesso restrito ao administrador.");
-            return transaction;
-        }
-        catch { await transaction.DisposeAsync(); throw; }
-    }
+    private async Task<IDbContextTransaction> BeginWriteAsync(Guid actorId, Guid actorStamp, CancellationToken cancellationToken) =>
+        await CatalogWriteTransaction.BeginAsync(
+            database, actorId, actorStamp,
+            () => new ProductException(ProductError.InvalidSession, "Sessão inválida. Faça login novamente."),
+            () => new ProductException(ProductError.PermissionDenied, "Acesso restrito ao administrador."),
+            cancellationToken);
 
     private async Task<Category> RequireCategoryAsync(Guid id, bool requireActive, CancellationToken cancellationToken)
     {
@@ -135,9 +128,12 @@ public sealed class ProductService(AppDbContext database, TimeProvider clock, IL
 
     private async Task SaveAsync(CancellationToken cancellationToken)
     {
-        try { await database.SaveChangesAsync(cancellationToken); }
+        try
+        {
+            await database.SaveChangesAsync(cancellationToken);
+        }
         catch (DbUpdateException exception) when (exception.InnerException is PostgresException
-            { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: "IX_Products_CategoryId_NormalizedName" })
+        { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: "IX_Products_CategoryId_NormalizedName" })
         {
             throw new ProductException(ProductError.DuplicateProductName, "Já existe um produto com esse nome nesta categoria, inclusive entre os inativos.");
         }

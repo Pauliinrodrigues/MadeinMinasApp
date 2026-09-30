@@ -16,6 +16,7 @@ public sealed class CategoryTests(AuthenticationFactory factory) : IClassFixture
 {
     public Task InitializeAsync() => factory.WithDatabaseAsync(async database =>
     {
+        await database.Recipes.ExecuteDeleteAsync();
         await database.Products.ExecuteDeleteAsync();
         await database.Categories.ExecuteDeleteAsync();
         await database.Users.ExecuteDeleteAsync();
@@ -169,17 +170,31 @@ public sealed class CategoryTests(AuthenticationFactory factory) : IClassFixture
     public async Task DefaultsAndRequiredUpdateFieldsAreExplicit()
     {
         using var client = await SignInAsync();
-        var response = await client.PostAsJsonAsync("/api/categories", new { name = "Bebidas", description = "  " });
+        var response = await client.PostAsJsonAsync("/api/categories", new
+        {
+            name = "Bebidas",
+            description = "  "
+        });
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         var category = (await response.Content.ReadFromJsonAsync<CategoryResponse>())!;
         Assert.True(category.IsActive);
         Assert.Equal(0, category.DisplayOrder);
         Assert.Null(category.Description);
         Assert.Equal(HttpStatusCode.BadRequest, (await client.PutAsJsonAsync($"/api/categories/{category.Id}",
-            new { name = "Bebidas", displayOrder = 1 })).StatusCode);
+            new
+            {
+                name = "Bebidas",
+                displayOrder = 1
+            })).StatusCode);
         Assert.Equal(HttpStatusCode.BadRequest, (await client.PutAsJsonAsync($"/api/categories/{category.Id}",
-            new { name = "Bebidas", isActive = true })).StatusCode);
-        Assert.Equal(HttpStatusCode.BadRequest, (await client.PutAsJsonAsync($"/api/categories/{category.Id}/status", new { })).StatusCode);
+            new
+            {
+                name = "Bebidas",
+                isActive = true
+            })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.PutAsJsonAsync($"/api/categories/{category.Id}/status", new
+        {
+        })).StatusCode);
     }
 
     [Theory]

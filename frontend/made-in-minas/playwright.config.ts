@@ -3,12 +3,13 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
-  workers: 2,
+  workers: process.env['CI'] ? 2 : 1,
+  forbidOnly: !!process.env['CI'],
   reporter: 'list',
   use: {
     baseURL: 'http://localhost:8101',
-    channel: process.env['PLAYWRIGHT_CHANNEL'] || 'msedge',
-    trace: 'off',
+    channel: process.env['PLAYWRIGHT_CHANNEL'] || (process.env['CI'] ? undefined : 'msedge'),
+    trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
   projects: [
@@ -16,8 +17,9 @@ export default defineConfig({
     { name: 'mobile', use: { ...devices['iPhone 13'], defaultBrowserType: 'chromium' } },
   ],
   webServer: {
-    command: 'npm run start', url: 'http://localhost:8101',
-    reuseExistingServer: !process.env['CI'], timeout: 120000,
+    command: 'npm run start',
+    url: 'http://localhost:8101',
+    reuseExistingServer: !process.env['CI'],
+    timeout: 120000,
   },
 });
-

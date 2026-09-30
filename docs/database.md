@@ -1,6 +1,6 @@
 # Modelo conceitual inicial
 
-Modelagem incremental. InitialAccessControl implementa Users e Roles; AddCategories implementa Categories; AddProducts implementa Products com FK restrita para Categories; AddIngredients implementa Ingredients. As demais entidades continuam propostas.
+Modelagem incremental. InitialAccessControl implementa Users e Roles; AddCategories implementa Categories; AddProducts implementa Products com FK restrita para Categories; AddIngredients implementa Ingredients; AddRecipes implementa Recipes e RecipeItems. As demais entidades continuam propostas.
 
 | Entidade | Dados e relações previstos | Fase |
 | --- | --- | --- |
@@ -9,8 +9,8 @@ Modelagem incremental. InitialAccessControl implementa Users e Roles; AddCategor
 | Categories | Nome único normalizado, descrição opcional, ordem, ativo, criação/atualização UTC | 3A implementada |
 | Products | Categoria obrigatória, nome único por categoria, descrição, preço numeric(8,2), URL de imagem, ativo, disponibilidade manual, datas UTC | 3B implementada |
 | Ingredients | Nome único normalizado, unidade-base fixa (kg/l/un), custo numeric(10,4), mínimo numeric(9,3), fornecedor textual opcional, ativo, datas UTC; sem saldo nesta etapa | 3C implementada |
-| Recipes | Produto e rendimento | 3 |
-| RecipeItems | Receita, ingrediente, quantidade na unidade-base | 3 |
+| Recipes | Produto único com FK restrita, rendimento inteiro (1–10000), instruções opcionais, datas UTC | 3D implementada |
+| RecipeItems | PK composta receita/ingrediente, quantidade numeric(9,3), posição; FK restrita de ingrediente e cascade de receita para seus itens | 3D implementada |
 | Combos | Nome, descrição, preço e disponibilidade próprios | Catálogo, incremento específico |
 | ComboItems | Combo, produto e quantidade | Catálogo, incremento específico |
 | Customers | Nome, telefone normalizado, datas | 4 |

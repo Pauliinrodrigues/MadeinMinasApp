@@ -1,6 +1,6 @@
 # Produtos — Fase 3B
 
-Gestão administrativa de produtos vinculados às categorias da Fase 3A. Usa catalog.manage, exclusiva do administrador. Não cria carrinho, pedidos, estoque ou cardápio público. Ingredientes e fichas técnicas serão os próximos incrementos.
+Gestão administrativa de produtos vinculados às categorias da Fase 3A. Usa catalog.manage, exclusiva do administrador. Não cria carrinho, pedidos, estoque ou cardápio público. Ingredientes foram adicionados na [Fase 3C](ingredients.md) e fichas técnicas na [Fase 3D](recipes.md), acessíveis pela listagem e edição de produtos.
 
 ## Usar
 
@@ -126,4 +126,3 @@ Validação manual: crie um produto em categoria ativa, edite o preço, pause/li
 - Documentação: README, roteiro, modelo de banco, API, arquitetura, categorias, decisões, interface da equipe e validação.
 
 Referências: [precisão decimal no EF Core](https://learn.microsoft.com/en-us/ef/core/modeling/entity-properties#precision-and-scale) e [validação de modelos no ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/mvc/models/validation?view=aspnetcore-10.0).
-

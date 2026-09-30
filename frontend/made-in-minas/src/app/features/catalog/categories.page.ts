@@ -7,8 +7,10 @@ import { apiError } from '../../core/api-error';
 import { Category, CategoryApi, CategoryPage } from '../../core/services/category-api.service';
 
 @Component({
-  selector: 'app-categories', imports: [FormsModule, RouterLink],
-  templateUrl: './categories.page.html', changeDetection: ChangeDetectionStrategy.OnPush,
+  selector: 'app-categories',
+  imports: [FormsModule, RouterLink],
+  templateUrl: './categories.page.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CategoriesPage {
   private readonly api = inject(CategoryApi);
@@ -24,7 +26,9 @@ export class CategoriesPage {
   active = '';
   page = 1;
 
-  constructor() { this.load(); }
+  constructor() {
+    this.load();
+  }
 
   load(page = 1): void {
     this.request?.unsubscribe();
@@ -32,11 +36,16 @@ export class CategoriesPage {
     this.loading.set(true);
     this.error.set('');
     this.result.set(null);
-    this.request = this.api.list(page, this.search, this.active).pipe(
-      takeUntilDestroyed(this.destroyRef), finalize(() => this.loading.set(false)),
-    ).subscribe({
-      next: result => this.result.set(result), error: error => this.error.set(apiError(error)),
-    });
+    this.request = this.api
+      .list(page, this.search, this.active)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.loading.set(false)),
+      )
+      .subscribe({
+        next: (result) => this.result.set(result),
+        error: (error) => this.error.set(apiError(error)),
+      });
   }
 
   requestStatus(category: Category): void {
@@ -47,18 +56,26 @@ export class CategoriesPage {
 
   changeStatus(): void {
     const category = this.pending();
-    if (!category || this.saving()) return;
+    if (!category || this.saving()) {
+      return;
+    }
     this.saving.set(true);
-    this.api.status(category.id, !category.isActive).pipe(
-      takeUntilDestroyed(this.destroyRef), finalize(() => this.saving.set(false)),
-    ).subscribe({
-      next: () => {
-        this.pending.set(null);
-        this.notice.set(category.isActive ? 'Categoria inativada.' : 'Categoria ativada.');
-        this.load(this.page);
-      },
-      error: error => { this.pending.set(null); this.error.set(apiError(error)); },
-    });
+    this.api
+      .status(category.id, !category.isActive)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.saving.set(false)),
+      )
+      .subscribe({
+        next: () => {
+          this.pending.set(null);
+          this.notice.set(category.isActive ? 'Categoria inativada.' : 'Categoria ativada.');
+          this.load(this.page);
+        },
+        error: (error) => {
+          this.pending.set(null);
+          this.error.set(apiError(error));
+        },
+      });
   }
 }
-
