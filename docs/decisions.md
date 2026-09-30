@@ -65,3 +65,9 @@ Nome único inclui registros inativos. Fornecedor é texto opcional; não se cri
 A Fase 3D usa uma ficha por produto, rendimento inteiro em unidades do produto e quantidades totais na unidade-base do ingrediente. RecipeItems não aceita ingredientes repetidos. A posição reflete a ordem enviada. O contrato PUT representa a ficha inteira; criação e edição compartilham validação e transação, serializadas por bloqueio do produto. Identidade e CreatedAt são preservados nas edições; a última gravação válida prevalece.
 
 Novos vínculos exigem ingredientes ativos. Um ingrediente inativo já vinculado pode ser mantido, ter sua quantidade ajustada ou ser removido. O backend retorna o status atual e a interface exibe aviso. Isso não altera a disponibilidade comercial do produto nem gera movimentos de estoque. Produto inativo pode ter sua ficha mantida. Não se antecipa cálculo de CMV, perdas, conversão de unidades ou histórico de versões. Detalhes: [recipes.md](recipes.md).
+
+## 012 — Branch por incremento e integração validada
+
+A `master` recebe trabalho testado e validado por pull request. Funcionalidades, correções e manutenção usam branches curtas, sem uma branch `develop` permanente. O incremento atual de fichas técnicas e manutenção foi preservado em `feat/recipes-and-maintenance`; os próximos começam na `master` atualizada após a integração anterior.
+
+Branches não isolam o banco de dados. Migrations exigem conferir o destino e o esquema independentemente da branch. O fluxo, a publicação e a política desejada de proteção remota estão em [git-workflow.md](git-workflow.md).

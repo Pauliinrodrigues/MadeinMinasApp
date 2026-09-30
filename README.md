@@ -93,6 +93,8 @@ Saída em `frontend/made-in-minas/www/browser`. Consulte [validação](docs/vali
 
 ## Qualidade e manutenção
 
+Trabalhamos com uma branch por incremento e integração na `master` por pull request, após testes e validação manual. Consulte o [fluxo de Git](docs/git-workflow.md) para criar branches, publicar alterações e continuar em outra máquina.
+
 O fluxo local completo está em `scripts/Test-Quality.ps1`: formatação, testes do backend em banco isolado, lint, build e testes de navegador. Na primeira execução, instale as dependências do frontend com `npm.cmd ci`.
 
 ```powershell
@@ -115,6 +117,7 @@ O GitHub Actions executará as verificações em pushes para `master` e pull req
 
 ## Documentação
 
+- [Fluxo de Git e branches](docs/git-workflow.md)
 - [Arquitetura](docs/architecture.md)
 - [Autenticação, administrador inicial e testes](docs/authentication.md)
 - [Gestão de funcionários e permissões](docs/users.md)
