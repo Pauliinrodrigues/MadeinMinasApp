@@ -10,12 +10,18 @@ export class AuthSession {
   private expiration = 0;
   private timer?: ReturnType<typeof setTimeout>;
   readonly user = this.profile.asReadonly();
-  readonly canManageUsers = computed(() => this.profile()?.permissions.includes('users.manage') ?? false);
-  readonly canManageCatalog = computed(() => this.profile()?.permissions.includes('catalog.manage') ?? false);
+  readonly canManageUsers = computed(
+    () => this.profile()?.permissions.includes('users.manage') ?? false,
+  );
+  readonly canManageCatalog = computed(
+    () => this.profile()?.permissions.includes('catalog.manage') ?? false,
+  );
   readonly notice = signal('');
 
   token(): string | null {
-    if (this.accessToken && Date.now() >= this.expiration) this.end('Sua sessão expirou. Entre novamente.');
+    if (this.accessToken && Date.now() >= this.expiration) {
+      this.end('Sua sessão expirou. Entre novamente.');
+    }
     return this.accessToken;
   }
 
@@ -29,10 +35,15 @@ export class AuthSession {
     this.expiration = expiration;
     this.profile.set(response.user);
     this.notice.set('');
-    this.timer = setTimeout(() => this.end('Sua sessão expirou. Entre novamente.'), expiration - Date.now());
+    this.timer = setTimeout(
+      () => this.end('Sua sessão expirou. Entre novamente.'),
+      expiration - Date.now(),
+    );
   }
 
-  updateProfile(profile: StaffProfile): void { this.profile.set(profile); }
+  updateProfile(profile: StaffProfile): void {
+    this.profile.set(profile);
+  }
 
   end(message: string): void {
     clearTimeout(this.timer);

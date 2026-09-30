@@ -2,7 +2,7 @@
 
 Sistema de gestão e pedidos da hamburgueria Made in Minas, desenvolvido por fases.
 
-**Fases 1 e 2 implementadas; Fases 3A, 3B e 3C implementadas:** infraestrutura, autenticação, permissões, funcionários, categorias, produtos e ingredientes na API e no frontend. Fichas técnicas, pedidos, pagamentos e atendimento por IA seguem para os próximos incrementos. A Fase 3C aguarda aceite manual.
+**Fases 1, 2 e 3 implementadas:** infraestrutura, autenticação, permissões, funcionários, categorias, produtos, ingredientes e fichas técnicas na API e no frontend. Ingredientes foram validados pelo usuário; a Fase 3D (fichas técnicas) aguarda aceite manual. Pedidos, pagamentos, estoque/CMV e atendimento por IA seguem para os próximos incrementos.
 
 ## Estrutura
 
@@ -16,14 +16,14 @@ O projeto de console original foi reorganizado na API; abra `MadeinMinasApp.sln`
 
 ## Pré-requisitos
 
-- .NET SDK 10.0.300 (ou patch da mesma faixa, conforme `global.json`).
+- .NET SDK 10.0.401 (ou patch da mesma faixa, conforme `global.json`), com runtime 10.0.12.
 - PostgreSQL 17 disponível localmente.
-- Node 24.19.0 recomendado (`.nvmrc` no frontend). Node 22.12+ também é aceito.
+- Node 24.21.0 recomendado (`.nvmrc` no frontend). Também são aceitos Node 22.22.3+ na linha 22 e Node 24.15+ na linha 24.
 - npm 10+ e Git.
 
-Use `node --version` antes de instalar. O ambiente original tem dois Nodes: Rider 24.19.0 e instalação global 22.16.0. Os comandos npm abaixo usam o Angular CLI local; não precisam de Ionic CLI global.
+Use `node --version` antes de instalar. O Node 24.19.0 fornecido pelo Rider é compatível; a instalação global antiga 22.16.0 não atende ao Angular 22. Se o terminal mostrar 22.16.0, selecione um Node compatível nas configurações do Rider/terminal. Os comandos npm abaixo usam o Angular CLI local; não precisam de Ionic CLI global.
 
-Dependências diretas fixadas: Angular 20.3.32, Ionic 9.0.5, EF Core Design 10.0.12 e Npgsql EF 10.0.3. Preserve `package-lock.json` e `packages.lock.json`.
+Dependências diretas fixadas: Angular 22.2.1, Angular CLI/build 22.2.0, TypeScript 6.0.3, Ionic 9.0.5, EF Core Design 10.0.12 e Npgsql EF 10.0.3. Preserve `package-lock.json` e `packages.lock.json`.
 
 ## Iniciar o backend
 
@@ -66,6 +66,8 @@ Detalhes e arquivos da interface: [Fase 2C](docs/staff-frontend.md). Na pasta do
 
 **Ingredientes:** abra **Ingredientes → Novo ingrediente**. Cadastre unidade-base (kg, L ou un), custo por unidade, mínimo desejado, fornecedor e status. A unidade fica fixa após salvar. Saldo e movimentações de estoque virão na fase 6. Contratos, migration, testes e arquivos: [Fase 3C](docs/ingredients.md).
 
+**Fichas técnicas:** abra **Produtos → Ficha técnica**. Informe rendimento, ingredientes, quantidades totais na unidade-base e instruções de preparo. A gravação preserva a composição inteira e alerta sobre ingredientes inativos. Contratos, limites, testes e arquivos: [Fase 3D](docs/recipes.md).
+
 ## Verificar a fase
 
 Com os dois processos iniciados:
@@ -89,6 +91,16 @@ npm.cmd run build
 
 Saída em `frontend/made-in-minas/www/browser`. Consulte [validação](docs/validation.md) para os cenários e resultados da implementação.
 
+## Qualidade e manutenção
+
+O fluxo local completo está em `scripts/Test-Quality.ps1`: formatação, testes do backend em banco isolado, lint, build e testes de navegador. Na primeira execução, instale as dependências do frontend com `npm.cmd ci`.
+
+```powershell
+powershell -NoProfile -File scripts/Test-Quality.ps1
+```
+
+O GitHub Actions executará as verificações em pushes para `master` e pull requests após o envio do workflow ao repositório. Detalhes, ferramentas e limites: [manutenção técnica](docs/maintenance.md). O próximo módulo está descrito na [proposta de clientes e endereços](docs/customers-plan.md).
+
 ## Configuração e segurança
 
 - Connection string em User Secrets (Development) ou `ConnectionStrings__DefaultConnection` (ambiente).
@@ -99,7 +111,7 @@ Saída em `frontend/made-in-minas/www/browser`. Consulte [validação](docs/vali
 - Configurar `AllowedHosts`, HTTPS e, se necessário, `Cors__AllowedOrigins__0` para o domínio real.
 - Há redirecionamento HTTPS/HSTS fora de Development. A hospedagem deve fornecer HTTPS; reverse proxy e forwarded headers precisarão ser configurados conforme a infraestrutura escolhida.
 - A base ainda não é uma entrega de produção. A autenticação do backend está descrita em [docs/authentication.md](docs/authentication.md).
-- O runtime local encontrado foi 10.0.8. Atualizar o runtime/SDK para patches suportados faz parte da preparação de implantação; nenhum instalador global foi executado nesta fase.
+- A manutenção instalou o SDK 10.0.401 e o runtime 10.0.12. O instalador Microsoft retornou 3010 (sucesso com reinicialização pendente): salve seu trabalho e reinicie o Windows quando puder para concluir as substituições de arquivos em uso.
 
 ## Documentação
 

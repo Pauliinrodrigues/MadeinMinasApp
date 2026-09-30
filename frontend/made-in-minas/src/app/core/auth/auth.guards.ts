@@ -10,13 +10,17 @@ export const staffGuard: CanActivateFn = () => {
 export const administratorGuard: CanActivateFn = () => {
   const session = inject(AuthSession);
   const router = inject(Router);
-  if (!session.token()) return router.createUrlTree(['/entrar']);
+  if (!session.token()) {
+    return router.createUrlTree(['/entrar']);
+  }
   return session.canManageUsers() ? true : router.createUrlTree(['/equipe']);
 };
 
 export const catalogGuard: CanActivateFn = () => {
   const session = inject(AuthSession);
   const router = inject(Router);
-  if (!session.token()) return router.createUrlTree(['/entrar']);
+  if (!session.token()) {
+    return router.createUrlTree(['/entrar']);
+  }
   return session.canManageCatalog() ? true : router.createUrlTree(['/equipe']);
 };

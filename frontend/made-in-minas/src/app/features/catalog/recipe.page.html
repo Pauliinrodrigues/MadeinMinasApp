@@ -1,0 +1,123 @@
+<a routerLink="/equipe/produtos" class="back-link">← Produtos</a>
+<section class="panel recipe-panel">
+  <p class="eyebrow">CATÁLOGO</p>
+  <h1>Ficha técnica</h1>
+  @if (product(); as item) {
+  <h2>{{ item.name }}</h2>
+  @if (!item.isActive) {
+  <p class="notice">Produto inativo. Sua ficha pode ser mantida e editada.</p>
+  } } @if (error()) {
+  <p class="error" role="alert">{{ error() }}</p>
+  } @if (notice()) {
+  <p class="notice" role="status">{{ notice() }}</p>
+  } @if (loading()) {
+  <p role="status">Carregando produto, ingredientes e ficha técnica…</p>
+  } @if (!loading() && !ready()) { <button (click)="load()">Tentar novamente</button> } @if
+  (ready()) { @if (!exists()) {
+  <p class="notice">
+    Este produto ainda não possui ficha técnica. Preencha os itens e salve para criar.
+  </p>
+  } @if (!ingredients().length) {
+  <p class="notice">
+    Não há ingredientes cadastrados.
+    <a routerLink="/equipe/ingredientes/novo">Cadastre um ingrediente</a> e volte a esta tela.
+  </p>
+  }
+  <p>
+    Informe as quantidades totais para o rendimento escolhido. Exemplo: para 2 hambúrgueres de 150
+    g, use 0,300 kg de carne e rendimento 2.
+  </p>
+  <form #form="ngForm" (ngSubmit)="save()" class="form-stack">
+    <fieldset [disabled]="busy()">
+      <label
+        >Rendimento (unidades do produto)<input
+          type="number"
+          name="yieldQuantity"
+          [(ngModel)]="yieldQuantity"
+          required
+          min="1"
+          max="10000"
+          step="1"
+      /></label>
+      @if (!validYield()) {
+      <p role="alert" class="error">Informe um rendimento inteiro de 1 a 10000.</p>
+      }
+      <h2>Ingredientes da ficha</h2>
+      <p class="hint">
+        De 1 a 100 ingredientes, sem repetição. Quantidade na unidade-base: kg, L ou un. Use até
+        três casas decimais; 0,150 kg = 150 g e 0,030 L = 30 mL.
+      </p>
+      @for (row of rows; track row.key; let index = $index) {
+      <div class="recipe-row">
+        <label
+          >Ingrediente {{ index + 1 }}<select
+            [name]="'ingredient-' + row.key"
+            [(ngModel)]="row.ingredientId"
+            required
+          >
+            <option value="" disabled>Selecione um ingrediente</option>
+            @for (ingredient of ingredients(); track ingredient.id) {
+            <option [value]="ingredient.id" [disabled]="!canSelect(ingredient)">
+              {{ ingredient.name }} ({{ unitLabel(ingredient.unit) }}){{ ingredient.isActive ? '' :
+              ' — inativo' }}
+            </option>
+            }
+          </select></label
+        >
+        <label
+          >Quantidade {{ index + 1 }} ({{ selected(row) ? unitLabel(selected(row)!.unit) :
+          'unidade-base' }})
+          <input
+            [name]="'quantity-' + row.key"
+            [(ngModel)]="row.quantity"
+            inputmode="decimal"
+            required
+            maxlength="10"
+          />
+        </label>
+        @if (selected(row); as ingredient) { @if (!ingredient.isActive) {
+        <p class="notice">
+          Ingrediente inativo. Vínculos já salvos podem ser mantidos; revise antes de produzir.
+        </p>
+        } } @if (row.quantity && quantityValue(row) === null) {
+        <p role="alert" class="error">
+          Informe uma quantidade positiva de 0,001 a 999999,999, com até três casas decimais.
+        </p>
+        } @if (duplicate(row)) {
+        <p role="alert" class="error">
+          Ingrediente repetido. Some as quantidades em uma única linha.
+        </p>
+        }
+        <button
+          type="button"
+          (click)="removeRow(row)"
+          [attr.aria-label]="'Remover ingrediente ' + (index + 1)"
+        >
+          Remover
+        </button>
+      </div>
+      } @if (!rows.length) {
+      <p class="notice">Adicione pelo menos um ingrediente para salvar a ficha.</p>
+      }
+      <button type="button" (click)="addRow()" [disabled]="rows.length >= 100">
+        Adicionar ingrediente
+      </button>
+      <label
+        >Instruções de preparo (opcional)<textarea
+          name="instructions"
+          [(ngModel)]="instructions"
+          maxlength="2000"
+          rows="4"
+        ></textarea>
+      </label>
+      <p class="hint">
+        Salvar a ficha não movimenta estoque. O cálculo de CMV será disponibilizado em uma próxima
+        etapa.
+      </p>
+      <button class="primary" [disabled]="form.invalid || !valid()">
+        {{ busy() ? 'Salvando…' : 'Salvar ficha técnica' }}
+      </button>
+    </fieldset>
+  </form>
+  }
+</section>

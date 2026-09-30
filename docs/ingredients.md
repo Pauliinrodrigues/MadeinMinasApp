@@ -28,7 +28,7 @@ A unidade fica fixa após o primeiro cadastro, tanto na interface quanto na API.
 - Repetir o mesmo status preserva UpdatedAt. Não há DELETE, ETag ou histórico de custos; a última edição válida aplicada prevalece.
 - Escritas revalidam conta ativa, SecurityStamp e perfil do autor dentro de transação, com bloqueio compartilhado do usuário e exclusivo do ingrediente editado. Conflitos do índice único retornam 409, inclusive sob concorrência.
 
-**Limite desta etapa:** MinimumStock é apenas a configuração de uma quantidade mínima desejada. Não há saldo atual, entradas, baixas, reservas, alertas ou cálculo de CMV. Esses recursos virão na fase 6; nenhum saldo zero fictício é apresentado. Inativar ingrediente ainda não altera disponibilidade de produtos, pois as fichas técnicas serão o próximo incremento.
+**Limite desta etapa:** MinimumStock é apenas a configuração de uma quantidade mínima desejada. Não há saldo atual, entradas, baixas, reservas, alertas ou cálculo de CMV. Esses recursos virão na fase 6; nenhum saldo zero fictício é apresentado. As [fichas técnicas da Fase 3D](recipes.md) avisam sobre ingredientes inativos e impedem novos vínculos com eles. Inativar ingrediente não altera automaticamente a disponibilidade dos produtos neste incremento.
 
 ## API
 

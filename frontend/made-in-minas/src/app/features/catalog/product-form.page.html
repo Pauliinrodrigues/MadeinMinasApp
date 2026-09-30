@@ -1,55 +1,133 @@
 <a routerLink="/equipe/produtos" class="back-link">← Produtos</a>
 <section class="panel narrow">
-  <p class="eyebrow">CATÁLOGO</p><h1>{{ id ? 'Editar produto' : 'Novo produto' }}</h1>
-  @if (error()) { <p role="alert" class="error">{{ error() }}</p> }
-  @if (notice()) { <p role="status" class="notice">{{ notice() }}</p> }
-  @if (loading()) { <p role="status">Carregando produto e categorias…</p> }
-  @if (!loading() && !ready()) { <button (click)="load()">Tentar novamente</button> }
-  @if (ready()) {
-    @if (!hasActiveCategory()) {
-      <p class="notice">Não há categorias ativas para novos produtos.
-        <a routerLink="/equipe/categorias">Cadastre ou ative uma categoria</a>.</p>
-    }
-    <form #form="ngForm" (ngSubmit)="save()" class="form-stack">
-      <fieldset [disabled]="busy()">
-        <label>Nome<input name="name" [(ngModel)]="name" #nameField="ngModel" required maxlength="120"
-          autocomplete="off" aria-describedby="product-name-help"></label>
-        <p id="product-name-help" class="hint">Obrigatório, até 120 caracteres. Não repita o nome de outro produto na mesma categoria.</p>
-        @if ((nameField.dirty || nameField.touched) && !name.trim()) { <p class="error" role="alert">Informe o nome do produto.</p> }
-        <label>Categoria<select name="categoryId" [(ngModel)]="categoryId" required>
+  <p class="eyebrow">CATÁLOGO</p>
+  <h1>{{ id ? 'Editar produto' : 'Novo produto' }}</h1>
+  @if (error()) {
+  <p role="alert" class="error">{{ error() }}</p>
+  } @if (notice()) {
+  <p role="status" class="notice">{{ notice() }}</p>
+  } @if (loading()) {
+  <p role="status">Carregando produto e categorias…</p>
+  } @if (!loading() && !ready()) { <button (click)="load()">Tentar novamente</button> } @if
+  (ready()) { @if (id) {
+  <p>
+    <a [routerLink]="['/equipe/produtos', id, 'ficha-tecnica']" class="button">Ficha técnica</a>
+  </p>
+  } @if (!hasActiveCategory()) {
+  <p class="notice">
+    Não há categorias ativas para novos produtos.
+    <a routerLink="/equipe/categorias">Cadastre ou ative uma categoria</a>.
+  </p>
+  }
+  <form #form="ngForm" (ngSubmit)="save()" class="form-stack">
+    <fieldset [disabled]="busy()">
+      <label
+        >Nome<input
+          name="name"
+          [(ngModel)]="name"
+          #nameField="ngModel"
+          required
+          maxlength="120"
+          autocomplete="off"
+          aria-describedby="product-name-help"
+      /></label>
+      <p id="product-name-help" class="hint">
+        Obrigatório, até 120 caracteres. Não repita o nome de outro produto na mesma categoria.
+      </p>
+      @if ((nameField.dirty || nameField.touched) && !name.trim()) {
+      <p class="error" role="alert">Informe o nome do produto.</p>
+      }
+      <label
+        >Categoria<select name="categoryId" [(ngModel)]="categoryId" required>
           <option value="" disabled>Selecione uma categoria</option>
           @for (category of categories(); track category.id) {
-            <option [value]="category.id" [disabled]="!category.isActive && category.id !== originalCategoryId">
-              {{ category.name }}{{ category.isActive ? '' : ' (inativa)' }}
-            </option>
+          <option
+            [value]="category.id"
+            [disabled]="!category.isActive && category.id !== originalCategoryId"
+          >
+            {{ category.name }}{{ category.isActive ? '' : ' (inativa)' }}
+          </option>
           }
-        </select></label>
-        @if (selectedCategory(); as category) {
-          @if (!category.isActive) { <p class="notice">Esta categoria está inativa. O produto ficará indisponível enquanto ela permanecer assim.</p> }
-        }
-        <label>Preço (R$)<input name="price" [(ngModel)]="price" #priceField="ngModel" type="text" inputmode="decimal"
-          maxlength="9" required autocomplete="off" aria-describedby="product-price-help"></label>
-        <p id="product-price-help" class="hint">De R$ 0,01 a R$ 999.999,99. Digite até duas casas decimais, sem separador de milhar. Exemplo: 29,90.</p>
-        @if ((priceField.dirty || priceField.touched) && parsePrice(price) === null) {
-          <p class="error" role="alert">Informe um preço positivo com até duas casas decimais.</p>
-        }
-        <label>Descrição (opcional)<textarea name="description" [(ngModel)]="description" maxlength="1000" rows="4"></textarea></label>
-        <label>Link da imagem (opcional)<input name="imageUrl" [(ngModel)]="imageUrl" (ngModelChange)="imageFailed.set(false)"
-          type="url" maxlength="2048" placeholder="https://" aria-describedby="product-image-help"></label>
-        <p id="product-image-help" class="hint">Use o endereço HTTPS de uma imagem. O envio de arquivos será uma melhoria futura.</p>
-        @if (!validImage(imageUrl)) { <p class="error" role="alert">Use um link HTTPS válido, sem usuário ou senha no endereço.</p> }
-        @if (imageUrl.trim() && validImage(imageUrl)) {
-          @if (!imageFailed()) {
-            <img class="product-preview" [src]="imageUrl.trim()" alt="Prévia da imagem do produto" referrerpolicy="no-referrer" (error)="imageFailed.set(true)">
-          } @else { <p class="hint" role="status">Não foi possível carregar a imagem. Confira o link; o cadastro pode ser salvo sem a prévia.</p> }
-        }
-        <label class="checkbox"><input name="isActive" [(ngModel)]="isActive" type="checkbox">Produto ativo</label>
-        <label class="checkbox"><input name="isAvailable" [(ngModel)]="isAvailable" type="checkbox">Disponível para venda</label>
-        <p class="hint">A disponibilidade também exige produto e categoria ativos. Desmarque “Disponível para venda” para uma pausa temporária.</p>
-        <button class="primary" [disabled]="form.invalid || !name.trim() || parsePrice(price) === null || !validCategory() || !validImage(imageUrl)">
-          {{ busy() ? 'Salvando…' : 'Salvar produto' }}</button>
-      </fieldset>
-    </form>
+        </select></label
+      >
+      @if (selectedCategory(); as category) { @if (!category.isActive) {
+      <p class="notice">
+        Esta categoria está inativa. O produto ficará indisponível enquanto ela permanecer assim.
+      </p>
+      } }
+      <label
+        >Preço (R$)<input
+          name="price"
+          [(ngModel)]="price"
+          #priceField="ngModel"
+          type="text"
+          inputmode="decimal"
+          maxlength="9"
+          required
+          autocomplete="off"
+          aria-describedby="product-price-help"
+      /></label>
+      <p id="product-price-help" class="hint">
+        De R$ 0,01 a R$ 999.999,99. Digite até duas casas decimais, sem separador de milhar.
+        Exemplo: 29,90.
+      </p>
+      @if ((priceField.dirty || priceField.touched) && parsePrice(price) === null) {
+      <p class="error" role="alert">Informe um preço positivo com até duas casas decimais.</p>
+      }
+      <label
+        >Descrição (opcional)<textarea
+          name="description"
+          [(ngModel)]="description"
+          maxlength="1000"
+          rows="4"
+        ></textarea>
+      </label>
+      <label
+        >Link da imagem (opcional)<input
+          name="imageUrl"
+          [(ngModel)]="imageUrl"
+          (ngModelChange)="imageFailed.set(false)"
+          type="url"
+          maxlength="2048"
+          placeholder="https://"
+          aria-describedby="product-image-help"
+      /></label>
+      <p id="product-image-help" class="hint">
+        Use o endereço HTTPS de uma imagem. O envio de arquivos será uma melhoria futura.
+      </p>
+      @if (!validImage(imageUrl)) {
+      <p class="error" role="alert">Use um link HTTPS válido, sem usuário ou senha no endereço.</p>
+      } @if (imageUrl.trim() && validImage(imageUrl)) { @if (!imageFailed()) {
+      <img
+        class="product-preview"
+        [src]="imageUrl.trim()"
+        alt="Prévia da imagem do produto"
+        referrerpolicy="no-referrer"
+        (error)="imageFailed.set(true)"
+      />
+      } @else {
+      <p class="hint" role="status">
+        Não foi possível carregar a imagem. Confira o link; o cadastro pode ser salvo sem a prévia.
+      </p>
+      } }
+      <label class="checkbox"
+        ><input name="isActive" [(ngModel)]="isActive" type="checkbox" />Produto ativo</label
+      >
+      <label class="checkbox"
+        ><input name="isAvailable" [(ngModel)]="isAvailable" type="checkbox" />Disponível para
+        venda</label
+      >
+      <p class="hint">
+        A disponibilidade também exige produto e categoria ativos. Desmarque “Disponível para venda”
+        para uma pausa temporária.
+      </p>
+      <button
+        class="primary"
+        [disabled]="form.invalid || !name.trim() || parsePrice(price) === null || !validCategory() || !validImage(imageUrl)"
+      >
+        {{ busy() ? 'Salvando…' : 'Salvar produto' }}
+      </button>
+    </fieldset>
+  </form>
   }
 </section>
-

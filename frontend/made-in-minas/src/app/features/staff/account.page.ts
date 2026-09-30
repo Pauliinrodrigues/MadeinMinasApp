@@ -7,14 +7,25 @@ import { StaffApi } from '../../core/services/staff-api.service';
 import { apiError } from '../../core/api-error';
 
 @Component({
-  selector: 'app-account', imports: [RouterLink],
+  selector: 'app-account',
+  imports: [RouterLink],
   template: `<section class="panel">
-    <p class="eyebrow">MINHA CONTA</p><h1>Olá, {{ session.user()?.name }}.</h1>
-    <p>Perfil: <strong>{{ roleLabel(session.user()?.role ?? '') }}</strong></p>
+    <p class="eyebrow">MINHA CONTA</p>
+    <h1>Olá, {{ session.user()?.name }}.</h1>
+    <p>
+      Perfil: <strong>{{ roleLabel(session.user()?.role ?? '') }}</strong>
+    </p>
     <p>Login: {{ session.user()?.username }}</p>
-    @if (error()) { <p role="alert" class="error">{{ error() }}</p><button (click)="refresh()">Tentar novamente</button> }
-    @if (session.canManageUsers()) { <a class="button primary" routerLink="/equipe/funcionarios">Gerenciar funcionários</a> }
-    <p class="hint">Os módulos de cardápio, pedidos e cozinha serão disponibilizados nas próximas etapas.</p>
+    @if (error()) {
+      <p role="alert" class="error">{{ error() }}</p>
+      <button (click)="refresh()">Tentar novamente</button>
+    }
+    @if (session.canManageUsers()) {
+      <a class="button primary" routerLink="/equipe/funcionarios">Gerenciar funcionários</a>
+    }
+    <p class="hint">
+      Os módulos de cardápio, pedidos e cozinha serão disponibilizados nas próximas etapas.
+    </p>
   </section>`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -24,12 +35,17 @@ export class AccountPage {
   readonly error = signal('');
   private readonly api = inject(StaffApi);
   private readonly destroyRef = inject(DestroyRef);
-  constructor() { this.refresh(); }
+  constructor() {
+    this.refresh();
+  }
   refresh(): void {
     this.error.set('');
-    this.api.me().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: profile => this.session.updateProfile(profile), error: error => this.error.set(apiError(error)),
-    });
+    this.api
+      .me()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (profile) => this.session.updateProfile(profile),
+        error: (error) => this.error.set(apiError(error)),
+      });
   }
 }
-

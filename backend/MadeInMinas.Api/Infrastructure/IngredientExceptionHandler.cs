@@ -8,7 +8,8 @@ public sealed class IngredientExceptionHandler(IProblemDetailsService problems) 
 {
     public async ValueTask<bool> TryHandleAsync(HttpContext context, Exception exception, CancellationToken cancellationToken)
     {
-        if (exception is not IngredientException failure) return false;
+        if (exception is not IngredientException failure)
+            return false;
         var status = failure.Error switch
         {
             IngredientError.IngredientNotFound => StatusCodes.Status404NotFound,
@@ -17,13 +18,15 @@ public sealed class IngredientExceptionHandler(IProblemDetailsService problems) 
             _ => StatusCodes.Status403Forbidden
         };
         context.Response.StatusCode = status;
-        if (status == StatusCodes.Status401Unauthorized) context.Response.Headers.WWWAuthenticate = "Bearer";
+        if (status == StatusCodes.Status401Unauthorized)
+            context.Response.Headers.WWWAuthenticate = "Bearer";
         return await problems.TryWriteAsync(new ProblemDetailsContext
         {
             HttpContext = context,
             ProblemDetails = new ProblemDetails
             {
-                Status = status, Title = failure.Message,
+                Status = status,
+                Title = failure.Message,
                 Extensions = { ["code"] = failure.Error.ToString() }
             }
         });

@@ -12,7 +12,8 @@ export class SystemApiService {
   private readonly http = inject(HttpClient);
 
   getStatus() {
-    return this.http.get<SystemStatus>(`${environment.apiBaseUrl}/system/status`)
+    return this.http
+      .get<SystemStatus>(`${environment.apiBaseUrl}/system/status`)
       .pipe(timeout(5000));
   }
 }

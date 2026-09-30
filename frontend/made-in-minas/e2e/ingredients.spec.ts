@@ -1,45 +1,86 @@
 import { test, expect, Page } from '@playwright/test';
 
-const ingredient = { id: 'ingredient-1', name: 'Carne', unit: 'kg', unitCost: 32.4567, minimumStock: 1.125, supplier: 'Fornecedor local',
-  isActive: true, createdAt: '2026-09-29T12:00:00Z', updatedAt: '2026-09-29T12:00:00Z' };
+const ingredient = {
+  id: 'ingredient-1',
+  name: 'Carne',
+  unit: 'kg',
+  unitCost: 32.4567,
+  minimumStock: 1.125,
+  supplier: 'Fornecedor local',
+  isActive: true,
+  createdAt: '2026-09-29T12:00:00Z',
+  updatedAt: '2026-09-29T12:00:00Z',
+};
 
 async function setup(page: Page, role = 'Administrator') {
-  const profile = { id: 'staff', name: 'Equipe Teste', username: 'equipe.teste', role,
-    permissions: role === 'Administrator' ? ['catalog.manage', 'users.manage'] : [] };
+  const profile = {
+    id: 'staff',
+    name: 'Equipe Teste',
+    username: 'equipe.teste',
+    role,
+    permissions: role === 'Administrator' ? ['catalog.manage', 'users.manage'] : [],
+  };
   const state = { items: [{ ...ingredient }], listStatus: 200, saveStatus: 200, writes: 0 };
-  await page.route('**/api/**', async route => {
+  await page.route('**/api/**', async (route) => {
     const request = route.request();
     const url = new URL(request.url());
     const path = url.pathname;
     const json = (body: unknown, status = 200) => route.fulfill({ status, json: body });
-    if (path === '/api/auth/login') return json({
-      accessToken: 'ingredient-test-token', tokenType: 'Bearer', expiresAt: new Date(Date.now() + 900000).toISOString(), user: profile,
-    });
+    if (path === '/api/auth/login') {
+      return json({
+        accessToken: 'ingredient-test-token',
+        tokenType: 'Bearer',
+        expiresAt: new Date(Date.now() + 900000).toISOString(),
+        user: profile,
+      });
+    }
     expect(request.headers()['authorization']).toBe('Bearer ingredient-test-token');
-    if (path === '/api/auth/me') return json(profile);
+    if (path === '/api/auth/me') {
+      return json(profile);
+    }
     if (path === '/api/ingredients' && request.method() === 'GET') {
-      if (state.listStatus !== 200) return json({}, state.listStatus);
+      if (state.listStatus !== 200) {
+        return json({}, state.listStatus);
+      }
       const search = (url.searchParams.get('search') ?? '').toLowerCase();
       const active = url.searchParams.get('isActive');
-      const items = state.items.filter(item => item.name.toLowerCase().includes(search) && (!active || String(item.isActive) === active))
+      const items = state.items
+        .filter(
+          (item) =>
+            item.name.toLowerCase().includes(search) &&
+            (!active || String(item.isActive) === active),
+        )
         .sort((a, b) => a.name.localeCompare(b.name));
       const current = Number(url.searchParams.get('page') ?? '1');
-      return json({ items: items.slice((current - 1) * 20, current * 20), page: current, pageSize: 20, totalCount: items.length });
+      return json({
+        items: items.slice((current - 1) * 20, current * 20),
+        page: current,
+        pageSize: 20,
+        totalCount: items.length,
+      });
     }
     if (path === '/api/ingredients' && request.method() === 'POST') {
       state.writes++;
-      if (state.saveStatus !== 200) return json({ code: 'DuplicateIngredientName' }, state.saveStatus);
+      if (state.saveStatus !== 200) {
+        return json({ code: 'DuplicateIngredientName' }, state.saveStatus);
+      }
       const created = { ...ingredient, ...request.postDataJSON(), id: 'new-ingredient' };
       state.items.push(created);
       return json(created, 201);
     }
     const match = path.match(/^\/api\/ingredients\/([^/]+)(\/status)?$/);
     if (match) {
-      const item = state.items.find(item => item.id === match[1]);
-      if (!item) return json({ code: 'IngredientNotFound' }, 404);
-      if (request.method() === 'GET') return json(item);
+      const item = state.items.find((item) => item.id === match[1]);
+      if (!item) {
+        return json({ code: 'IngredientNotFound' }, 404);
+      }
+      if (request.method() === 'GET') {
+        return json(item);
+      }
       state.writes++;
-      if (state.saveStatus !== 200) return json({ code: 'DuplicateIngredientName' }, state.saveStatus);
+      if (state.saveStatus !== 200) {
+        return json({ code: 'DuplicateIngredientName' }, state.saveStatus);
+      }
       Object.assign(item, request.postDataJSON());
       return json(item);
     }
@@ -56,12 +97,15 @@ async function login(page: Page) {
   await expect(page).toHaveURL(/\/equipe$/);
 }
 async function navigate(page: Page, path: string) {
-  await page.evaluate(path => { history.pushState(null, '', path); dispatchEvent(new PopStateEvent('popstate')); }, path);
+  await page.evaluate((path) => {
+    history.pushState(null, '', path);
+    dispatchEvent(new PopStateEvent('popstate'));
+  }, path);
 }
 
 test('ingredientes: cadastro, edição e persistência ao reabrir a tela', async ({ page }) => {
   const errors: string[] = [];
-  page.on('pageerror', error => errors.push(error.message));
+  page.on('pageerror', (error) => errors.push(error.message));
   const state = await setup(page);
   await login(page);
   await page.getByRole('link', { name: 'Ingredientes', exact: true }).click();
@@ -94,9 +138,13 @@ test('ingredientes: cadastro, edição e persistência ao reabrir a tela', async
   expect(errors).toEqual([]);
 });
 
-test('ingredientes: status com confirmação, filtros, paginação e estado vazio', async ({ page }) => {
+test('ingredientes: status com confirmação, filtros, paginação e estado vazio', async ({
+  page,
+}) => {
   const state = await setup(page);
-  for (let i = 0; i < 21; i++) state.items.push({ ...ingredient, id: 'extra-' + i, name: 'Ingrediente ' + i });
+  for (let i = 0; i < 21; i++) {
+    state.items.push({ ...ingredient, id: 'extra-' + i, name: 'Ingrediente ' + i });
+  }
   await login(page);
   await page.getByRole('link', { name: 'Ingredientes', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('22 ingrediente(s)');
@@ -185,7 +233,12 @@ test('ingredientes: unidades, limites decimais e valores enviados para a API', a
   await minimum.fill('0.001');
   await save.click();
   await expect(page.getByRole('status').filter({ hasText: 'Ingrediente criado' })).toBeVisible();
-  expect(state.items.find(item => item.id === 'new-ingredient')).toMatchObject({ unit: 'l', unitCost: 0.0001, minimumStock: 0.001, supplier: null });
+  expect(state.items.find((item) => item.id === 'new-ingredient')).toMatchObject({
+    unit: 'l',
+    unitCost: 0.0001,
+    minimumStock: 0.001,
+    supplier: null,
+  });
   await expect(page.getByLabel('Unidade-base')).toBeDisabled();
   await page.getByRole('link', { name: 'Ingredientes', exact: true }).click();
   await page.getByRole('link', { name: 'Novo ingrediente' }).click();

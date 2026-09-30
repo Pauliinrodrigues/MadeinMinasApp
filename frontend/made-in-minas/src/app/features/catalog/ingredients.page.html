@@ -1,53 +1,121 @@
 <section>
-  <div class="page-heading"><div><p class="eyebrow">CATÁLOGO</p><h1>Ingredientes</h1></div>
-    <a routerLink="novo" class="button primary">Novo ingrediente</a></div>
-  <p>Cadastre insumos e embalagens com custo por unidade-base. O saldo de estoque será disponibilizado em uma próxima etapa.</p>
-  @if (notice()) { <p role="status" class="notice">{{ notice() }}</p> }
-  @if (error()) { <p role="alert" class="error">{{ error() }}</p> }
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">CATÁLOGO</p>
+      <h1>Ingredientes</h1>
+    </div>
+    <a routerLink="novo" class="button primary">Novo ingrediente</a>
+  </div>
+  <p>
+    Cadastre insumos e embalagens com custo por unidade-base. O saldo de estoque será
+    disponibilizado em uma próxima etapa.
+  </p>
+  @if (notice()) {
+  <p role="status" class="notice">{{ notice() }}</p>
+  } @if (error()) {
+  <p role="alert" class="error">{{ error() }}</p>
+  }
   <form class="panel filters" (ngSubmit)="load()">
-    <label>Buscar ingrediente<input name="search" [(ngModel)]="search" maxlength="120" type="search"></label>
-    <label>Status<select name="active" [(ngModel)]="active">
-      <option value="">Todos</option><option value="true">Ativos</option><option value="false">Inativos</option>
-    </select></label>
+    <label
+      >Buscar ingrediente<input name="search" [(ngModel)]="search" maxlength="120" type="search"
+    /></label>
+    <label
+      >Status<select name="active" [(ngModel)]="active">
+        <option value="">Todos</option>
+        <option value="true">Ativos</option>
+        <option value="false">Inativos</option>
+      </select></label
+    >
     <button class="primary" [disabled]="loading() || saving()">Buscar</button>
   </form>
   @if (pending(); as ingredient) {
-    <section class="panel confirmation" role="region" aria-label="Confirmar mudança de status">
-      <h2>{{ ingredient.isActive ? 'Inativar' : 'Ativar' }} {{ ingredient.name }}?</h2>
-      <p>O cadastro será preservado e poderá ser {{ ingredient.isActive ? 'reativado' : 'inativado' }} depois.</p>
-      <div class="actions">
-        <button type="button" class="primary" (click)="changeStatus()" [disabled]="saving()">{{ saving() ? 'Salvando…' : 'Confirmar' }}</button>
-        <button type="button" (click)="pending.set(null)" [disabled]="saving()">Cancelar</button>
-      </div>
-    </section>
-  }
-  @if (loading()) { <p role="status">Carregando ingredientes…</p> }
-  @if (!loading() && !result()) { <button type="button" (click)="load(page)">Tentar novamente</button> }
-  @if (result(); as data) {
-    <p role="status">{{ data.totalCount }} ingrediente(s) encontrado(s).</p>
-    @if (data.items.length) {
-      <div class="table-scroll panel">
-        <table><caption class="sr-only">Lista de ingredientes</caption>
-          <thead><tr><th scope="col">Ingrediente</th><th scope="col">Custo por unidade</th><th scope="col">Mínimo</th><th scope="col">Status</th><th scope="col">Ações</th></tr></thead>
-          <tbody>
-            @for (ingredient of data.items; track ingredient.id) {
-              <tr><td><strong>{{ ingredient.name }}</strong><span class="cell-detail">{{ ingredient.supplier }}</span></td>
-                <td>R$ {{ decimal.format(ingredient.unitCost) }} / {{ unitLabel(ingredient.unit) }}</td><td>{{ decimal.format(ingredient.minimumStock) }} {{ unitLabel(ingredient.unit) }}</td>
-                <td><span class="badge" [class.inactive]="!ingredient.isActive">{{ ingredient.isActive ? 'Ativo' : 'Inativo' }}</span></td>
-                <td><div class="actions">
-                  <a [routerLink]="[ingredient.id]" class="button" [attr.aria-label]="'Editar ' + ingredient.name">Editar</a>
-                  <button type="button" (click)="requestStatus(ingredient)" [disabled]="saving()"
-                    [attr.aria-label]="(ingredient.isActive ? 'Inativar ' : 'Ativar ') + ingredient.name">{{ ingredient.isActive ? 'Inativar' : 'Ativar' }}</button>
-                </div></td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    } @else { <p class="panel">Nenhum ingrediente nesta página. Cadastre um ingrediente, ajuste os filtros ou volte à página anterior.</p> }
-    <div class="pagination">
-      <button type="button" (click)="load(page - 1)" [disabled]="page <= 1 || saving()">Anterior</button><span>Página {{ page }}</span>
-      <button type="button" (click)="load(page + 1)" [disabled]="page * data.pageSize >= data.totalCount || saving()">Próxima</button>
+  <section class="panel confirmation" role="region" aria-label="Confirmar mudança de status">
+    <h2>{{ ingredient.isActive ? 'Inativar' : 'Ativar' }} {{ ingredient.name }}?</h2>
+    <p>
+      O cadastro será preservado e poderá ser {{ ingredient.isActive ? 'reativado' : 'inativado' }}
+      depois.
+    </p>
+    <div class="actions">
+      <button type="button" class="primary" (click)="changeStatus()" [disabled]="saving()">
+        {{ saving() ? 'Salvando…' : 'Confirmar' }}
+      </button>
+      <button type="button" (click)="pending.set(null)" [disabled]="saving()">Cancelar</button>
     </div>
+  </section>
+  } @if (loading()) {
+  <p role="status">Carregando ingredientes…</p>
+  } @if (!loading() && !result()) {
+  <button type="button" (click)="load(page)">Tentar novamente</button> } @if (result(); as data) {
+  <p role="status">{{ data.totalCount }} ingrediente(s) encontrado(s).</p>
+  @if (data.items.length) {
+  <div class="table-scroll panel">
+    <table>
+      <caption class="sr-only">
+        Lista de ingredientes
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Ingrediente</th>
+          <th scope="col">Custo por unidade</th>
+          <th scope="col">Mínimo</th>
+          <th scope="col">Status</th>
+          <th scope="col">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (ingredient of data.items; track ingredient.id) {
+        <tr>
+          <td>
+            <strong>{{ ingredient.name }}</strong
+            ><span class="cell-detail">{{ ingredient.supplier }}</span>
+          </td>
+          <td>R$ {{ decimal.format(ingredient.unitCost) }} / {{ unitLabel(ingredient.unit) }}</td>
+          <td>{{ decimal.format(ingredient.minimumStock) }} {{ unitLabel(ingredient.unit) }}</td>
+          <td>
+            <span class="badge" [class.inactive]="!ingredient.isActive"
+              >{{ ingredient.isActive ? 'Ativo' : 'Inativo' }}</span
+            >
+          </td>
+          <td>
+            <div class="actions">
+              <a
+                [routerLink]="[ingredient.id]"
+                class="button"
+                [attr.aria-label]="'Editar ' + ingredient.name"
+                >Editar</a
+              >
+              <button
+                type="button"
+                (click)="requestStatus(ingredient)"
+                [disabled]="saving()"
+                [attr.aria-label]="(ingredient.isActive ? 'Inativar ' : 'Ativar ') + ingredient.name"
+              >
+                {{ ingredient.isActive ? 'Inativar' : 'Ativar' }}
+              </button>
+            </div>
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  } @else {
+  <p class="panel">
+    Nenhum ingrediente nesta página. Cadastre um ingrediente, ajuste os filtros ou volte à página
+    anterior.
+  </p>
+  }
+  <div class="pagination">
+    <button type="button" (click)="load(page - 1)" [disabled]="page <= 1 || saving()">
+      Anterior</button
+    ><span>Página {{ page }}</span>
+    <button
+      type="button"
+      (click)="load(page + 1)"
+      [disabled]="page * data.pageSize >= data.totalCount || saving()"
+    >
+      Próxima
+    </button>
+  </div>
   }
 </section>

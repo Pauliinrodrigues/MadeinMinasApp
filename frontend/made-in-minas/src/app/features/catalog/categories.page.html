@@ -1,54 +1,116 @@
 <section>
-  <div class="page-heading"><div><p class="eyebrow">CATÁLOGO</p><h1>Categorias</h1></div>
-    <a routerLink="nova" class="button primary">Nova categoria</a></div>
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">CATÁLOGO</p>
+      <h1>Categorias</h1>
+    </div>
+    <a routerLink="nova" class="button primary">Nova categoria</a>
+  </div>
   <p>Organize as categorias que serão usadas no cadastro de produtos.</p>
-  @if (notice()) { <p role="status" class="notice">{{ notice() }}</p> }
-  @if (error()) { <p role="alert" class="error">{{ error() }}</p> }
+  @if (notice()) {
+  <p role="status" class="notice">{{ notice() }}</p>
+  } @if (error()) {
+  <p role="alert" class="error">{{ error() }}</p>
+  }
   <form class="panel filters" (ngSubmit)="load()">
-    <label>Buscar categoria<input name="search" [(ngModel)]="search" maxlength="80" type="search"></label>
-    <label>Status<select name="active" [(ngModel)]="active">
-      <option value="">Todos</option><option value="true">Ativas</option><option value="false">Inativas</option>
-    </select></label>
+    <label
+      >Buscar categoria<input name="search" [(ngModel)]="search" maxlength="80" type="search"
+    /></label>
+    <label
+      >Status<select name="active" [(ngModel)]="active">
+        <option value="">Todos</option>
+        <option value="true">Ativas</option>
+        <option value="false">Inativas</option>
+      </select></label
+    >
     <button class="primary" [disabled]="loading() || saving()">Buscar</button>
   </form>
   @if (pending(); as category) {
-    <section class="panel confirmation" role="region" aria-label="Confirmar mudança de status">
-      <h2>{{ category.isActive ? 'Inativar' : 'Ativar' }} {{ category.name }}?</h2>
-      <p>O cadastro será preservado e poderá ser {{ category.isActive ? 'reativado' : 'inativado' }} depois.</p>
-      <div class="actions">
-        <button type="button" class="primary" (click)="changeStatus()" [disabled]="saving()">{{ saving() ? 'Salvando…' : 'Confirmar' }}</button>
-        <button type="button" (click)="pending.set(null)" [disabled]="saving()">Cancelar</button>
-      </div>
-    </section>
-  }
-  @if (loading()) { <p role="status">Carregando categorias…</p> }
-  @if (!loading() && !result()) { <button type="button" (click)="load(page)">Tentar novamente</button> }
-  @if (result(); as data) {
-    <p role="status">{{ data.totalCount }} categoria(s) encontrada(s).</p>
-    @if (data.items.length) {
-      <div class="table-scroll panel">
-        <table><caption class="sr-only">Lista de categorias</caption>
-          <thead><tr><th scope="col">Categoria</th><th scope="col">Ordem</th><th scope="col">Status</th><th scope="col">Ações</th></tr></thead>
-          <tbody>
-            @for (category of data.items; track category.id) {
-              <tr><td><strong>{{ category.name }}</strong><span class="cell-detail">{{ category.description }}</span></td>
-                <td>{{ category.displayOrder }}</td>
-                <td><span class="badge" [class.inactive]="!category.isActive">{{ category.isActive ? 'Ativa' : 'Inativa' }}</span></td>
-                <td><div class="actions">
-                  <a [routerLink]="[category.id]" class="button" [attr.aria-label]="'Editar ' + category.name">Editar</a>
-                  <button type="button" (click)="requestStatus(category)" [disabled]="saving()"
-                    [attr.aria-label]="(category.isActive ? 'Inativar ' : 'Ativar ') + category.name">{{ category.isActive ? 'Inativar' : 'Ativar' }}</button>
-                </div></td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    } @else { <p class="panel">Nenhuma categoria nesta página. Cadastre uma categoria, ajuste os filtros ou volte à página anterior.</p> }
-    <div class="pagination">
-      <button type="button" (click)="load(page - 1)" [disabled]="page <= 1 || saving()">Anterior</button><span>Página {{ page }}</span>
-      <button type="button" (click)="load(page + 1)" [disabled]="page * data.pageSize >= data.totalCount || saving()">Próxima</button>
+  <section class="panel confirmation" role="region" aria-label="Confirmar mudança de status">
+    <h2>{{ category.isActive ? 'Inativar' : 'Ativar' }} {{ category.name }}?</h2>
+    <p>
+      O cadastro será preservado e poderá ser {{ category.isActive ? 'reativado' : 'inativado' }}
+      depois.
+    </p>
+    <div class="actions">
+      <button type="button" class="primary" (click)="changeStatus()" [disabled]="saving()">
+        {{ saving() ? 'Salvando…' : 'Confirmar' }}
+      </button>
+      <button type="button" (click)="pending.set(null)" [disabled]="saving()">Cancelar</button>
     </div>
+  </section>
+  } @if (loading()) {
+  <p role="status">Carregando categorias…</p>
+  } @if (!loading() && !result()) {
+  <button type="button" (click)="load(page)">Tentar novamente</button> } @if (result(); as data) {
+  <p role="status">{{ data.totalCount }} categoria(s) encontrada(s).</p>
+  @if (data.items.length) {
+  <div class="table-scroll panel">
+    <table>
+      <caption class="sr-only">
+        Lista de categorias
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Categoria</th>
+          <th scope="col">Ordem</th>
+          <th scope="col">Status</th>
+          <th scope="col">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (category of data.items; track category.id) {
+        <tr>
+          <td>
+            <strong>{{ category.name }}</strong
+            ><span class="cell-detail">{{ category.description }}</span>
+          </td>
+          <td>{{ category.displayOrder }}</td>
+          <td>
+            <span class="badge" [class.inactive]="!category.isActive"
+              >{{ category.isActive ? 'Ativa' : 'Inativa' }}</span
+            >
+          </td>
+          <td>
+            <div class="actions">
+              <a
+                [routerLink]="[category.id]"
+                class="button"
+                [attr.aria-label]="'Editar ' + category.name"
+                >Editar</a
+              >
+              <button
+                type="button"
+                (click)="requestStatus(category)"
+                [disabled]="saving()"
+                [attr.aria-label]="(category.isActive ? 'Inativar ' : 'Ativar ') + category.name"
+              >
+                {{ category.isActive ? 'Inativar' : 'Ativar' }}
+              </button>
+            </div>
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  } @else {
+  <p class="panel">
+    Nenhuma categoria nesta página. Cadastre uma categoria, ajuste os filtros ou volte à página
+    anterior.
+  </p>
+  }
+  <div class="pagination">
+    <button type="button" (click)="load(page - 1)" [disabled]="page <= 1 || saving()">
+      Anterior</button
+    ><span>Página {{ page }}</span>
+    <button
+      type="button"
+      (click)="load(page + 1)"
+      [disabled]="page * data.pageSize >= data.totalCount || saving()"
+    >
+      Próxima
+    </button>
+  </div>
   }
 </section>
-

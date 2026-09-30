@@ -18,8 +18,10 @@ public sealed class UserService(
     public async Task<UserPageResponse> ListAsync(UserListQuery request, CancellationToken cancellationToken)
     {
         var query = database.Users.AsNoTracking();
-        if (request.IsActive is not null) query = query.Where(user => user.IsActive == request.IsActive);
-        if (request.RoleId is not null) query = query.Where(user => user.RoleId == request.RoleId);
+        if (request.IsActive is not null)
+            query = query.Where(user => user.IsActive == request.IsActive);
+        if (request.RoleId is not null)
+            query = query.Where(user => user.RoleId == request.RoleId);
         if (!string.IsNullOrWhiteSpace(request.Search))
         {
             var search = request.Search.Trim().ToUpperInvariant();
@@ -51,8 +53,12 @@ public sealed class UserService(
         await EnsureUniqueUsernameAsync(normalized, null, cancellationToken);
         var user = new User
         {
-            Name = request.Name.Trim(), Username = request.Username, NormalizedUsername = normalized,
-            RoleId = request.RoleId, IsActive = request.IsActive, CreatedAt = clock.GetUtcNow()
+            Name = request.Name.Trim(),
+            Username = request.Username,
+            NormalizedUsername = normalized,
+            RoleId = request.RoleId,
+            IsActive = request.IsActive,
+            CreatedAt = clock.GetUtcNow()
         };
         user.PasswordHash = passwordHasher.HashPassword(user, request.Password);
         database.Users.Add(user);
@@ -90,7 +96,8 @@ public sealed class UserService(
         await using var transaction = await BeginWriteAsync(actorId, actorStamp, true, cancellationToken);
         var user = await RequireUserForUpdateAsync(id, cancellationToken);
         await EnsureAdministratorRemainsAsync(user, user.RoleId, isActive, cancellationToken);
-        if (user.IsActive != isActive) user.SecurityStamp = Guid.NewGuid();
+        if (user.IsActive != isActive)
+            user.SecurityStamp = Guid.NewGuid();
         user.IsActive = isActive;
         await SaveAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
@@ -128,7 +135,8 @@ public sealed class UserService(
         if (passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.CurrentPassword) == PasswordVerificationResult.Failed)
         {
             user.FailedLoginAttempts++;
-            if (user.FailedLoginAttempts >= 5) user.LockoutEndAt = now.AddMinutes(15);
+            if (user.FailedLoginAttempts >= 5)
+                user.LockoutEndAt = now.AddMinutes(15);
             await SaveAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
             throw new UserManagementException(UserManagementError.InvalidPassword, "Não foi possível validar a senha atual.");
@@ -203,9 +211,12 @@ public sealed class UserService(
 
     private async Task SaveAsync(CancellationToken cancellationToken)
     {
-        try { await database.SaveChangesAsync(cancellationToken); }
+        try
+        {
+            await database.SaveChangesAsync(cancellationToken);
+        }
         catch (DbUpdateException exception) when (exception.InnerException is PostgresException
-            { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: "IX_Users_NormalizedUsername" })
+        { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: "IX_Users_NormalizedUsername" })
         {
             throw new UserManagementException(UserManagementError.DuplicateUsername, "Este login já está em uso.");
         }

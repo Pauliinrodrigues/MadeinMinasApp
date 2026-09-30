@@ -8,7 +8,10 @@ public static class AccessPolicies
     public const string WorkKitchen = "kitchen.work";
     public const string WorkDispatch = "dispatch.work";
 
-    public static IReadOnlyDictionary<string, string[]> RolesByPermission { get; } =
+    public static IReadOnlyDictionary<string, string[]> RolesByPermission
+    {
+        get;
+    } =
         new Dictionary<string, string[]>
         {
             [ManageUsers] = ["Administrator"],

@@ -28,7 +28,10 @@ public sealed class CategoriesController(CategoryService categories) : Controlle
     public async Task<ActionResult<CategoryResponse>> Create(CreateCategoryRequest request, CancellationToken cancellationToken)
     {
         var category = await categories.CreateAsync(ActorId, ActorStamp, request, cancellationToken);
-        return CreatedAtAction(nameof(Get), new { id = category.Id }, category);
+        return CreatedAtAction(nameof(Get), new
+        {
+            id = category.Id
+        }, category);
     }
 
     [HttpPut("{id:guid}")]

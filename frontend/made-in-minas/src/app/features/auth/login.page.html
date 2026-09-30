@@ -5,20 +5,50 @@
       <p class="eyebrow">ÁREA DA EQUIPE</p>
       <h1>Bom trabalho começa por aqui.</h1>
       <p>Entre com sua conta de funcionário.</p>
-      @if (session.notice()) { <p role="status" class="notice">{{ session.notice() }}</p> }
-      @if (error()) { <p role="alert" class="error">{{ error() }}</p> }
+      @if (session.notice()) {
+      <p role="status" class="notice">{{ session.notice() }}</p>
+      } @if (error()) {
+      <p role="alert" class="error">{{ error() }}</p>
+      }
       <form #form="ngForm" (ngSubmit)="submit()" class="form-stack">
-        <label>Login<input name="username" [(ngModel)]="username" #usernameField="ngModel" required minlength="3" maxlength="64"
-          pattern="[A-Za-z0-9._\-]+" autocomplete="username" autocapitalize="none" spellcheck="false" [disabled]="busy()"
-          [attr.aria-invalid]="usernameField.invalid && (usernameField.dirty || usernameField.touched) ? 'true' : null"
-          [attr.aria-describedby]="usernameField.invalid && (usernameField.dirty || usernameField.touched) ? 'login-help login-error' : 'login-help'"></label>
-        <p id="login-help" class="hint">Digite o nome de usuário cadastrado. O acesso por e-mail ainda não está disponível.</p>
+        <label
+          >Login<input
+            name="username"
+            [(ngModel)]="username"
+            #usernameField="ngModel"
+            required
+            minlength="3"
+            maxlength="64"
+            pattern="[A-Za-z0-9._\-]+"
+            autocomplete="username"
+            autocapitalize="none"
+            spellcheck="false"
+            [disabled]="busy()"
+            [attr.aria-invalid]="usernameField.invalid && (usernameField.dirty || usernameField.touched) ? 'true' : null"
+            [attr.aria-describedby]="usernameField.invalid && (usernameField.dirty || usernameField.touched) ? 'login-help login-error' : 'login-help'"
+        /></label>
+        <p id="login-help" class="hint">
+          Digite o nome de usuário cadastrado. O acesso por e-mail ainda não está disponível.
+        </p>
         @if (usernameField.invalid && (usernameField.dirty || usernameField.touched)) {
-          <p id="login-error" class="error" role="alert">Use de 3 a 64 caracteres: letras sem acento, números, ponto, hífen ou sublinhado. Não use @ ou espaços.</p>
+        <p id="login-error" class="error" role="alert">
+          Use de 3 a 64 caracteres: letras sem acento, números, ponto, hífen ou sublinhado. Não use
+          @ ou espaços.
+        </p>
         }
-        <label>Senha<input name="password" [(ngModel)]="password" type="password" required maxlength="128"
-          autocomplete="current-password" [disabled]="busy()"></label>
-        <button class="primary" type="submit" [disabled]="form.invalid || busy()">{{ busy() ? 'Entrando…' : 'Entrar' }}</button>
+        <label
+          >Senha<input
+            name="password"
+            [(ngModel)]="password"
+            type="password"
+            required
+            maxlength="128"
+            autocomplete="current-password"
+            [disabled]="busy()"
+        /></label>
+        <button class="primary" type="submit" [disabled]="form.invalid || busy()">
+          {{ busy() ? 'Entrando…' : 'Entrar' }}
+        </button>
       </form>
       <p class="hint">A sessão dura até 15 minutos. Atualizar a página exige novo login.</p>
     </section>

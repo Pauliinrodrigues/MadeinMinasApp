@@ -13,7 +13,8 @@ public sealed class CategoryService(AppDbContext database, TimeProvider clock, I
     public async Task<CategoryPageResponse> ListAsync(CategoryListQuery request, CancellationToken cancellationToken)
     {
         var query = database.Categories.AsNoTracking();
-        if (request.IsActive is not null) query = query.Where(category => category.IsActive == request.IsActive);
+        if (request.IsActive is not null)
+            query = query.Where(category => category.IsActive == request.IsActive);
         if (!string.IsNullOrWhiteSpace(request.Search))
         {
             var search = NormalizeName(request.Search);
@@ -44,8 +45,11 @@ public sealed class CategoryService(AppDbContext database, TimeProvider clock, I
         {
             Name = request.Name.Trim().Normalize(NormalizationForm.FormC),
             NormalizedName = NormalizeName(request.Name),
-            Description = CleanDescription(request.Description), DisplayOrder = request.DisplayOrder,
-            IsActive = request.IsActive, CreatedAt = now, UpdatedAt = now
+            Description = CleanDescription(request.Description),
+            DisplayOrder = request.DisplayOrder,
+            IsActive = request.IsActive,
+            CreatedAt = now,
+            UpdatedAt = now
         };
         database.Categories.Add(category);
         await SaveAsync(cancellationToken);
@@ -87,26 +91,12 @@ public sealed class CategoryService(AppDbContext database, TimeProvider clock, I
         return ToResponse(category);
     }
 
-    private async Task<IDbContextTransaction> BeginWriteAsync(Guid actorId, Guid actorStamp, CancellationToken cancellationToken)
-    {
-        var transaction = await database.Database.BeginTransactionAsync(cancellationToken);
-        try
-        {
-            // Bloqueia revogação/alteração do autor até o término desta gravação.
-            var actor = await database.Users.FromSqlInterpolated(
-                $"SELECT * FROM \"Users\" WHERE \"Id\" = {actorId} FOR SHARE").AsNoTracking().SingleOrDefaultAsync(cancellationToken);
-            if (actor is null || !actor.IsActive || actor.SecurityStamp != actorStamp)
-                throw new CategoryException(CategoryError.InvalidSession, "Sessão inválida. Faça login novamente.");
-            if (!await database.Roles.AnyAsync(role => role.Id == actor.RoleId && role.Code == "Administrator", cancellationToken))
-                throw new CategoryException(CategoryError.PermissionDenied, "Acesso restrito ao administrador.");
-            return transaction;
-        }
-        catch
-        {
-            await transaction.DisposeAsync();
-            throw;
-        }
-    }
+    private async Task<IDbContextTransaction> BeginWriteAsync(Guid actorId, Guid actorStamp, CancellationToken cancellationToken) =>
+        await CatalogWriteTransaction.BeginAsync(
+            database, actorId, actorStamp,
+            () => new CategoryException(CategoryError.InvalidSession, "Sessão inválida. Faça login novamente."),
+            () => new CategoryException(CategoryError.PermissionDenied, "Acesso restrito ao administrador."),
+            cancellationToken);
 
     private async Task<Category> RequireForUpdateAsync(Guid id, CancellationToken cancellationToken) =>
         await database.Categories.FromSqlInterpolated(
@@ -115,9 +105,12 @@ public sealed class CategoryService(AppDbContext database, TimeProvider clock, I
 
     private async Task SaveAsync(CancellationToken cancellationToken)
     {
-        try { await database.SaveChangesAsync(cancellationToken); }
+        try
+        {
+            await database.SaveChangesAsync(cancellationToken);
+        }
         catch (DbUpdateException exception) when (exception.InnerException is PostgresException
-            { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: "IX_Categories_NormalizedName" })
+        { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: "IX_Categories_NormalizedName" })
         {
             throw new CategoryException(CategoryError.DuplicateCategoryName, "Já existe uma categoria com esse nome, inclusive entre as inativas.");
         }

@@ -28,7 +28,10 @@ public sealed class IngredientsController(IngredientService ingredients) : Contr
     public async Task<ActionResult<IngredientResponse>> Create(IngredientRequest request, CancellationToken cancellationToken)
     {
         var ingredient = await ingredients.CreateAsync(ActorId, ActorStamp, request, cancellationToken);
-        return CreatedAtAction(nameof(Get), new { id = ingredient.Id }, ingredient);
+        return CreatedAtAction(nameof(Get), new
+        {
+            id = ingredient.Id
+        }, ingredient);
     }
 
     [HttpPut("{id:guid}")]

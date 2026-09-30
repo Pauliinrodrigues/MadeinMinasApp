@@ -6,19 +6,23 @@
     "start": "ng serve --host localhost --port 8101",
     "build": "ng build",
     "build:development": "ng build --configuration development",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "lint": "eslint \"src/**/*.{ts,html}\" \"e2e/**/*.ts\" playwright.config.ts --max-warnings 0",
+    "lint:fix": "npm run lint -- --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "engines": {
-    "node": "^22.12.0 || ^24.0.0",
+    "node": "^22.22.3 || ^24.15.0",
     "npm": ">=10"
   },
   "dependencies": {
-    "@angular/common": "20.3.32",
-    "@angular/compiler": "20.3.32",
-    "@angular/core": "20.3.32",
-    "@angular/forms": "20.3.32",
-    "@angular/platform-browser": "20.3.32",
-    "@angular/router": "20.3.32",
+    "@angular/common": "22.2.1",
+    "@angular/compiler": "22.2.1",
+    "@angular/core": "22.2.1",
+    "@angular/forms": "22.2.1",
+    "@angular/platform-browser": "22.2.1",
+    "@angular/router": "22.2.1",
     "@ionic/angular": "9.0.5",
     "ionicons": "8.1.0",
     "rxjs": "7.8.2",
@@ -26,10 +30,15 @@
     "zone.js": "0.15.1"
   },
   "devDependencies": {
-    "@angular/build": "20.3.37",
-    "@angular/cli": "20.3.37",
-    "@angular/compiler-cli": "20.3.32",
+    "@angular/build": "22.2.0",
+    "@angular/cli": "22.2.0",
+    "@angular/compiler-cli": "22.2.1",
+    "@eslint/js": "10.0.1",
     "@playwright/test": "1.58.2",
-    "typescript": "5.9.3"
+    "angular-eslint": "22.5.0",
+    "eslint": "10.11.0",
+    "prettier": "3.9.9",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.0"
   }
 }
