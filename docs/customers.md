@@ -2,6 +2,8 @@
 
 Incremento na branch `feat/customers-addresses`, iniciado após o aceite das fichas técnicas e integração do PR #1. Administrador e atendente mantêm clientes e seus endereços na área da equipe. Pedidos, carrinho, pagamentos e identificação pública do cliente continuam fora deste incremento.
 
+Aceite manual concluído pelo usuário e registrado no [PR #2](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/2). O roteiro abaixo permanece como referência para verificações futuras.
+
 ## Regras
 
 - Cliente exige nome (até 120 caracteres) e telefone. `isActive` assume `true` quando omitido no cadastro. Não há senha de cliente.

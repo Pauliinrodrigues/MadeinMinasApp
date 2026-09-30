@@ -7,7 +7,7 @@ Cada fase exige implementação, testes e validação antes da próxima.
 | 1 | Estrutura, API, frontend, banco/configuração, Git e documentação | Implementada; ver docs/validation.md |
 | 2 | Autenticação, usuários e permissões | 2A, 2B e 2C implementadas; acesso validado pelo usuário |
 | 3 | Categorias, produtos, ingredientes e fichas técnicas | 3A–3D implementadas e validadas; fichas técnicas integradas pelo PR #1 |
-| 4 | Clientes, pedidos, carrinho e pagamentos | 4A: clientes e endereços implementados, aguardando aceite manual; demais incrementos planejados |
+| 4 | Clientes, pedidos, carrinho e pagamentos | 4A: clientes e endereços implementados e validados pelo usuário no PR #2; demais incrementos planejados |
 | 5 | Cozinha/KDS, expedição e impressão | Planejada |
 | 6 | Estoque e CMV | Planejada |
 | 7 | Dashboard e relatórios | Planejada |
@@ -32,4 +32,4 @@ Em 30/09/2026 foram concluídas a [manutenção técnica](maintenance.md), as ve
 - Repositório ignora dependências, builds e segredos.
 - Configuração do PostgreSQL permanente documentada; credenciais fornecidas localmente pelo responsável.
 
-Os incrementos da Fase 2 estão descritos em [authentication.md](authentication.md), [users.md](users.md) e [staff-frontend.md](staff-frontend.md). A [Fase 3A](categories.md) implementa categorias; a [Fase 3B](products.md), produtos; a [Fase 3C](ingredients.md), ingredientes; e a [Fase 3D](recipes.md), fichas técnicas. Ingredientes e fichas técnicas foram validados pelo usuário em 30/09/2026. Clientes e endereços precisam de aceite próprio antes de iniciar carrinho, pedidos e pagamentos.
+Os incrementos da Fase 2 estão descritos em [authentication.md](authentication.md), [users.md](users.md) e [staff-frontend.md](staff-frontend.md). A [Fase 3A](categories.md) implementa categorias; a [Fase 3B](products.md), produtos; a [Fase 3C](ingredients.md), ingredientes; e a [Fase 3D](recipes.md), fichas técnicas. Ingredientes e fichas técnicas foram validados pelo usuário em 30/09/2026. O usuário também validou clientes e endereços no PR #2. Carrinho, pedidos e pagamentos terão seus próprios incrementos e aceites.

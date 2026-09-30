@@ -2,7 +2,7 @@
 
 Sistema de gestão e pedidos da hamburgueria Made in Minas, desenvolvido por fases.
 
-**Fases 1, 2 e 3 implementadas e fichas técnicas validadas.** A Fase 4A adiciona clientes e endereços na API e no frontend, em branch própria e aguardando aceite manual. Pedidos, pagamentos, estoque/CMV e atendimento por IA seguem para os próximos incrementos.
+**Fases 1, 2 e 3 implementadas e fichas técnicas validadas.** A Fase 4A adiciona clientes e endereços na API e no frontend, com aceite manual concluído no PR #2. Pedidos, pagamentos, estoque/CMV e atendimento por IA seguem para os próximos incrementos.
 
 ## Estrutura
 
