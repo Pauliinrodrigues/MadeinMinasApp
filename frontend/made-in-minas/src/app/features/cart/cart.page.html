@@ -1,0 +1,308 @@
+<section class="panel">
+  <p class="eyebrow">ATENDIMENTO</p>
+  <h1>Carrinho da equipe</h1>
+  <p>Monte os itens e confira os valores atuais antes da próxima etapa.</p>
+  <p class="hint">
+    Carrinho temporário: sair desta tela, atualizar a página ou encerrar a sessão descarta os dados.
+    A revisão ainda não cria um pedido.
+  </p>
+</section>
+<fieldset class="cart-editor" [disabled]="busy()">
+  <section class="panel" aria-labelledby="customer-title">
+    <h2 id="customer-title">1. Cliente e recebimento</h2>
+    @if (selectedCustomer(); as customer) {
+    <p class="notice">
+      Cliente selecionado: <strong>{{ customer.name }}</strong> · {{ customer.phone }}
+    </p>
+    }
+    <div class="filters">
+      <label
+        >Buscar cliente por nome ou telefone<input
+          [(ngModel)]="customerSearch"
+          maxlength="120"
+          (keyup.enter)="loadCustomers()"
+      /></label>
+      <button type="button" (click)="loadCustomers()" [disabled]="loadingCustomers()">
+        Buscar clientes
+      </button>
+    </div>
+    @if (customerError()) {
+    <p role="alert" class="error">{{ customerError() }}</p>
+    } @if (loadingCustomers()) {
+    <p role="status">Buscando clientes…</p>
+    } @if (customers(); as result) {
+    <ul class="choices">
+      @for (customer of result.items; track customer.id) {
+      <li>
+        <span>{{ customer.name }} · {{ customer.phone }}</span
+        ><button
+          type="button"
+          (click)="selectCustomer(customer)"
+          [disabled]="loadingCustomers() || loadingAddresses()"
+          [attr.aria-pressed]="selectedCustomer()?.id === customer.id"
+          [attr.aria-label]="'Selecionar cliente ' + customer.name"
+        >
+          Selecionar
+        </button>
+      </li>
+      } @empty {
+      <li>Nenhum cliente ativo encontrado. Cadastre-o em Clientes antes de montar o carrinho.</li>
+      }
+    </ul>
+    <div class="pagination" aria-label="Páginas de clientes">
+      <button
+        type="button"
+        [disabled]="loadingCustomers() || result.page === 1"
+        (click)="loadCustomers(result.page - 1)"
+      >
+        Clientes anteriores
+      </button>
+      <span>Página {{ result.page }} · {{ result.totalCount }} cliente(s)</span>
+      <button
+        type="button"
+        [disabled]="loadingCustomers() || result.page * result.pageSize >= result.totalCount"
+        (click)="loadCustomers(result.page + 1)"
+      >
+        Próximos clientes
+      </button>
+    </div>
+    }
+    <label
+      >Recebimento<select
+        [ngModel]="fulfillment"
+        (ngModelChange)="changeFulfillment($event)"
+        [disabled]="loadingAddresses()"
+      >
+        <option value="Pickup">Retirada</option>
+        <option value="Delivery">Entrega</option>
+      </select></label
+    >
+    @if (fulfillment === 'Delivery') { @if (!selectedCustomer()) {
+    <p>Selecione um cliente para consultar seus endereços.</p>
+    } @if (selectedAddress(); as address) {
+    <p class="notice">
+      Endereço selecionado: {{ address.street }}, {{ address.number }} · {{ address.neighborhood }}
+      · {{ address.city }}/{{ address.state }}
+    </p>
+    } @if (selectedCustomer()) {
+    <button type="button" (click)="loadAddresses()" [disabled]="loadingAddresses()">
+      Atualizar endereços
+    </button>
+    } @if (addressError()) {
+    <p role="alert" class="error">{{ addressError() }}</p>
+    } @if (loadingAddresses()) {
+    <p role="status">Buscando endereços…</p>
+    } @if (addresses(); as result) {
+    <ul class="choices">
+      @for (address of result.items; track address.id) {
+      <li>
+        <span
+          >{{ address.street }}, {{ address.number }} · {{ address.neighborhood }} · {{ address.city
+          }}/{{ address.state }}<br />{{ address.complement }} {{ address.reference }}</span
+        ><button
+          type="button"
+          (click)="selectAddress(address)"
+          [disabled]="loadingAddresses()"
+          [attr.aria-pressed]="selectedAddress()?.id === address.id"
+          [attr.aria-label]="'Selecionar endereço ' + address.street + ', ' + address.number"
+        >
+          Selecionar
+        </button>
+      </li>
+      } @empty {
+      <li>
+        Nenhum endereço ativo nesta página. Cadastre um endereço em Clientes ou escolha retirada.
+      </li>
+      }
+    </ul>
+    <div class="pagination" aria-label="Páginas de endereços">
+      <button
+        type="button"
+        [disabled]="loadingAddresses() || result.page === 1"
+        (click)="loadAddresses(result.page - 1)"
+      >
+        Endereços anteriores
+      </button>
+      <span>Página {{ result.page }} · {{ result.totalCount }} endereço(s)</span>
+      <button
+        type="button"
+        [disabled]="loadingAddresses() || result.page * result.pageSize >= result.totalCount"
+        (click)="loadAddresses(result.page + 1)"
+      >
+        Próximos endereços
+      </button>
+    </div>
+    } }
+  </section>
+  <section class="panel" aria-labelledby="products-title">
+    <h2 id="products-title">2. Produtos disponíveis</h2>
+    <div class="filters">
+      <label
+        >Buscar produto<input
+          [(ngModel)]="productSearch"
+          maxlength="120"
+          (keyup.enter)="loadProducts()"
+      /></label>
+      <button type="button" (click)="loadProducts()" [disabled]="loadingProducts()">
+        Buscar produtos
+      </button>
+    </div>
+    @if (productError()) {
+    <p role="alert" class="error">{{ productError() }}</p>
+    } @if (loadingProducts()) {
+    <p role="status">Buscando produtos…</p>
+    } @if (products(); as result) {
+    <ul class="products">
+      @for (product of result.items; track product.id) {
+      <li>
+        <h3>{{ product.name }}</h3>
+        <p>{{ product.categoryName }}</p>
+        <p>{{ product.description }}</p>
+        <p>{{ formatPrice(product.price) }}</p>
+        <button
+          type="button"
+          (click)="add(product)"
+          [disabled]="loadingProducts() || lines().length >= 50"
+          [attr.aria-label]="'Adicionar ' + product.name"
+        >
+          Adicionar
+        </button>
+      </li>
+      } @empty {
+      <li>Nenhum produto disponível nesta busca.</li>
+      }
+    </ul>
+    <div class="pagination" aria-label="Páginas de produtos">
+      <button
+        type="button"
+        [disabled]="loadingProducts() || result.page === 1"
+        (click)="loadProducts(result.page - 1)"
+      >
+        Produtos anteriores
+      </button>
+      <span>Página {{ result.page }} · {{ result.totalCount }} produto(s)</span>
+      <button
+        type="button"
+        [disabled]="loadingProducts() || result.page * result.pageSize >= result.totalCount"
+        (click)="loadProducts(result.page + 1)"
+      >
+        Próximos produtos
+      </button>
+    </div>
+    }
+  </section>
+  <section class="panel" aria-labelledby="items-title">
+    <h2 id="items-title">3. Itens do carrinho</h2>
+    <p class="hint">
+      Até 50 linhas e 99 unidades por produto, somando as linhas. Para observações diferentes,
+      adicione o produto em outra linha.
+    </p>
+    <ol class="cart-lines">
+      @for (line of lines(); track line.key; let index = $index) {
+      <li>
+        <h3>{{ index + 1 }}. {{ line.product.name }}</h3>
+        <label [for]="'quantity-' + line.key">Quantidade do item {{ index + 1 }}</label>
+        <input
+          [id]="'quantity-' + line.key"
+          type="number"
+          min="1"
+          max="99"
+          step="1"
+          required
+          [ngModel]="line.quantity"
+          (ngModelChange)="updateLine(line.key, 'quantity', $event)"
+        />
+        <label [for]="'notes-' + line.key">Observações do item {{ index + 1 }}</label>
+        <textarea
+          [id]="'notes-' + line.key"
+          maxlength="250"
+          rows="2"
+          [ngModel]="line.notes"
+          (ngModelChange)="updateLine(line.key, 'notes', $event)"
+        ></textarea>
+        <button
+          type="button"
+          (click)="remove(line.key)"
+          [attr.aria-label]="'Remover item ' + (index + 1)"
+        >
+          Remover
+        </button>
+      </li>
+      } @empty {
+      <li>O carrinho está vazio. Adicione produtos acima.</li>
+      }
+    </ol>
+    @if (lines().length && !validItems()) {
+    <p role="alert" class="error">
+      Confira as quantidades: números inteiros de 1 a 99 e, no máximo, 99 unidades de cada produto.
+    </p>
+    }
+    <label
+      >Observações gerais<textarea
+        maxlength="500"
+        rows="3"
+        [(ngModel)]="notes"
+        (ngModelChange)="invalidate()"
+      ></textarea>
+    </label>
+    @if (error()) {
+    <p role="alert" class="error">{{ error() }}</p>
+    }
+    <div class="actions">
+      <button type="button" class="primary" (click)="review()" [disabled]="!canReview()">
+        {{ busy() ? 'Revisando…' : 'Revisar carrinho' }}
+      </button>
+      <button
+        type="button"
+        (click)="confirmClear.set(true)"
+        [disabled]="loadingAddresses() || (!lines().length && !selectedCustomer())"
+      >
+        Limpar carrinho
+      </button>
+    </div>
+    @if (confirmClear()) {
+    <div class="notice" role="group" aria-label="Confirmar limpeza">
+      <p>Descartar cliente, itens e observações deste carrinho?</p>
+      <button type="button" (click)="clear()">Confirmar limpeza</button
+      ><button type="button" (click)="confirmClear.set(false)">Manter carrinho</button>
+    </div>
+    }
+  </section>
+</fieldset>
+@if (quote(); as result) {
+<section class="panel" aria-labelledby="review-title" aria-live="polite">
+  <h2 id="review-title">Revisão do carrinho</h2>
+  <p>
+    {{ result.customer.name }} · {{ result.customer.phone }} · {{ result.fulfillment === 'Pickup' ?
+    'Retirada' : 'Entrega' }}
+  </p>
+  @if (result.address; as address) {
+  <p>
+    {{ address.street }}, {{ address.number }} · {{ address.neighborhood }} · {{ address.city }}/{{
+    address.state }}<br />{{ address.complement }} {{ address.postalCode }} {{ address.reference }}
+  </p>
+  }
+  <ul class="choices">
+    @for (item of result.items; track $index) {
+    <li>
+      <span
+        >{{ item.quantity }} × {{ item.name }} · {{ formatPrice(item.unitPrice) }} por unidade<br />{{
+        item.notes }}</span
+      ><strong>{{ formatPrice(item.lineTotal) }}</strong>
+    </li>
+    }
+  </ul>
+  @if (result.notes) {
+  <p>Observações: {{ result.notes }}</p>
+  }
+  <p class="subtotal">
+    Subtotal dos produtos:
+    <strong>{{ formatPrice(result.subtotal) }}</strong>
+  </p>
+  <p>Entrega, descontos e pagamento ainda não estão incluídos. Nenhum pedido foi criado.</p>
+  <p class="hint">
+    Valores consultados em {{ result.calculatedAt | date:'dd/MM/yyyy HH:mm:ss':'-0300' }} (horário
+    de Brasília). Revisar novamente consulta os preços e a disponibilidade atuais.
+  </p>
+</section>
+}

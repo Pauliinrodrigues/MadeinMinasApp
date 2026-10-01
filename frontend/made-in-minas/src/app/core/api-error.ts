@@ -5,6 +5,11 @@ export function apiError(error: unknown, login = false): string {
     return 'Não foi possível concluir. Verifique a conexão e tente novamente.';
   }
   const codes: Record<string, string> = {
+    CartCustomerUnavailable: 'O cliente não está disponível. Busque e selecione um cliente ativo.',
+    CartAddressUnavailable:
+      'O endereço não está disponível para este cliente. Atualize e selecione um endereço ativo.',
+    CartProductUnavailable:
+      'Um produto do carrinho está indisponível. Atualize os produtos e remova os itens indisponíveis.',
     CustomerNotFound: 'Cliente não encontrado.',
     AddressNotFound: 'Endereço não encontrado para este cliente.',
     DuplicateCustomerPhone:
