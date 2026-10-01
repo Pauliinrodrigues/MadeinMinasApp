@@ -1,7 +1,9 @@
 import { DatePipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
 import { apiError } from '../../core/api-error';
 import { formatProductPrice } from '../../core/services/product-api.service';
@@ -10,6 +12,7 @@ import {
   CartProduct,
   CartProductPage,
   CartQuote,
+  CartQuoteInput,
 } from '../../core/services/cart-api.service';
 import {
   Address,
@@ -18,6 +21,7 @@ import {
   CustomerApi,
   CustomerPage,
 } from '../../core/services/customer-api.service';
+import { CreateOrderInput, OrderApi } from '../../core/services/order-api.service';
 
 interface CartLine {
   key: number;
@@ -28,7 +32,7 @@ interface CartLine {
 
 @Component({
   selector: 'app-cart',
-  imports: [FormsModule, DatePipe],
+  imports: [FormsModule, DatePipe, RouterLink],
   templateUrl: './cart.page.html',
   styleUrl: './cart.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -37,6 +41,14 @@ export class CartPage {
   readonly formatPrice = formatProductPrice;
   private readonly api = inject(CartApi);
   private readonly customersApi = inject(CustomerApi);
+  private readonly ordersApi = inject(OrderApi);
+  private readonly router = inject(Router);
+  private reviewedInput: CartQuoteInput | null = null;
+  readonly pendingOrder = signal<CreateOrderInput | null>(null);
+  readonly orderError = signal('');
+  readonly uncertainOrder = signal(false);
+  readonly requestConflict = signal(false);
+  readonly createdOrderId = signal<string | null>(null);
   private readonly destroyRef = inject(DestroyRef);
   private nextKey = 0;
   readonly products = signal<CartProductPage | null>(null);
@@ -59,6 +71,7 @@ export class CartPage {
   customerSearch = '';
   fulfillment: 'Pickup' | 'Delivery' = 'Pickup';
   notes = '';
+  deliveryFee: number | null = null;
 
   constructor() {
     this.loadProducts();
@@ -123,6 +136,7 @@ export class CartPage {
 
   changeFulfillment(value: 'Pickup' | 'Delivery'): void {
     this.fulfillment = value;
+    this.deliveryFee = null;
     this.selectedAddress.set(null);
     this.addresses.set(null);
     this.addressError.set('');
@@ -184,6 +198,8 @@ export class CartPage {
 
   invalidate(): void {
     this.quote.set(null);
+    this.reviewedInput = null;
+    this.orderError.set('');
     this.error.set('');
     this.confirmClear.set(false);
   }
@@ -218,35 +234,52 @@ export class CartPage {
       !!this.selectedCustomer() &&
       this.validItems() &&
       !this.loadingAddresses() &&
-      (this.fulfillment === 'Pickup' || !!this.selectedAddress())
+      (this.fulfillment === 'Pickup' ||
+        (!!this.selectedAddress() &&
+          this.deliveryFee !== null &&
+          Number.isFinite(this.deliveryFee) &&
+          this.deliveryFee >= 0 &&
+          this.deliveryFee <= 9999.99 &&
+          Math.abs(this.deliveryFee * 100 - Math.round(this.deliveryFee * 100)) < 0.000001))
     );
   }
 
   review(): void {
     const customer = this.selectedCustomer();
-    if (!customer || this.busy() || !this.canReview()) {
+    if (
+      !customer ||
+      this.busy() ||
+      this.pendingOrder() ||
+      this.createdOrderId() ||
+      !this.canReview()
+    ) {
       return;
     }
     this.invalidate();
     this.busy.set(true);
+    const input: CartQuoteInput = {
+      customerId: customer.id,
+      fulfillment: this.fulfillment,
+      addressId: this.fulfillment === 'Delivery' ? this.selectedAddress()!.id : null,
+      deliveryFee: this.fulfillment === 'Delivery' ? this.deliveryFee! : 0,
+      items: this.lines().map((line) => ({
+        productId: line.product.id,
+        quantity: line.quantity!,
+        notes: line.notes.trim() || null,
+      })),
+      notes: this.notes.trim() || null,
+    };
     this.api
-      .quote({
-        customerId: customer.id,
-        fulfillment: this.fulfillment,
-        addressId: this.fulfillment === 'Delivery' ? this.selectedAddress()!.id : null,
-        items: this.lines().map((line) => ({
-          productId: line.product.id,
-          quantity: line.quantity!,
-          notes: line.notes.trim() || null,
-        })),
-        notes: this.notes.trim() || null,
-      })
+      .quote(input)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => this.busy.set(false)),
       )
       .subscribe({
-        next: (quote) => this.quote.set(quote),
+        next: (quote) => {
+          this.reviewedInput = input;
+          this.quote.set(quote);
+        },
         error: (error) => this.error.set(apiError(error)),
       });
   }
@@ -258,6 +291,62 @@ export class CartPage {
     this.addresses.set(null);
     this.fulfillment = 'Pickup';
     this.notes = '';
+    this.deliveryFee = null;
     this.invalidate();
+  }
+
+  register(): void {
+    const quote = this.quote();
+    if (
+      this.busy() ||
+      this.createdOrderId() ||
+      this.requestConflict() ||
+      !quote ||
+      !this.reviewedInput
+    ) {
+      return;
+    }
+    const request = this.pendingOrder() ?? {
+      requestId: crypto.randomUUID(),
+      reviewToken: quote.reviewToken,
+      cart: this.reviewedInput,
+    };
+    this.pendingOrder.set(request);
+    this.busy.set(true);
+    this.orderError.set('');
+    this.ordersApi
+      .create(request)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.busy.set(false)),
+      )
+      .subscribe({
+        next: (order) => {
+          this.createdOrderId.set(order.id);
+          this.uncertainOrder.set(false);
+          void this.router.navigate(['/equipe/pedidos', order.id], { replaceUrl: true });
+        },
+        error: (error: unknown) => {
+          const code: unknown = error instanceof HttpErrorResponse ? error.error?.code : null;
+          if (code === 'OrderRequestConflict') {
+            this.requestConflict.set(true);
+            this.orderError.set(apiError(error));
+            return;
+          }
+          const rejected =
+            error instanceof HttpErrorResponse && [400, 401, 403, 409, 429].includes(error.status);
+          if (rejected) {
+            this.pendingOrder.set(null);
+            this.uncertainOrder.set(false);
+            this.invalidate();
+            this.error.set(apiError(error));
+          } else {
+            this.uncertainOrder.set(true);
+            this.orderError.set(
+              'Não foi possível confirmar o resultado do registro. Use Tentar registro novamente para consultar ou concluir a mesma tentativa. Se sair desta tela, confira os pedidos antes de montar outro carrinho.',
+            );
+          }
+        },
+      });
   }
 }

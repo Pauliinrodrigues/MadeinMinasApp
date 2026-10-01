@@ -1,13 +1,13 @@
 <section class="panel">
   <p class="eyebrow">ATENDIMENTO</p>
   <h1>Carrinho da equipe</h1>
-  <p>Monte os itens e confira os valores atuais antes da próxima etapa.</p>
+  <p>Monte os itens, revise os valores e registre o pedido.</p>
   <p class="hint">
     Carrinho temporário: sair desta tela, atualizar a página ou encerrar a sessão descarta os dados.
     A revisão ainda não cria um pedido.
   </p>
 </section>
-<fieldset class="cart-editor" [disabled]="busy()">
+<fieldset class="cart-editor" [disabled]="busy() || !!pendingOrder() || !!createdOrderId()">
   <section class="panel" aria-labelledby="customer-title">
     <h2 id="customer-title">1. Cliente e recebimento</h2>
     @if (selectedCustomer(); as customer) {
@@ -77,7 +77,19 @@
         <option value="Delivery">Entrega</option>
       </select></label
     >
-    @if (fulfillment === 'Delivery') { @if (!selectedCustomer()) {
+    @if (fulfillment === 'Delivery') {
+    <label
+      >Taxa de entrega (R$)<input
+        type="number"
+        min="0"
+        max="9999.99"
+        step="0.01"
+        required
+        [(ngModel)]="deliveryFee"
+        (ngModelChange)="invalidate()"
+    /></label>
+    <p class="hint">Informe a taxa combinada com o cliente. Para entrega gratuita, informe 0.</p>
+    @if (!selectedCustomer()) {
     <p>Selecione um cliente para consultar seus endereços.</p>
     } @if (selectedAddress(); as address) {
     <p class="notice">
@@ -299,10 +311,32 @@
     Subtotal dos produtos:
     <strong>{{ formatPrice(result.subtotal) }}</strong>
   </p>
-  <p>Entrega, descontos e pagamento ainda não estão incluídos. Nenhum pedido foi criado.</p>
+  <p>Taxa de entrega: <strong>{{ formatPrice(result.deliveryFee) }}</strong></p>
+  <p class="subtotal">Total: <strong>{{ formatPrice(result.total) }}</strong></p>
+  <p>
+    Nenhum pedido foi criado nesta revisão. Registrar salva o pedido como Novo. O registro de
+    pagamento será disponibilizado em outra etapa.
+  </p>
   <p class="hint">
     Valores consultados em {{ result.calculatedAt | date:'dd/MM/yyyy HH:mm:ss':'-0300' }} (horário
     de Brasília). Revisar novamente consulta os preços e a disponibilidade atuais.
   </p>
+  @if (orderError()) {
+  <p role="alert" class="error">{{ orderError() }}</p>
+  } @if (createdOrderId(); as id) {
+  <p role="status">Pedido registrado.</p>
+  <a class="button primary" [routerLink]="['/equipe/pedidos', id]">Abrir pedido</a>
+  } @else {
+  <button
+    type="button"
+    class="primary"
+    (click)="register()"
+    [disabled]="busy() || requestConflict()"
+  >
+    {{ busy() ? 'Registrando…' : uncertainOrder() ? 'Tentar registro novamente' : 'Registrar pedido'
+    }}
+  </button>
+  }
+  <a class="button" routerLink="/equipe/pedidos">Consultar pedidos</a>
 </section>
 }

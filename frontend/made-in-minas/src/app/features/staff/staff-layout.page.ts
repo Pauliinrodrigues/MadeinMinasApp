@@ -45,6 +45,7 @@ import { StaffApi } from '../../core/services/staff-api.service';
         }
         @if (session.canManageOrders()) {
           <a routerLink="/equipe/carrinho" routerLinkActive="selected">Carrinho</a>
+          <a routerLink="/equipe/pedidos" routerLinkActive="selected">Pedidos</a>
         }
       </nav>
       @if (session.user()) {

@@ -1,5 +1,7 @@
 # Carrinho da equipe — Fase 4B
 
+Este documento registra o contrato e o aceite da Fase 4B. A [Fase 4C](orders.md) estende o carrinho com taxa de entrega explícita, total, identificação da revisão e registro de pedidos. Para entrega, os clientes da API devem agora enviar `deliveryFee`; retirada aceita omissão/nulo/zero. As limitações abaixo descrevem a entrega original da Fase 4B.
+
 Aceite manual concluído pelo usuário em 01/10/2026. O [PR #3](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/3) registra a revisão da branch `feat/staff-cart` para `master`; o usuário também autorizou sua integração, condicionada à aprovação dos checks de qualidade do commit final.
 
 ## Escopo

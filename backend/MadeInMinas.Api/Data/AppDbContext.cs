@@ -14,6 +14,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<RecipeItem> RecipeItems => Set<RecipeItem>();
     public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<Address> Addresses => Set<Address>();
+    public DbSet<Order> Orders => Set<Order>();
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+    public DbSet<OrderStatusHistory> OrderStatusHistory => Set<OrderStatusHistory>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

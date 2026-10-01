@@ -20,6 +20,7 @@ export interface CartQuoteInput {
   customerId: string;
   fulfillment: 'Pickup' | 'Delivery';
   addressId: string | null;
+  deliveryFee: number;
   items: { productId: string; quantity: number; notes: string | null }[];
   notes: string | null;
 }
@@ -47,6 +48,9 @@ export interface CartQuote {
   }[];
   notes: string | null;
   subtotal: number;
+  deliveryFee: number;
+  total: number;
+  reviewToken: string;
   calculatedAt: string;
 }
 

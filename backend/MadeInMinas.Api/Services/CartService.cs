@@ -29,8 +29,9 @@ public sealed class CartService(AppDbContext database, TimeProvider clock)
 
     public async Task<CartQuoteResponse> QuoteAsync(CartQuoteRequest request, CancellationToken cancellationToken)
     {
-        // As leituras compartilham um snapshot; a revisão não reserva preço ou disponibilidade.
-        await using var transaction = await database.Database.BeginTransactionAsync(IsolationLevel.RepeatableRead, cancellationToken);
+        // No pedido, o chamador já mantém uma transação e bloqueios sobre os dados comerciais.
+        await using var transaction = database.Database.CurrentTransaction is null
+            ? await database.Database.BeginTransactionAsync(IsolationLevel.RepeatableRead, cancellationToken) : null;
         var customer = await database.Customers.AsNoTracking()
             .Where(customer => customer.Id == request.CustomerId && customer.IsActive)
             .Select(customer => new CartCustomerResponse(customer.Id, customer.Name, customer.Phone))
@@ -60,9 +61,14 @@ public sealed class CartService(AppDbContext database, TimeProvider clock)
                 product.Price * item.Quantity.Value, CleanOptional(item.Notes));
         }).ToArray();
         var response = new CartQuoteResponse(customer, request.Fulfillment, address, items, CleanOptional(request.Notes),
-            items.Sum(item => item.LineTotal), clock.GetUtcNow());
-        await transaction.CommitAsync(cancellationToken);
-        return response;
+            items.Sum(item => item.LineTotal), clock.GetUtcNow())
+        {
+            DeliveryFee = request.DeliveryFee ?? 0,
+            Total = items.Sum(item => item.LineTotal) + (request.DeliveryFee ?? 0)
+        };
+        if (transaction is not null)
+            await transaction.CommitAsync(cancellationToken);
+        return response with { ReviewToken = OrderFingerprint.ForReview(response) };
     }
 
     private static string? CleanOptional(string? value) => string.IsNullOrWhiteSpace(value)

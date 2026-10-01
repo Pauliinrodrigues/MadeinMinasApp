@@ -2,7 +2,7 @@
 
 Sistema de gestão e pedidos da hamburgueria Made in Minas, desenvolvido por fases.
 
-**Fases 1, 2, 3, 4A e 4B implementadas e validadas.** A Fase 4B adiciona o carrinho temporário da equipe e a revisão dos valores pela API, com aceite manual concluído em 01/10/2026 e revisão no [PR #3](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/3). A gravação de pedidos, pagamentos, estoque/CMV e atendimento por IA seguem para os próximos incrementos.
+**Fases 1, 2, 3, 4A, 4B e 4C implementadas e validadas.** A Fase 4B foi integrada pelo [PR #3](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/3). A Fase 4C adiciona registro de pedidos manuais, consulta e histórico de confirmação/cancelamento, com aceite do usuário e autorização de publicação em 01/10/2026. Pagamentos serão o próximo incremento; estoque/CMV e atendimento por IA seguem nas fases planejadas.
 
 ## Estrutura
 
@@ -70,7 +70,9 @@ Detalhes e arquivos da interface: [Fase 2C](docs/staff-frontend.md). Na pasta do
 
 **Clientes e endereços:** faça novo login como administrador ou atendente e abra **Clientes**. Cadastre nome e telefone com DDD; depois abra **Gerenciar endereços** para manter os locais de entrega. Busca por nome/telefone, paginação, inativação e reativação estão disponíveis. Contratos, migration e roteiro de aceite: [Fase 4A](docs/customers.md).
 
-**Carrinho:** abra **Carrinho** como administrador ou atendente, selecione cliente, retirada/entrega, endereço quando necessário e produtos disponíveis. Ajuste quantidades/observações e clique em **Revisar carrinho**. A API calcula o subtotal atual; nenhum pedido ou pagamento é criado. O carrinho é descartado ao sair da tela. Regras e roteiro de aceite: [Fase 4B](docs/cart.md).
+**Carrinho e pedidos:** abra **Carrinho** como administrador ou atendente, selecione cliente, retirada/entrega, endereço e taxa quando houver entrega, e produtos disponíveis. Ajuste quantidades/observações e clique em **Revisar carrinho**. Confira os dados e o total calculado pela API; depois use **Registrar pedido**. O registro cria um pedido **Novo**, consultável em **Pedidos**, com itens e valores preservados. Confirmar não registra pagamento. Cancelamento exige motivo; depois da confirmação, somente o administrador pode cancelar. Regras e roteiro de aceite: [Fase 4C](docs/orders.md).
+
+O carrinho ainda é temporário e é descartado ao sair da tela. Se o registro tiver resultado desconhecido, use **Tentar registro novamente**; a mesma tentativa retorna o pedido já salvo ou conclui a criação. Se sair ou perder a sessão, consulte **Pedidos** antes de montar outro carrinho.
 
 ## Verificar a fase
 
@@ -105,7 +107,7 @@ O fluxo local completo está em `scripts/Test-Quality.ps1`: formatação, testes
 powershell -NoProfile -File scripts/Test-Quality.ps1
 ```
 
-O GitHub Actions executa as verificações em pushes para `master` e pull requests. O PR #1 passou com 135 testes do backend e 106 do frontend antes da integração. Detalhes e limites: [manutenção técnica](docs/maintenance.md). O incremento atual está em [carrinho da equipe](docs/cart.md), com validação local registrada em [validation.md](docs/validation.md).
+O GitHub Actions executa as verificações em pushes para `master` e pull requests. O PR #1 passou com 135 testes do backend e 106 do frontend antes da integração. Detalhes e limites: [manutenção técnica](docs/maintenance.md). O incremento atual está em [pedidos manuais](docs/orders.md), com validação local registrada em [validation.md](docs/validation.md).
 
 ## Configuração e segurança
 
@@ -124,6 +126,7 @@ O GitHub Actions executa as verificações em pushes para `master` e pull reques
 - [Fluxo de Git e branches](docs/git-workflow.md)
 - [Clientes e endereços](docs/customers.md)
 - [Carrinho da equipe](docs/cart.md)
+- [Pedidos manuais](docs/orders.md)
 - [Arquitetura](docs/architecture.md)
 - [Autenticação, administrador inicial e testes](docs/authentication.md)
 - [Gestão de funcionários e permissões](docs/users.md)

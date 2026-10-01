@@ -83,3 +83,11 @@ Endereços pertencem a um cliente e só podem ser acessados pelo vínculo corret
 A Fase 4B separa montagem/revisão da futura criação do pedido. O carrinho vive na página Angular e é descartado na navegação/saída da sessão; não há tabela de carrinho nem armazenamento de dados pessoais no navegador. A permissão orders.manage permite consultar o catálogo de venda sem abrir o CRUD administrativo ao atendente.
 
 A API aceita somente IDs, quantidades, modalidade e observações, e rejeita campos comerciais extras. A revisão valida os cadastros em um snapshot consistente e calcula os valores em decimal, sem gravar ou reservar preço/estoque. Exibe subtotal dos produtos; taxa de entrega, descontos, confirmação e pagamento exigem incrementos próprios. O próximo módulo deve revalidar e registrar cópias históricas, com criação idempotente, numeração atômica e transições explícitas. Regras e aceite: [cart.md](cart.md).
+
+## 015 — Pedidos manuais com dados preservados e criação idempotente
+
+A Fase 4C cria somente Orders, OrderItems e OrderStatusHistory. Número identity único separado do UUID, cópias dos dados comerciais e índice único por funcionário/tentativa. Um bloqueio transacional serializa reenvios; dados comerciais são bloqueados para leitura durante a criação. O SHA-256 da revisão detecta conteúdo alterado, sem substituir autorização nem permitir preços enviados pelo navegador.
+
+Itens e valores são imutáveis nesta etapa. Status usa versão e bloqueio de linha, com gravação atômica do histórico. Novo pode ser confirmado ou cancelado pela equipe de atendimento; cancelamento após confirmação exige administrador. Cancelado é terminal e exige motivo. A confirmação preserva preços e revalida disponibilidade, sem efeito financeiro/estoque.
+
+Adotada taxa manual validada e registrada pela API, a validar no aceite do usuário. Não há padrão silencioso de entrega gratuita. O navegador preserva a mesma tentativa enquanto a página existir e bloqueia edição após resultado desconhecido; ao perder a página/sessão, a equipe deve consultar os pedidos antes de registrar outra compra. Pagamentos seguem para incremento próprio. Detalhes: [orders.md](orders.md).

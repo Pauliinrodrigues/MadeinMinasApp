@@ -1,7 +1,7 @@
 # Regras de negócio acordadas
 
 Estas regras orientam os módulos futuros; ainda não estão implementadas.
-As regras já implementadas por incremento constam em authentication.md, users.md, categories.md, products.md, ingredients.md, recipes.md, [customers.md](customers.md) e [cart.md](cart.md).
+As regras já implementadas por incremento constam em authentication.md, users.md, categories.md, products.md, ingredients.md, recipes.md, [customers.md](customers.md), [cart.md](cart.md) e [orders.md](orders.md). As regras de pedidos manuais da Fase 4C foram validadas pelo usuário em 01/10/2026.
 
 - WhatsApp é canal de entrada por link; o atendimento próprio centraliza o pedido.
 - Backend/banco definem produtos, preços, promoções, estoque e totais. A IA não decide regras críticas.
@@ -9,7 +9,7 @@ As regras já implementadas por incremento constam em authentication.md, users.m
 - Pedido é a entidade central e preserva valores e composição da compra.
 - Origens previstas: chat próprio, WhatsApp, atendimento manual e link direto.
 - Status previstos: Novo, Confirmado, Em preparação, Pronto, Aguardando entrega, Saiu para entrega, Entregue, Finalizado e Cancelado.
-- Toda transição registra data/hora, responsável e motivo quando necessário; transições permitidas serão definidas antes de implementar pedidos.
+- Toda transição registra data/hora, responsável e motivo quando necessário. Na Fase 4C: Novo → Confirmado/Cancelado; Confirmado → Cancelado somente por administrador, sempre com motivo. Estados de produção serão definidos na fase 5.
 - Pagamento possui estado próprio. Confirmar pagamento e confirmar produção são operações distintas.
 - Cozinha recebe somente informações necessárias à produção; endereço e cobrança ficam com os perfis autorizados.
 - Administrador, atendente, cozinha e expedição têm permissões validadas pelo backend.
