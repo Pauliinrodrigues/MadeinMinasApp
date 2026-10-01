@@ -13,6 +13,7 @@ Aceite manual concluído pelo usuário em 01/10/2026, com autorização para com
 - `requestId` identifica uma tentativa de registro por funcionário. Repetir o mesmo conteúdo retorna o mesmo pedido, inclusive após perder a resposta. Reutilizar o identificador com outro conteúdo retorna conflito. Registro concorrente não pode duplicar pedido ou número.
 - Novo → Confirmado: administrador ou atendente; revalidar disponibilidade atual, preservando os preços já registrados. Confirmar não significa receber pagamento.
 - Novo → Cancelado: administrador ou atendente. Confirmado → Cancelado: somente administrador. Cancelamento exige motivo e não apaga o pedido. Cancelado é terminal.
+- A partir da Fase 4D, cancelar exige antes cancelar a intenção pendente ou registrar devolução do pagamento recebido. O bloqueio retorna `OrderPaymentUnresolved` (409). Veja [pagamentos](payments.md).
 - Histórico inclui criação e cada transição, com data UTC, funcionário e motivo. Alterações de status usam versão para detectar decisões concorrentes e são serializadas por pedido.
 - Não há descontos neste incremento. Adotada inicialmente taxa de entrega informada pela equipe e validada pelo backend: valor explícito entre R$ 0,00 e R$ 9.999,99, com até duas casas decimais, inclusive zero para entrega gratuita. Retirada tem taxa zero. Essa política é parte do aceite manual; não há cálculo por distância/bairro.
 

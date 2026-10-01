@@ -2,7 +2,7 @@
 
 Sistema de gestão e pedidos da hamburgueria Made in Minas, desenvolvido por fases.
 
-**Fases 1, 2, 3, 4A, 4B e 4C implementadas e validadas.** A Fase 4B foi integrada pelo [PR #3](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/3). A Fase 4C adiciona registro de pedidos manuais, consulta e histórico de confirmação/cancelamento, com aceite do usuário e autorização de publicação em 01/10/2026. Pagamentos serão o próximo incremento; estoque/CMV e atendimento por IA seguem nas fases planejadas.
+**Fases 1, 2, 3 e 4 implementadas e validadas nos incrementos descritos no roteiro.** A Fase 4C foi integrada pelo [PR #4](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/4). A Fase 4D acrescenta pagamentos manuais: recebimentos, troco, cancelamento de intenção e registro de devolução integral. O usuário concluiu o aceite e autorizou publicação e integração em 01/10/2026. Próximo incremento: cozinha/KDS (5A); expedição, impressão, estoque/CMV e atendimento por IA seguem nas fases planejadas.
 
 ## Estrutura
 
@@ -74,6 +74,8 @@ Detalhes e arquivos da interface: [Fase 2C](docs/staff-frontend.md). Na pasta do
 
 O carrinho ainda é temporário e é descartado ao sair da tela. Se o registro tiver resultado desconhecido, use **Tentar registro novamente**; a mesma tentativa retorna o pedido já salvo ou conclui a criação. Se sair ou perder a sessão, consulte **Pedidos** antes de montar outro carrinho.
 
+**Pagamentos:** faça novo login como administrador ou atendente e abra **Pedidos → Abrir → Pagamentos**. Defina dinheiro, Pix, crédito ou débito para o valor integral. Use **Registrar recebimento** somente após conferir o recebimento; em dinheiro, informe o valor entregue e confira o troco retornado pela API. Uma intenção pendente pode ser cancelada com motivo. Somente administrador registra uma devolução integral já realizada. Resolva pagamentos pendentes/recebidos antes de cancelar o pedido. Não há cobrança ou estorno bancário automático. Contratos, limites e roteiro de aceite: [Fase 4D](docs/payments.md).
+
 ## Verificar a fase
 
 Com os dois processos iniciados:
@@ -107,7 +109,7 @@ O fluxo local completo está em `scripts/Test-Quality.ps1`: formatação, testes
 powershell -NoProfile -File scripts/Test-Quality.ps1
 ```
 
-O GitHub Actions executa as verificações em pushes para `master` e pull requests. O PR #1 passou com 135 testes do backend e 106 do frontend antes da integração. Detalhes e limites: [manutenção técnica](docs/maintenance.md). O incremento atual está em [pedidos manuais](docs/orders.md), com validação local registrada em [validation.md](docs/validation.md).
+O GitHub Actions executa as verificações em pushes para `master` e pull requests. O PR #4 passou nos checks de backend e frontend antes da integração. Detalhes e limites: [manutenção técnica](docs/maintenance.md). O incremento atual está em [pagamentos manuais](docs/payments.md), com validação local registrada em [validation.md](docs/validation.md).
 
 ## Configuração e segurança
 
@@ -127,6 +129,7 @@ O GitHub Actions executa as verificações em pushes para `master` e pull reques
 - [Clientes e endereços](docs/customers.md)
 - [Carrinho da equipe](docs/cart.md)
 - [Pedidos manuais](docs/orders.md)
+- [Pagamentos manuais](docs/payments.md)
 - [Arquitetura](docs/architecture.md)
 - [Autenticação, administrador inicial e testes](docs/authentication.md)
 - [Gestão de funcionários e permissões](docs/users.md)

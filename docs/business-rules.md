@@ -1,7 +1,7 @@
 # Regras de negócio acordadas
 
 Estas regras orientam os módulos futuros; ainda não estão implementadas.
-As regras já implementadas por incremento constam em authentication.md, users.md, categories.md, products.md, ingredients.md, recipes.md, [customers.md](customers.md), [cart.md](cart.md) e [orders.md](orders.md). As regras de pedidos manuais da Fase 4C foram validadas pelo usuário em 01/10/2026.
+As regras já implementadas por incremento constam em authentication.md, users.md, categories.md, products.md, ingredients.md, recipes.md, [customers.md](customers.md), [cart.md](cart.md), [orders.md](orders.md) e [payments.md](payments.md). As regras de pedidos manuais da Fase 4C foram validadas pelo usuário em 01/10/2026. Pagamentos manuais integrais (4D) foram aceitos pelo usuário em 01/10/2026.
 
 - WhatsApp é canal de entrada por link; o atendimento próprio centraliza o pedido.
 - Backend/banco definem produtos, preços, promoções, estoque e totais. A IA não decide regras críticas.
@@ -11,6 +11,7 @@ As regras já implementadas por incremento constam em authentication.md, users.m
 - Status previstos: Novo, Confirmado, Em preparação, Pronto, Aguardando entrega, Saiu para entrega, Entregue, Finalizado e Cancelado.
 - Toda transição registra data/hora, responsável e motivo quando necessário. Na Fase 4C: Novo → Confirmado/Cancelado; Confirmado → Cancelado somente por administrador, sempre com motivo. Estados de produção serão definidos na fase 5.
 - Pagamento possui estado próprio. Confirmar pagamento e confirmar produção são operações distintas.
+- Na Fase 4D, valor integral em uma única forma por tentativa, sem cobrança online. Equipe confirma recebimento conferido; somente administrador registra devolução integral já realizada. Não se cancela pedido com pagamento pendente/recebido: primeiro resolver o pagamento, preservando histórico.
 - Cozinha recebe somente informações necessárias à produção; endereço e cobrança ficam com os perfis autorizados.
 - Administrador, atendente, cozinha e expedição têm permissões validadas pelo backend.
 - Cliente pode iniciar atendimento sem cadastro complexo. Acesso a dados pessoais e histórico exige verificação adequada.

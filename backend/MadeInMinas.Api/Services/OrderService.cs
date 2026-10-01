@@ -136,6 +136,9 @@ public sealed class OrderService(AppDbContext database, CartService cart, TimePr
             // Confirma disponibilidade atual sem reescrever preços e dados já registrados na compra.
             await cart.QuoteAsync(input, cancellationToken);
         }
+        if (request.Status == "Cancelled" && await database.Payments.AnyAsync(payment => payment.OrderId == id
+            && (payment.Status == "Pending" || payment.Status == "Received"), cancellationToken))
+            throw new OrderException(OrderError.OrderPaymentUnresolved, "Cancele o pagamento pendente ou registre a devolução do valor recebido antes de cancelar o pedido.");
         var previous = order.Status;
         order.Status = request.Status;
         order.Version++;

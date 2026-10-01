@@ -6,6 +6,8 @@ public static class AccessPolicies
     public const string ManageCatalog = "catalog.manage";
     public const string ManageCustomers = "customers.manage";
     public const string ManageOrders = "orders.manage";
+    public const string ManagePayments = "payments.manage";
+    public const string RefundPayments = "payments.refund";
     public const string WorkKitchen = "kitchen.work";
     public const string WorkDispatch = "dispatch.work";
 
@@ -19,6 +21,8 @@ public static class AccessPolicies
             [ManageCatalog] = ["Administrator"],
             [ManageCustomers] = ["Administrator", "Attendant"],
             [ManageOrders] = ["Administrator", "Attendant"],
+            [ManagePayments] = ["Administrator", "Attendant"],
+            [RefundPayments] = ["Administrator"],
             [WorkKitchen] = ["Administrator", "Kitchen"],
             [WorkDispatch] = ["Administrator", "Dispatch"]
         };

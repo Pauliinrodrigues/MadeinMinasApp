@@ -98,3 +98,16 @@ dotnet ef database update 20261001142005_AddManualOrders --project backend/MadeI
 ```
 
 O banco deste projeto é `made_in_minas`. Não use conexões de outros projetos. Branches não isolam o banco e nenhuma migration é aplicada automaticamente ao iniciar a API.
+
+## Pagamentos manuais — Fase 4D
+
+A migration `20261001180855_AddManualPayments` cria somente Payments e PaymentStatusHistory, com histórico, FKs, constraints e índice parcial de pagamento ativo por pedido. Não cria transações de demonstração nem integração bancária. Regras e testes: [pagamentos](../docs/payments.md).
+
+Depois de conferir a conexão exclusiva para **made_in_minas** e fazer backup:
+
+```powershell
+dotnet ef migrations script 20261001142005_AddManualOrders 20261001180855_AddManualPayments --project backend/MadeInMinas.Api
+dotnet ef database update 20261001180855_AddManualPayments --project backend/MadeInMinas.Api
+```
+
+Reinicie a API e faça novo login no frontend para carregar as permissões de pagamentos. O rollback desta migration remove as duas tabelas novas; depois de registrar pagamentos, preserve os dados e planeje a recuperação antes de qualquer rollback.

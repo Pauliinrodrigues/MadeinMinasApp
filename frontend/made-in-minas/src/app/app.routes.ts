@@ -4,6 +4,7 @@ import {
   catalogGuard,
   customersGuard,
   ordersGuard,
+  paymentsGuard,
   staffGuard,
 } from './core/auth/auth.guards';
 
@@ -29,6 +30,12 @@ export const routes: Routes = [
         canActivate: [ordersGuard],
         loadComponent: () =>
           import('./features/orders/orders.page').then((page) => page.OrdersPage),
+      },
+      {
+        path: 'pedidos/:id/pagamentos',
+        canActivate: [paymentsGuard],
+        loadComponent: () =>
+          import('./features/payments/payments.page').then((page) => page.PaymentsPage),
       },
       {
         path: 'pedidos/:id',

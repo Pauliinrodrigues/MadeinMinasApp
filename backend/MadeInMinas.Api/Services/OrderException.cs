@@ -8,6 +8,7 @@ public enum OrderError
     OrderVersionConflict,
     OrderTransitionDenied,
     OrderCancellationDenied,
+    OrderPaymentUnresolved,
     InvalidSession,
     PermissionDenied
 }
