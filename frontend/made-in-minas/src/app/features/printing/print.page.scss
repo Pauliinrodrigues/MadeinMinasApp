@@ -1,0 +1,48 @@
+:host {
+  display: block;
+  overflow-y: auto;
+  height: 100%;
+  background: #fff;
+  color: #000;
+}
+.print-tools {
+  max-width: 900px;
+}
+.receipt {
+  width: 72mm;
+  max-width: 100%;
+  margin: 1rem auto;
+  padding: 2mm;
+  font:
+    14px/1.4 Arial,
+    sans-serif;
+  overflow-wrap: anywhere;
+}
+.receipt.narrow {
+  width: 50mm;
+}
+.receipt.a4 {
+  width: 190mm;
+}
+.receipt h2 {
+  font-size: 20px;
+}
+.receipt-item {
+  break-inside: avoid;
+}
+.note {
+  white-space: pre-wrap;
+  font-weight: bold;
+}
+@media print {
+  :host {
+    overflow: visible;
+    height: auto;
+  }
+  .print-tools {
+    display: none;
+  }
+  .receipt {
+    margin: 0 auto;
+  }
+}

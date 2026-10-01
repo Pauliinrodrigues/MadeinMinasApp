@@ -297,7 +297,7 @@ public sealed class KitchenTests(AuthenticationFactory factory) : IClassFixture<
         var order = await CreateAsync(client);
         await factory.WithDatabaseAsync(async database =>
         {
-            var error = await Assert.ThrowsAsync<PostgresException>(() => database.Orders.Where(value => value.Id == order.Id).ExecuteUpdateAsync(set => set.SetProperty(value => value.Status, "Delivered")));
+            var error = await Assert.ThrowsAsync<PostgresException>(() => database.Orders.Where(value => value.Id == order.Id).ExecuteUpdateAsync(set => set.SetProperty(value => value.Status, "Unknown")));
             Assert.Equal(PostgresErrorCodes.CheckViolation, error.SqlState);
         });
         await factory.WithDatabaseAsync(async database =>

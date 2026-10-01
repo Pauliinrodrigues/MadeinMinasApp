@@ -279,7 +279,7 @@ public sealed class OrderTests(AuthenticationFactory factory) : IClassFixture<Au
         Assert.Equal(second.Id, Assert.Single((await client.GetFromJsonAsync<OrderPageResponse>($"/api/orders?search=%23{second.Number}"))!.Items).Id);
         Assert.Empty((await client.GetFromJsonAsync<OrderPageResponse>($"/api/orders?customerId={Guid.NewGuid()}"))!.Items);
         await ProblemAsync(await client.GetAsync($"/api/orders/{Guid.NewGuid()}"), "OrderNotFound", HttpStatusCode.NotFound);
-        foreach (var query in new[] { "page=0", "pageSize=101", "status=Delivered", "customerId=wrong" })
+        foreach (var query in new[] { "page=0", "pageSize=101", "status=Unknown", "customerId=wrong" })
             Assert.Equal(HttpStatusCode.BadRequest, (await client.GetAsync("/api/orders?" + query)).StatusCode);
     }
 

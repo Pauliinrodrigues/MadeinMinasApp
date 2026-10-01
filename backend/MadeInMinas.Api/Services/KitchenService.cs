@@ -10,6 +10,10 @@ namespace MadeInMinas.Api.Services;
 
 public sealed class KitchenService(AppDbContext database, TimeProvider clock, ILogger<KitchenService> logger)
 {
+    public async Task<KitchenOrderResponse> GetAsync(Guid id, CancellationToken cancellationToken) =>
+        await database.Orders.AsNoTracking().Where(order => order.Id == id).Select(Projection).SingleOrDefaultAsync(cancellationToken)
+        ?? throw new OrderException(OrderError.OrderNotFound, "Pedido não encontrado.");
+
     // A projeção limita o contrato aos dados de produção; não envia dados financeiros ou do cliente.
     private static readonly Expression<Func<Order, KitchenOrderResponse>> Projection = order => new(
         order.Id, order.Number, order.Fulfillment, order.Status, order.Version, order.Notes, order.CreatedAt,

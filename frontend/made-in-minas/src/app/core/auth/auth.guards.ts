@@ -60,3 +60,25 @@ export const kitchenGuard: CanActivateFn = () => {
   }
   return session.canWorkKitchen() ? true : router.createUrlTree(['/equipe']);
 };
+
+export const dispatchGuard: CanActivateFn = () => {
+  const session = inject(AuthSession);
+  const router = inject(Router);
+  if (!session.token()) {
+    return router.createUrlTree(['/entrar']);
+  }
+  return session.canWorkDispatch() ? true : router.createUrlTree(['/equipe']);
+};
+
+export const printGuard: CanActivateFn = (route) => {
+  const session = inject(AuthSession);
+  const router = inject(Router);
+  if (!session.token()) {
+    return router.createUrlTree(['/entrar']);
+  }
+  const mode = route.paramMap.get('mode');
+  return (mode === 'kitchen' && session.canPrintKitchen()) ||
+    (mode === 'dispatch' && session.canPrintDispatch())
+    ? true
+    : router.createUrlTree(['/equipe']);
+};

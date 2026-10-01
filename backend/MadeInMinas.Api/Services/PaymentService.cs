@@ -153,6 +153,8 @@ public sealed class PaymentService(AppDbContext database, TimeProvider clock, IL
             .SingleOrDefaultAsync(cancellationToken) ?? throw OrderNotFound();
     private static void RequireActiveOrder(Order order)
     {
+        if (order.Status == "Finalized")
+            throw new PaymentException(PaymentError.PaymentOrderFinalized, "Pedido finalizado não pode receber novos pagamentos. Devoluções continuam disponíveis ao administrador.");
         if (order.Status == "Cancelled")
             throw new PaymentException(PaymentError.PaymentOrderCancelled, "Pedido cancelado não pode receber novos pagamentos.");
     }

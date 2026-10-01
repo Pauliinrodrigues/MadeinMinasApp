@@ -5,6 +5,7 @@ public enum PaymentError
     PaymentNotFound,
     PaymentOrderNotFound,
     PaymentOrderCancelled,
+    PaymentOrderFinalized,
     PaymentOrderChanged,
     PaymentAlreadyActive,
     PaymentRequestConflict,

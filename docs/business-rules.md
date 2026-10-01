@@ -18,3 +18,5 @@ As regras já implementadas por incremento constam em authentication.md, users.m
 - Cliente pode iniciar atendimento sem cadastro complexo. Acesso a dados pessoais e histórico exige verificação adequada.
 - Ficha técnica fundamenta custo, consumo de estoque e CMV. Cancelamentos podem exigir estorno conforme o estágio de produção.
 - Estoque, financeiro e integrações devem suportar repetição de solicitações sem duplicar efeitos.
+
+- Fases 5B/5C: entrega passa por aguardando entrega, saída, entregue e finalizado; retirada vai de pronto a entregue e finalizado. Finalizar exige Received integral; não registra recebimento. Só administrador cancela antes da entrega, com motivo e pagamentos resolvidos. Após entrega não cancelar; após finalização não criar novo pagamento, mantendo devolução administrativa auditada. Comandas são consultas atuais com via de produção restrita; diálogo do navegador não comprova saída física. Regras e aceite do incremento entregue, registrado em 01/10/2026: [dispatch-printing.md](dispatch-printing.md).

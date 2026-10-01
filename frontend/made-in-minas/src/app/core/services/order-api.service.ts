@@ -4,7 +4,16 @@ import { timeout } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { CartQuote, CartQuoteInput } from './cart-api.service';
 
-export type OrderStatus = 'New' | 'Confirmed' | 'InPreparation' | 'Ready' | 'Cancelled';
+export type OrderStatus =
+  | 'New'
+  | 'Confirmed'
+  | 'InPreparation'
+  | 'Ready'
+  | 'AwaitingDelivery'
+  | 'OutForDelivery'
+  | 'Delivered'
+  | 'Finalized'
+  | 'Cancelled';
 export interface OrderSummary {
   id: string;
   number: number;
@@ -54,6 +63,10 @@ export function orderStatusLabel(status: OrderStatus): string {
     Confirmed: 'Confirmado',
     InPreparation: 'Em preparação',
     Ready: 'Pronto',
+    AwaitingDelivery: 'Aguardando entrega',
+    OutForDelivery: 'Saiu para entrega',
+    Delivered: 'Entregue',
+    Finalized: 'Finalizado',
     Cancelled: 'Cancelado',
   }[status];
 }

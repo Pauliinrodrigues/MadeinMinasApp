@@ -43,3 +43,5 @@ A Fase 5A usa a migration `20261001191445_AddKitchenStatuses` para ampliar apena
 - Pagamentos manuais têm histórico de tentativas e estados independentes do status do pedido. Não há referência de provedor nem dados sensíveis de cartão. Integração online e conciliação exigirão contratos próprios.
 
 Índices, limites de campos, constraints, transações e estratégias de concorrência serão implementados com cada módulo, acompanhados de migrations e testes.
+
+Migration 20261001201327_AddDispatchStatuses (5B/5C): estende somente CK_Orders_Status e CK_OrderStatusHistory_Transition com AwaitingDelivery, OutForDelivery, Delivered e Finalized. Modalidade e recebimento integral são validados transacionalmente pelo serviço. Sem nova tabela ou dados de demonstração. Rollback não pode apagar histórico para eliminar estados novos; ver [expedição e impressão](dispatch-printing.md).

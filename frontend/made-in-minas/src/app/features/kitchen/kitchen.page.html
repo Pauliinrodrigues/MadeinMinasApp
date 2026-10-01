@@ -30,6 +30,14 @@
       @for (order of column.items; track order.id) {
       <article class="panel kitchen-card" [attr.aria-label]="'Pedido ' + order.number">
         <h3>#{{ order.number }} · {{ order.fulfillment === 'Pickup' ? 'Retirada' : 'Entrega' }}</h3>
+        @if (session.canPrintKitchen()) {
+        <a
+          class="button"
+          [routerLink]="['/comanda', order.id, 'kitchen']"
+          [queryParams]="{ from: 'kitchen' }"
+          >Comanda de produção</a
+        >
+        }
         <p>Confirmado: {{ order.confirmedAt | date:'dd/MM/yyyy HH:mm':'-0300' }} (Brasília)</p>
         <p>
           Espera até iniciar:

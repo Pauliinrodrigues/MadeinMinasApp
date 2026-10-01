@@ -122,3 +122,14 @@ dotnet ef database update 20261001191445_AddKitchenStatuses --project backend/Ma
 ```
 
 Reinicie a API atualizada e faça novo login. Para voltar à migration anterior, não pode haver pedidos nem eventos nos novos estados; não apague histórico de produção para satisfazer as constraints antigas. Regras e roteiro: [cozinha/KDS](../docs/kitchen.md).
+
+## Migration de expedição — Fase 5B
+
+20261001201327_AddDispatchStatuses altera duas constraints existentes. Antes de aplicar em outra instalação, confirme exclusivamente made_in_minas, faça backup e revise a migration:
+
+```powershell
+dotnet ef migrations script 20261001191445_AddKitchenStatuses 20261001201327_AddDispatchStatuses --project backend/MadeInMinas.Api
+dotnet ef database update 20261001201327_AddDispatchStatuses --project backend/MadeInMinas.Api
+```
+
+Não é necessário reaplicar ao trocar de branch se já estiver registrada. Rollback falha quando pedidos ou eventos usam estados novos; não apagar/regravar histórico para forçar retorno. Impressão pelo navegador não cria tabelas ou exige credenciais extras. Operação e limites: [expedição e impressão](../docs/dispatch-printing.md).

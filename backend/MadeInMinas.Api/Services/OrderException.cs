@@ -9,6 +9,7 @@ public enum OrderError
     OrderTransitionDenied,
     OrderCancellationDenied,
     OrderPaymentUnresolved,
+    OrderPaymentRequired,
     InvalidSession,
     PermissionDenied
 }

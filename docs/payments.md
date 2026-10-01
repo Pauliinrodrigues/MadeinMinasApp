@@ -65,3 +65,5 @@ Pagamento dividido/parcial, cobrança online, conciliação, taxas, comprovantes
 - Testes: PaymentTests e atualização das permissões esperadas em AuthenticationTests; navegador em e2e/payments.spec.ts.
 - Frontend: core/services/payment-api.service.ts, features/payments, rotas/guard/permissões, mensagens e acesso pelo detalhe do pedido.
 - Documentação: README, payments, orders, modelo, API, decisões, regras, roteiro e validação.
+
+A Fase 5B exige pagamento Received integral para finalizar pedido. Entregue não registra recebimento automaticamente. Pedido Finalized não aceita novo pagamento nem recebimento, mas devolução integral realizada continua disponível ao administrador e não reabre o pedido. A expedição vê somente o resumo atual e solicita ao atendimento a conferência/registro. Ver [dispatch-printing.md](dispatch-printing.md).

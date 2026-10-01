@@ -17,6 +17,15 @@ export class AuthSession {
     () => this.profile()?.permissions.includes('catalog.manage') ?? false,
   );
   readonly notice = signal('');
+  readonly canWorkDispatch = computed(
+    () => this.profile()?.permissions.includes('dispatch.work') ?? false,
+  );
+  readonly canPrintKitchen = computed(
+    () => this.profile()?.permissions.includes('printing.kitchen') ?? false,
+  );
+  readonly canPrintDispatch = computed(
+    () => this.profile()?.permissions.includes('printing.dispatch') ?? false,
+  );
   readonly canWorkKitchen = computed(
     () => this.profile()?.permissions.includes('kitchen.work') ?? false,
   );

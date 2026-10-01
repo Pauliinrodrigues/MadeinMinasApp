@@ -12,7 +12,7 @@ Incremento na branch `feat/kitchen-kds`, após a Fase 4D aceita e integrada pelo
 - PUT /api/kitchen/orders/{id}/status recebe status (InPreparation ou Ready) e expectedVersion. Não aceita campos comerciais nem observações extras. Respostas reutilizam os erros Order* e no-store.
 - Cards exibem número, retirada/entrega, produtos, quantidades, observações, horário e tempos. Observações são texto livre já presente no pedido: a equipe deve reservar esses campos para instruções de produção, sem dados de cobrança/contato.
 - Atualização automática a cada 10 segundos e manual. Falha ou dados com mais de 30 segundos bloqueiam novas decisões; versão do backend continua sendo a proteção definitiva. Não há sobreposição de consultas, nem escrita enquanto se consulta. Confirmação visual antes de avançar; após falha de escrita, consultar novamente antes de decidir. Sair da página encerra os temporizadores e requisições.
-- Prontos permanecem consultáveis até o próximo incremento de expedição. Não haverá botão que simule entrega ou finalização. Impressão, notificações sonoras, estoque e indicadores ficam para etapas próprias.
+- Prontos permanecem na coluna até a expedição avançar o pedido; a cozinha não registra saída, entrega ou finalização. A Fase 5C adiciona uma via de produção pelo navegador. Notificações sonoras, estoque e indicadores continuam fora deste módulo.
 
 ## Testar manualmente
 
@@ -24,7 +24,7 @@ Incremento na branch `feat/kitchen-kds`, após a Fase 4D aceita e integrada pelo
 6. Para testar concorrência, deixe o mesmo pedido em duas sessões: a segunda ação com versão antiga deve exigir atualização. Para indisponibilidade, interrompa a conexão no navegador; cards antigos não autorizam novas ações e a consulta deve recuperar após reconexão.
 7. Se testar cancelamento durante/depois do preparo, use administrador, motivo e resolva os pagamentos antes. O pedido sai da fila na próxima consulta, em até 10 segundos enquanto a página estiver ativa e sem confirmação aberta.
 
-Os passos alteram pedidos de verdade no ambiente acessado. Use pedidos destinados à validação. Não há botão de expedição/finalização neste incremento; Prontos permanecem na fila. A sessão segue a validade já existente e pede novo login ao expirar.
+Os passos alteram pedidos de verdade no ambiente acessado. Use pedidos destinados à validação. Não há botão de expedição/finalização na cozinha; a equipe de expedição usa o painel próprio da Fase 5B. A sessão segue a validade já existente e pede novo login ao expirar.
 
 ## Arquivos e validação
 
@@ -34,3 +34,5 @@ Os passos alteram pedidos de verdade no ambiente acessado. Use pedidos destinado
 - Testes automatizados: PostgreSQL temporário isolado; navegador com API simulada, sem produzir nem receber pedidos reais. Resultados e limitações ficam em [validation.md](validation.md).
 
 A migration altera somente duas constraints, preservando tabelas e dados. Fazer backup antes de aplicar exclusivamente em made_in_minas. O rollback para os estados antigos só é possível se nenhum pedido ou evento usa InPreparation/Ready; não apagar nem reescrever histórico para forçar retorno. Aceite manual concluído pelo usuário em 01/10/2026, com commit, publicação e integração à master autorizados. Integrar por squash somente após os checks backend/frontend aprovados no commit final.
+
+A Fase 5A foi integrada pelo PR #6 (`06d73a5`) com checks aprovados. Na Fase 5B, expedição movimenta pedidos prontos para saída/retirada; eles deixam a coluna Pronto na próxima consulta. A via de produção passa a ser acessível pelo card, sob printing.kitchen. Ver [expedição e impressão](dispatch-printing.md).

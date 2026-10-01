@@ -8,6 +8,9 @@ export function apiError(error: unknown, login = false): string {
     PaymentNotFound: 'Pagamento não encontrado para este pedido.',
     PaymentOrderNotFound: 'Pedido não encontrado.',
     PaymentOrderCancelled: 'Pedido cancelado não pode receber novos pagamentos.',
+    PaymentOrderFinalized: 'Pedido finalizado não pode receber novos pagamentos.',
+    OrderPaymentRequired:
+      'Solicite ao atendimento o registro do recebimento integral antes de finalizar.',
     PaymentOrderChanged: 'O pedido mudou. Atualize os dados antes de definir o pagamento.',
     PaymentAlreadyActive:
       'O pedido já possui pagamento pendente ou recebido. Confira o pagamento atual.',
