@@ -1,0 +1,94 @@
+<section>
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">ATENDIMENTO</p>
+      <h1>Pedidos</h1>
+    </div>
+    <a class="button primary" routerLink="/equipe/carrinho">Novo pedido</a>
+  </div>
+  <p>Pedidos registrados pela equipe. Confirmar o pedido não registra pagamento.</p>
+  <form class="panel filters" (ngSubmit)="load()">
+    <label
+      >Buscar por número, cliente ou telefone<input
+        name="search"
+        type="search"
+        maxlength="120"
+        [(ngModel)]="search"
+    /></label>
+    <label
+      >Status<select name="status" [(ngModel)]="status">
+        <option value="">Todos</option>
+        <option value="New">Novo</option>
+        <option value="Confirmed">Confirmado</option>
+        <option value="Cancelled">Cancelado</option>
+      </select></label
+    >
+    <button class="primary" [disabled]="loading()">Buscar pedidos</button>
+  </form>
+  @if (error()) {
+  <p class="error" role="alert">{{ error() }}</p>
+  <button type="button" (click)="load(page)">Tentar novamente</button> } @if (loading()) {
+  <p role="status">Carregando pedidos…</p>
+  } @if (result(); as data) {
+  <p role="status">{{ data.totalCount }} pedido(s) encontrado(s).</p>
+  @if (data.items.length) {
+  <div class="table-scroll panel">
+    <table>
+      <caption class="sr-only">
+        Lista de pedidos
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Pedido</th>
+          <th scope="col">Cliente</th>
+          <th scope="col">Recebimento</th>
+          <th scope="col">Status</th>
+          <th scope="col">Total</th>
+          <th scope="col">Registrado (Brasília)</th>
+          <th scope="col">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (order of data.items; track order.id) {
+        <tr>
+          <td>#{{ order.number }}</td>
+          <td>{{ order.customerName }}</td>
+          <td>{{ order.fulfillment === 'Pickup' ? 'Retirada' : 'Entrega' }}</td>
+          <td>
+            <span class="badge" [class.inactive]="order.status === 'Cancelled'"
+              >{{ statusLabel(order.status) }}</span
+            >
+          </td>
+          <td>{{ formatPrice(order.total) }}</td>
+          <td>{{ order.createdAt | date:'dd/MM/yyyy HH:mm':'-0300' }}</td>
+          <td>
+            <a
+              class="button"
+              [routerLink]="[order.id]"
+              [attr.aria-label]="'Abrir pedido ' + order.number"
+              >Abrir</a
+            >
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  } @else {
+  <p class="panel">
+    Nenhum pedido nesta página. Ajuste os filtros ou registre um pedido no carrinho.
+  </p>
+  }
+  <div class="pagination">
+    <button type="button" (click)="load(page - 1)" [disabled]="page <= 1">Anterior</button
+    ><span>Página {{ page }}</span
+    ><button
+      type="button"
+      (click)="load(page + 1)"
+      [disabled]="page * data.pageSize >= data.totalCount"
+    >
+      Próxima
+    </button>
+  </div>
+  }
+</section>

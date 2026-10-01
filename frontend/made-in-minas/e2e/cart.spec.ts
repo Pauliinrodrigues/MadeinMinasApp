@@ -147,6 +147,9 @@ async function setup(page: Page, role = 'Attendant') {
         items,
         notes: input.notes,
         subtotal: items.reduce((sum, item) => sum + item.lineTotal, 0),
+        deliveryFee: input.deliveryFee,
+        total: items.reduce((sum, item) => sum + item.lineTotal, 0) + input.deliveryFee,
+        reviewToken: 'A'.repeat(64),
         calculatedAt: customer.createdAt,
       });
     }
@@ -196,6 +199,7 @@ for (const role of ['Administrator', 'Attendant']) {
       customerId: customer.id,
       fulfillment: 'Pickup',
       addressId: null,
+      deliveryFee: 0,
       items: [{ productId: product.id, quantity: 2, notes: 'Sem cebola' }],
       notes: 'Embalar separado',
     });
@@ -216,6 +220,8 @@ test('carrinho: entrega exige endereço e troca de cliente ou modalidade limpa s
   await page.getByRole('combobox', { name: 'Recebimento', exact: true }).selectOption('Delivery');
   await expect(review(page)).toBeDisabled();
   await page.getByRole('button', { name: 'Selecionar endereço Rua A, 12', exact: true }).click();
+  await expect(review(page)).toBeDisabled();
+  await page.getByLabel('Taxa de entrega (R$)', { exact: true }).fill('4.50');
   await review(page).click();
   await expect(summary(page)).toContainText('Portão verde');
   expect(state.quoted[0].addressId).toBe(address.id);
@@ -227,9 +233,9 @@ test('carrinho: entrega exige endereço e troca de cliente ou modalidade limpa s
   ).toBeVisible();
   await page.getByRole('combobox', { name: 'Recebimento', exact: true }).selectOption('Pickup');
   await review(page).click();
+  await expect(summary(page)).toContainText('João');
   expect(state.quoted[1].addressId).toBeNull();
   expect(state.quoted[1].customerId).toBe('customer-2');
-  await expect(summary(page)).toContainText('João');
 });
 
 test('carrinho: edição e remoção invalidam revisão e limites bloqueiam envio', async ({ page }) => {
@@ -298,6 +304,7 @@ test('carrinho: buscas, paginação e seleção fora da primeira página', async
   await page.getByRole('combobox', { name: 'Recebimento', exact: true }).selectOption('Delivery');
   await page.getByRole('button', { name: 'Próximos endereços', exact: true }).click();
   await page.getByRole('button', { name: 'Selecionar endereço Rua A, 39', exact: true }).click();
+  await page.getByLabel('Taxa de entrega (R$)', { exact: true }).fill('0');
   await page.getByRole('button', { name: 'Próximos produtos', exact: true }).click();
   await page.getByRole('button', { name: 'Adicionar Lanche 19', exact: true }).click();
   await page.getByLabel('Buscar produto', { exact: true }).fill('Uai');
@@ -323,6 +330,7 @@ test('carrinho: falhas de carregamento permitem nova busca e endereço é obriga
   await expect(page.getByRole('alert')).toHaveCount(1);
   await expect(review(page)).toBeDisabled();
   state.addressStatus = 200;
+  await page.getByLabel('Taxa de entrega (R$)', { exact: true }).fill('0');
   await page.getByRole('button', { name: 'Atualizar endereços', exact: true }).click();
   await page.getByRole('button', { name: 'Selecionar endereço Rua A, 12', exact: true }).click();
   await expect(review(page)).toBeEnabled();

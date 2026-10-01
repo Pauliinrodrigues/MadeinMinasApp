@@ -32,8 +32,16 @@ public sealed record CartQuoteRequest(
     Guid? AddressId = null,
     [StringLength(500)] string? Notes = null) : IValidatableObject
 {
+    public decimal? DeliveryFee { get; init; }
+
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
+        if (Fulfillment == "Delivery" && DeliveryFee is null)
+            yield return new ValidationResult("Informe a taxa de entrega, inclusive quando for zero.", [nameof(DeliveryFee)]);
+        if (DeliveryFee is < 0 or > 9999.99m || DeliveryFee is { } fee && decimal.Round(fee, 2) != fee)
+            yield return new ValidationResult("A taxa deve ser de R$ 0,00 a R$ 9.999,99, com até duas casas decimais.", [nameof(DeliveryFee)]);
+        if (Fulfillment == "Pickup" && DeliveryFee is not null and not 0)
+            yield return new ValidationResult("Retirada não deve incluir taxa de entrega.", [nameof(DeliveryFee)]);
         if (CustomerId == Guid.Empty)
             yield return new ValidationResult("Selecione um cliente.", [nameof(CustomerId)]);
         if (Fulfillment == "Delivery" && (AddressId is null || AddressId == Guid.Empty))
@@ -57,4 +65,9 @@ public sealed record CartAddressResponse(Guid Id, string Street, string Number, 
 public sealed record CartItemResponse(Guid ProductId, string Name, int Quantity, decimal UnitPrice,
     decimal LineTotal, string? Notes);
 public sealed record CartQuoteResponse(CartCustomerResponse Customer, string Fulfillment, CartAddressResponse? Address,
-    CartItemResponse[] Items, string? Notes, decimal Subtotal, DateTimeOffset CalculatedAt);
+    CartItemResponse[] Items, string? Notes, decimal Subtotal, DateTimeOffset CalculatedAt)
+{
+    public decimal DeliveryFee { get; init; }
+    public decimal Total { get; init; }
+    public string ReviewToken { get; init; } = "";
+}

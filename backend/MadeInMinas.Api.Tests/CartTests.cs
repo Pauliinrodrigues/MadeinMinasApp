@@ -117,7 +117,7 @@ public sealed class CartTests(AuthenticationFactory factory) : IClassFixture<Aut
             await database.Customers.Where(item => item.Id == customer.Id).ExecuteUpdateAsync(set => set.SetProperty(item => item.Name, "Maria Silva"));
             await database.Addresses.Where(item => item.Id == address.Id).ExecuteUpdateAsync(set => set.SetProperty(item => item.Number, "25B"));
         });
-        var response = await client.PostAsJsonAsync("/api/cart/quote", Input() with { Fulfillment = "Delivery", AddressId = address.Id });
+        var response = await client.PostAsJsonAsync("/api/cart/quote", Input() with { Fulfillment = "Delivery", AddressId = address.Id, DeliveryFee = 4.50m });
         response.EnsureSuccessStatusCode();
         var quote = (await response.Content.ReadFromJsonAsync<CartQuoteResponse>())!;
         Assert.Equal("Maria Silva", quote.Customer.Name);
@@ -125,6 +125,9 @@ public sealed class CartTests(AuthenticationFactory factory) : IClassFixture<Aut
         Assert.Equal("25B", quote.Address!.Number);
         Assert.Equal(address.Reference, quote.Address.Reference);
         Assert.Equal(address.PostalCode, quote.Address.PostalCode);
+        Assert.Equal(4.50m, quote.DeliveryFee);
+        Assert.Equal(79.75m, quote.Total);
+        Assert.Matches("^[A-F0-9]{64}$", quote.ReviewToken);
     }
 
     [Fact]
@@ -222,7 +225,7 @@ public sealed class CartTests(AuthenticationFactory factory) : IClassFixture<Aut
                 await database.Addresses.ExecuteUpdateAsync(set => set.SetProperty(item => item.CustomerId, other.Id));
             }
         });
-        await ProblemAsync(await client.PostAsJsonAsync("/api/cart/quote", Input() with { Fulfillment = "Delivery", AddressId = change == "missing" ? Guid.NewGuid() : address.Id }), "CartAddressUnavailable");
+        await ProblemAsync(await client.PostAsJsonAsync("/api/cart/quote", Input() with { Fulfillment = "Delivery", AddressId = change == "missing" ? Guid.NewGuid() : address.Id, DeliveryFee = 0 }), "CartAddressUnavailable");
     }
 
     [Fact]
@@ -232,6 +235,10 @@ public sealed class CartTests(AuthenticationFactory factory) : IClassFixture<Aut
         var invalid = new[]
         {
             Input() with { CustomerId = null }, Input() with { CustomerId = Guid.Empty },
+            Input() with { DeliveryFee = 1 }, Input() with { DeliveryFee = -1 },
+            Input() with { Fulfillment = "Delivery", AddressId = address.Id },
+            Input() with { Fulfillment = "Delivery", AddressId = address.Id, DeliveryFee = 10000 },
+            Input() with { Fulfillment = "Delivery", AddressId = address.Id, DeliveryFee = 0.001m },
             Input() with { Fulfillment = "Unknown" }, Input() with { Fulfillment = "Delivery" },
             Input() with { AddressId = address.Id }, Input() with { Items = [] }, Input() with { Items = null! },
             Input() with { Items = [null!] }, Input() with { Items = [new(null, 1)] },
@@ -251,7 +258,7 @@ public sealed class CartTests(AuthenticationFactory factory) : IClassFixture<Aut
     [Theory]
     [InlineData("total", false)]
     [InlineData("discount", false)]
-    [InlineData("deliveryFee", false)]
+    [InlineData("subtotal", false)]
     [InlineData("unitPrice", true)]
     [InlineData("name", true)]
     public async Task ClientCannotSupplyCommercialValuesOrNames(string field, bool nested)

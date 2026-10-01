@@ -2,7 +2,7 @@
 
 Modelagem incremental. InitialAccessControl implementa Users e Roles; AddCategories implementa Categories; AddProducts implementa Products com FK restrita para Categories; AddIngredients implementa Ingredients; AddRecipes implementa Recipes e RecipeItems; AddCustomersAndAddresses implementa Customers e Addresses. As demais entidades continuam propostas.
 
-A Fase 4B (carrinho/revisão) consulta esse modelo sem criar tabelas ou migrations. Carrinhos não são persistidos. Orders, OrderItems, Payments e OrderStatusHistory continuam propostos; suas regras de criação, cópias históricas e transições serão definidas no incremento de pedidos.
+A Fase 4B (carrinho/revisão) consulta esse modelo sem criar tabelas ou migrations. Carrinhos não são persistidos. A Fase 4C acrescenta Orders, OrderItems e OrderStatusHistory pela migration `20261001142005_AddManualOrders`; Payments continua proposta. Regras e tipos: [orders.md](orders.md).
 
 | Entidade | Dados e relações previstos | Fase |
 | --- | --- | --- |
@@ -17,10 +17,10 @@ A Fase 4B (carrinho/revisão) consulta esse modelo sem criar tabelas ou migratio
 | ComboItems | Combo, produto e quantidade | Catálogo, incremento específico |
 | Customers | Nome, nome normalizado, telefone brasileiro único com +55, ativo e datas UTC | 4A implementada |
 | Addresses | Cliente com FK restrita; rua, número textual, bairro, cidade, UF; complemento/CEP/referência opcionais, ativo e datas UTC | 4A implementada |
-| Orders | Número único, cliente, origem, status, totais, observações, cópia do endereço, datas | 4 |
-| OrderItems | Pedido, produto ou combo, quantidade, nome/preço da compra, observações | 4 |
+| Orders | Identity única, cliente/funcionário com FK restrita, chave idempotente por funcionário, origem Manual, status/versão, totais, cópias de cliente/endereço, datas UTC | 4C implementada e validada |
+| OrderItems | Pedido, produto com FK restrita, posição única no pedido, quantidade, nome/preço da compra, observações | 4C implementada e validada |
 | Payments | Pedido, método, valor, status, referência externa, datas | 4 |
-| OrderStatusHistory | Pedido, status anterior/novo, instante, responsável, motivo | 4 |
+| OrderStatusHistory | Pedido, versão única por pedido, status anterior/novo, instante UTC, funcionário com FK restrita e nome copiado, motivo | 4C implementada e validada |
 
 ## Diretrizes
 
@@ -30,10 +30,10 @@ A Fase 4B (carrinho/revisão) consulta esse modelo sem criar tabelas ou migratio
 - Inicialmente um perfil por usuário; políticas permitem ampliar as permissões.
 - Telefone normalizado para busca e deduplicação; conhecer um telefone não autentica um cliente.
 - Receita define consumo na unidade-base do ingrediente. Embalagens podem ser ingredientes.
-- OrderItems referencia produto OU combo, com restrição de integridade; composição escolhida fica registrada na compra.
+- OrderItems referencia produto nesta fase; vínculo com combo e cópia da composição serão definidos no incremento de combos.
 - Adicionais requerem catálogo, associação de opções permitidas e cópia das escolhas no pedido. A modelagem detalhada será feita no incremento de catálogo.
 - Alterações do cardápio ou endereço não reescrevem os valores históricos do pedido.
-- OrderStatusHistory registra transições. A Fase 4 detalhará também a auditoria de mudanças em itens, endereço e valores.
+- OrderStatusHistory registra criação e transições. Na Fase 4C, itens, endereço e valores do pedido não são editáveis; correções exigem cancelamento e novo registro.
 - Produtos referenciados por pedidos serão inativados.
 - Último pedido e contagem do cliente serão derivados inicialmente.
 - Fase 6 introduzirá movimentos de estoque e estornos; a regra de baixa será idempotente e transacional.

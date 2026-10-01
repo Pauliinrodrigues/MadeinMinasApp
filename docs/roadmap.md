@@ -7,7 +7,7 @@ Cada fase exige implementação, testes e validação antes da próxima.
 | 1 | Estrutura, API, frontend, banco/configuração, Git e documentação | Implementada; ver docs/validation.md |
 | 2 | Autenticação, usuários e permissões | 2A, 2B e 2C implementadas; acesso validado pelo usuário |
 | 3 | Categorias, produtos, ingredientes e fichas técnicas | 3A–3D implementadas e validadas; fichas técnicas integradas pelo PR #1 |
-| 4 | Clientes, pedidos, carrinho e pagamentos | 4A validada e integrada pelo PR #2; 4B carrinho/revisão implementados e aprovados pelo usuário em 01/10/2026 no PR #3; gravação de pedidos e pagamentos em incrementos posteriores |
+| 4 | Clientes, pedidos, carrinho e pagamentos | 4A e 4B validadas e integradas pelos PRs #2/#3; 4C pedidos manuais implementada e validada pelo usuário em 01/10/2026, com publicação e integração autorizadas; pagamentos serão o próximo incremento |
 | 5 | Cozinha/KDS, expedição e impressão | Planejada |
 | 6 | Estoque e CMV | Planejada |
 | 7 | Dashboard e relatórios | Planejada |
@@ -17,6 +17,8 @@ Cada fase exige implementação, testes e validação antes da próxima.
 | 11 | Melhorias e automações | Planejada |
 
 Combos e adicionais terão incrementos próprios associados ao catálogo e à montagem do pedido.
+
+A [Fase 4C](orders.md) registra pedidos manuais com numeração, cópias da compra, histórico, confirmação e cancelamento. Revisão exige taxa explícita para entrega. O aceite manual foi concluído em 01/10/2026. O próximo incremento será pagamentos (Fase 4D), com análise das regras antes de implementar; estados de produção continuam na fase 5.
 
 Em 30/09/2026 foram concluídas a [manutenção técnica](maintenance.md), as verificações do GitHub e o aceite manual das fichas técnicas. O PR #1 foi integrado na `master` por squash. Clientes e endereços também foram validados e integrados pelo PR #2, commit `511c228`. Em 01/10/2026, a branch `feat/staff-cart` iniciou a [Fase 4B](cart.md): carrinho temporário e revisão, sem persistência de pedidos. Regras, execução e aceite da etapa anterior estão em [clientes e endereços](customers.md).
 

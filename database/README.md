@@ -84,3 +84,17 @@ Depois, crie o administrador pelo comando local descrito em [autenticação](../
 ## Verificação
 
 `GET http://localhost:5080/health/ready` retorna 200 e `Healthy` somente quando o EF Core consegue abrir uma conexão autenticada. Esse teste não verifica tabelas ou migrations futuras.
+
+## Pedidos manuais — Fase 4C
+
+A migration `20261001142005_AddManualOrders` adiciona somente `Orders`, `OrderItems` e `OrderStatusHistory`, com chaves estrangeiras, índices e constraints. Não inclui pedidos de demonstração nem tabelas de pagamento/estoque. Revise [o modelo e as regras](../docs/orders.md) antes de aplicar.
+
+Com a conexão de desenvolvimento já conferida para **made_in_minas**, faça backup desse banco, confira o script e aplique a migration:
+
+```powershell
+$env:ASPNETCORE_ENVIRONMENT = 'Development'
+dotnet ef migrations script 20260930205926_AddCustomersAndAddresses 20261001142005_AddManualOrders --project backend/MadeInMinas.Api
+dotnet ef database update 20261001142005_AddManualOrders --project backend/MadeInMinas.Api
+```
+
+O banco deste projeto é `made_in_minas`. Não use conexões de outros projetos. Branches não isolam o banco e nenhuma migration é aplicada automaticamente ao iniciar a API.

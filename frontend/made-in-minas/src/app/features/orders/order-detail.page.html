@@ -1,0 +1,120 @@
+<section>
+  <div class="actions">
+    <a class="button" routerLink="/equipe/pedidos">Voltar aos pedidos</a
+    ><button type="button" (click)="load()" [disabled]="loading() || saving()">
+      Atualizar pedido
+    </button>
+  </div>
+  @if (loading()) {
+  <p role="status">Carregando pedido…</p>
+  } @if (error()) {
+  <p class="error" role="alert">{{ error() }}</p>
+  } @if (notice()) {
+  <p class="notice" role="status">{{ notice() }}</p>
+  } @if (order(); as data) {
+  <section class="panel" aria-labelledby="order-title">
+    <p class="eyebrow">ATENDIMENTO MANUAL</p>
+    <h1 id="order-title">Pedido #{{ data.number }}</h1>
+    <p>
+      Status: <strong>{{ statusLabel(data.status) }}</strong> · {{ data.fulfillment === 'Pickup' ?
+      'Retirada' : 'Entrega' }}
+    </p>
+    <p>Registrado em {{ data.createdAt | date:'dd/MM/yyyy HH:mm:ss':'-0300' }} (Brasília).</p>
+    <p>{{ data.customer.name }} · {{ data.customer.phone }}</p>
+    @if (data.address; as address) {
+    <p>
+      {{ address.street }}, {{ address.number }} · {{ address.neighborhood }} · {{ address.city
+      }}/{{ address.state }}<br />{{ address.complement }} {{ address.postalCode }} {{
+      address.reference }}
+    </p>
+    }
+    <ul>
+      @for (item of data.items; track $index) {
+      <li>
+        <strong>{{ item.quantity }} × {{ item.name }}</strong> · {{ formatPrice(item.unitPrice) }}
+        por unidade · {{ formatPrice(item.lineTotal) }}@if (item.notes) {
+        <p>Observações: {{ item.notes }}</p>
+        }
+      </li>
+      }
+    </ul>
+    @if (data.notes) {
+    <p>Observações gerais: {{ data.notes }}</p>
+    }
+    <p>Subtotal: {{ formatPrice(data.subtotal) }}</p>
+    <p>Taxa de entrega: {{ formatPrice(data.deliveryFee) }}</p>
+    <p>Total: <strong>{{ formatPrice(data.total) }}</strong></p>
+    <p class="hint">
+      Os dados acima são os registrados na compra. Confirmar não registra pagamento. Para corrigir
+      itens ou valores, cancele e registre outro pedido.
+    </p>
+    <div class="actions">
+      @if (data.status === 'New') {
+      <button
+        type="button"
+        class="primary"
+        (click)="requestStatus('Confirmed')"
+        [disabled]="saving() || needsRefresh()"
+      >
+        Confirmar pedido
+      </button>
+      } @if (canCancel()) {
+      <button
+        type="button"
+        (click)="requestStatus('Cancelled')"
+        [disabled]="saving() || needsRefresh()"
+      >
+        Cancelar pedido
+      </button>
+      }
+    </div>
+    @if (data.status === 'Confirmed' && !canCancel()) {
+    <p>Para cancelar este pedido confirmado, solicite ao administrador.</p>
+    }
+  </section>
+  @if (pending(); as status) {
+  <section class="panel" aria-label="Confirmar alteração do pedido">
+    <h2>{{ status === 'Confirmed' ? 'Confirmar este pedido?' : 'Cancelar este pedido?' }}</h2>
+    @if (status === 'Cancelled') {
+    <p>O cancelamento é definitivo e ficará no histórico.</p>
+    <label
+      >Motivo do cancelamento<textarea
+        maxlength="500"
+        rows="3"
+        [(ngModel)]="reason"
+        [disabled]="saving()"
+      ></textarea>
+    </label>
+    } @else {
+    <p>Confira os itens e o endereço. A disponibilidade será verificada novamente.</p>
+    }
+    <div class="actions">
+      <button
+        type="button"
+        class="primary"
+        (click)="changeStatus()"
+        [disabled]="saving() || (status === 'Cancelled' && !reason.trim())"
+      >
+        {{ saving() ? 'Salvando…' : 'Confirmar alteração' }}</button
+      ><button type="button" (click)="pending.set(null)" [disabled]="saving()">Voltar</button>
+    </div>
+  </section>
+  }
+  <section class="panel" aria-labelledby="history-title">
+    <h2 id="history-title">Histórico do pedido</h2>
+    <ol>
+      @for (event of data.history; track event.version) {
+      <li>
+        <p>
+          <strong>{{ statusLabel(event.toStatus) }}</strong> · {{ event.occurredAt |
+          date:'dd/MM/yyyy HH:mm:ss':'-0300' }} (Brasília) · {{ event.actorName }}
+        </p>
+        @if (event.reason) {
+        <p>Motivo: {{ event.reason }}</p>
+        }
+      </li>
+      }
+    </ol>
+  </section>
+  }
+</section>

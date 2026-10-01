@@ -25,6 +25,18 @@ export const routes: Routes = [
       import('./features/staff/staff-layout.page').then((page) => page.StaffLayoutPage),
     children: [
       {
+        path: 'pedidos',
+        canActivate: [ordersGuard],
+        loadComponent: () =>
+          import('./features/orders/orders.page').then((page) => page.OrdersPage),
+      },
+      {
+        path: 'pedidos/:id',
+        canActivate: [ordersGuard],
+        loadComponent: () =>
+          import('./features/orders/order-detail.page').then((page) => page.OrderDetailPage),
+      },
+      {
         path: 'carrinho',
         canActivate: [ordersGuard],
         loadComponent: () => import('./features/cart/cart.page').then((page) => page.CartPage),
