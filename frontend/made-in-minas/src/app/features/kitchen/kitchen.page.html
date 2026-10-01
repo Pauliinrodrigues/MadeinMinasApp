@@ -1,0 +1,104 @@
+<section>
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">PRODUÇÃO</p>
+      <h1>Cozinha</h1>
+    </div>
+    <button type="button" (click)="load()" [disabled]="loading() || saving()">
+      Atualizar painel
+    </button>
+  </div>
+  <p>
+    Pedidos confirmados pelo atendimento, do mais antigo ao mais recente. Atualização a cada 10
+    segundos.
+  </p>
+  @if (board(); as data) {
+  <p>Última atualização: {{ data.serverTime | date:'dd/MM/yyyy HH:mm:ss':'-0300' }} (Brasília).</p>
+  } @if (loading()) {
+  <p role="status">Atualizando painel…</p>
+  } @if (error()) {
+  <p class="error" role="alert">{{ error() }}</p>
+  } @if (stale() && board() && !error()) {
+  <p class="error" role="alert">Dados desatualizados. Atualize o painel para continuar.</p>
+  } @if (notice()) {
+  <p class="notice" role="status">{{ notice() }}</p>
+  } @if (board(); as data) {
+  <div class="kitchen-board" [class.unavailable]="needsRefresh() || stale()">
+    @for (column of data.columns; track column.status) {
+    <section class="kitchen-column" [attr.aria-label]="statusLabel(column.status)">
+      <h2>{{ statusLabel(column.status) }} <span class="badge">{{ column.totalCount }}</span></h2>
+      @for (order of column.items; track order.id) {
+      <article class="panel kitchen-card" [attr.aria-label]="'Pedido ' + order.number">
+        <h3>#{{ order.number }} · {{ order.fulfillment === 'Pickup' ? 'Retirada' : 'Entrega' }}</h3>
+        <p>Confirmado: {{ order.confirmedAt | date:'dd/MM/yyyy HH:mm':'-0300' }} (Brasília)</p>
+        <p>
+          Espera até iniciar:
+          <strong>{{ minutes(order.confirmedAt, order.preparationStartedAt) }}</strong>
+        </p>
+        @if (order.preparationStartedAt) {
+        <p>Preparo: <strong>{{ minutes(order.preparationStartedAt, order.readyAt) }}</strong></p>
+        } @if (order.readyAt) {
+        <p>Pronto há: <strong>{{ minutes(order.readyAt) }}</strong></p>
+        }
+        <ul>
+          @for (item of order.items; track item.position) {
+          <li>
+            <strong>{{ item.quantity }} × {{ item.name }}</strong>@if (item.notes) {
+            <p class="production-note">{{ item.notes }}</p>
+            }
+          </li>
+          }
+        </ul>
+        @if (order.notes) {
+        <p class="production-note"><strong>Observações:</strong> {{ order.notes }}</p>
+        } @if (order.status !== 'Ready') {
+        <button
+          type="button"
+          class="primary"
+          (click)="choose(order)"
+          [disabled]="blocked() || pending() !== null"
+          [attr.aria-label]="(order.status === 'Confirmed' ? 'Iniciar preparo do pedido ' : 'Marcar pronto o pedido ') + order.number"
+        >
+          {{ order.status === 'Confirmed' ? 'Iniciar preparo' : 'Marcar pronto' }}
+        </button>
+        } @else {
+        <p class="ready-label">Pronto para expedição</p>
+        } @if (pending(); as change) { @if (change.order.id === order.id) {
+        <section class="panel confirmation" aria-label="Confirmar etapa de produção">
+          <h4>Pedido #{{ change.order.number }}</h4>
+          <p>
+            {{ change.input.status === 'InPreparation' ? 'Iniciar a preparação deste pedido?' :
+            'Todos os itens deste pedido estão prontos?' }}
+          </p>
+          <div class="actions">
+            <button type="button" class="primary" (click)="confirm()" [disabled]="blocked()">
+              {{ saving() ? 'Salvando…' : 'Confirmar etapa' }}</button
+            ><button type="button" (click)="pending.set(null)" [disabled]="saving()">Voltar</button>
+          </div>
+        </section>
+        } }
+      </article>
+      } @empty {
+      <p>Nenhum pedido nesta coluna.</p>
+      }
+      <div class="pagination">
+        <button
+          type="button"
+          (click)="turnPage(column, column.page - 1)"
+          [disabled]="blocked() || pending() !== null || column.page <= 1"
+        >
+          Anterior</button
+        ><span>Página {{ column.page }}</span
+        ><button
+          type="button"
+          (click)="turnPage(column, column.page + 1)"
+          [disabled]="blocked() || pending() !== null || column.page * column.pageSize >= column.totalCount"
+        >
+          Próxima
+        </button>
+      </div>
+    </section>
+    }
+  </div>
+  }
+</section>

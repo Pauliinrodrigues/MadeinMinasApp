@@ -4,7 +4,7 @@ import { timeout } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { CartQuote, CartQuoteInput } from './cart-api.service';
 
-export type OrderStatus = 'New' | 'Confirmed' | 'Cancelled';
+export type OrderStatus = 'New' | 'Confirmed' | 'InPreparation' | 'Ready' | 'Cancelled';
 export interface OrderSummary {
   id: string;
   number: number;
@@ -49,7 +49,13 @@ export interface OrderStatusInput {
   reason: string | null;
 }
 export function orderStatusLabel(status: OrderStatus): string {
-  return { New: 'Novo', Confirmed: 'Confirmado', Cancelled: 'Cancelado' }[status];
+  return {
+    New: 'Novo',
+    Confirmed: 'Confirmado',
+    InPreparation: 'Em preparação',
+    Ready: 'Pronto',
+    Cancelled: 'Cancelado',
+  }[status];
 }
 
 @Injectable({ providedIn: 'root' })

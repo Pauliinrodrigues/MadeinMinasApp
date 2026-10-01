@@ -13,6 +13,7 @@ As regras já implementadas por incremento constam em authentication.md, users.m
 - Pagamento possui estado próprio. Confirmar pagamento e confirmar produção são operações distintas.
 - Na Fase 4D, valor integral em uma única forma por tentativa, sem cobrança online. Equipe confirma recebimento conferido; somente administrador registra devolução integral já realizada. Não se cancela pedido com pagamento pendente/recebido: primeiro resolver o pagamento, preservando histórico.
 - Cozinha recebe somente informações necessárias à produção; endereço e cobrança ficam com os perfis autorizados.
+- Na Fase 5A, só Confirmed entra na fila; kitchen.work avança Confirmed → InPreparation → Ready. Pagamento não libera produção automaticamente. Horários e autor ficam no histórico; administrador pode cancelar durante/depois do preparo com motivo e pagamento resolvido. Observações livres devem conter instruções de produção, sem dados de contato/cobrança. Aceite do KDS concluído em 01/10/2026; [regras e validação](kitchen.md).
 - Administrador, atendente, cozinha e expedição têm permissões validadas pelo backend.
 - Cliente pode iniciar atendimento sem cadastro complexo. Acesso a dados pessoais e histórico exige verificação adequada.
 - Ficha técnica fundamenta custo, consumo de estoque e CMV. Cancelamentos podem exigir estorno conforme o estágio de produção.

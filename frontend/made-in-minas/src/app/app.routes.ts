@@ -5,6 +5,7 @@ import {
   customersGuard,
   ordersGuard,
   paymentsGuard,
+  kitchenGuard,
   staffGuard,
 } from './core/auth/auth.guards';
 
@@ -25,6 +26,12 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/staff/staff-layout.page').then((page) => page.StaffLayoutPage),
     children: [
+      {
+        path: 'cozinha',
+        canActivate: [kitchenGuard],
+        loadComponent: () =>
+          import('./features/kitchen/kitchen.page').then((page) => page.KitchenPage),
+      },
       {
         path: 'pedidos',
         canActivate: [ordersGuard],
