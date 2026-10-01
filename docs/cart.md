@@ -1,6 +1,6 @@
 # Carrinho da equipe — Fase 4B
 
-Aceite manual concluído pelo usuário em 01/10/2026, com autorização para commit e abertura de pull request da branch `feat/staff-cart` para `master`. A integração será uma etapa separada.
+Aceite manual concluído pelo usuário em 01/10/2026. O [PR #3](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/3) registra a revisão da branch `feat/staff-cart` para `master`; o usuário também autorizou sua integração, condicionada à aprovação dos checks de qualidade do commit final.
 
 ## Escopo
 

@@ -2,7 +2,7 @@
 
 Sistema de gestão e pedidos da hamburgueria Made in Minas, desenvolvido por fases.
 
-**Fases 1, 2, 3, 4A e 4B implementadas e validadas.** A Fase 4B adiciona o carrinho temporário da equipe e a revisão dos valores pela API, na branch `feat/staff-cart`, com aceite manual concluído em 01/10/2026. A gravação de pedidos, pagamentos, estoque/CMV e atendimento por IA seguem para os próximos incrementos.
+**Fases 1, 2, 3, 4A e 4B implementadas e validadas.** A Fase 4B adiciona o carrinho temporário da equipe e a revisão dos valores pela API, com aceite manual concluído em 01/10/2026 e revisão no [PR #3](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/3). A gravação de pedidos, pagamentos, estoque/CMV e atendimento por IA seguem para os próximos incrementos.
 
 ## Estrutura
 

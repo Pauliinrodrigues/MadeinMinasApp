@@ -7,7 +7,7 @@ Cada fase exige implementação, testes e validação antes da próxima.
 | 1 | Estrutura, API, frontend, banco/configuração, Git e documentação | Implementada; ver docs/validation.md |
 | 2 | Autenticação, usuários e permissões | 2A, 2B e 2C implementadas; acesso validado pelo usuário |
 | 3 | Categorias, produtos, ingredientes e fichas técnicas | 3A–3D implementadas e validadas; fichas técnicas integradas pelo PR #1 |
-| 4 | Clientes, pedidos, carrinho e pagamentos | 4A validada e integrada pelo PR #2; 4B carrinho/revisão implementados e aprovados pelo usuário em 01/10/2026, aguardando integração; gravação de pedidos e pagamentos em incrementos posteriores |
+| 4 | Clientes, pedidos, carrinho e pagamentos | 4A validada e integrada pelo PR #2; 4B carrinho/revisão implementados e aprovados pelo usuário em 01/10/2026 no PR #3; gravação de pedidos e pagamentos em incrementos posteriores |
 | 5 | Cozinha/KDS, expedição e impressão | Planejada |
 | 6 | Estoque e CMV | Planejada |
 | 7 | Dashboard e relatórios | Planejada |
