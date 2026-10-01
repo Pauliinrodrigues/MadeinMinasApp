@@ -34,6 +34,7 @@ export class OrderDetailPage {
   readonly needsRefresh = signal(false);
   readonly statusLabel = orderStatusLabel;
   readonly formatPrice = formatProductPrice;
+  readonly canManagePayments = this.session.canManagePayments;
   reason = '';
 
   constructor() {

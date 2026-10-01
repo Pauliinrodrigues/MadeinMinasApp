@@ -42,3 +42,12 @@ export const ordersGuard: CanActivateFn = () => {
   }
   return session.canManageOrders() ? true : router.createUrlTree(['/equipe']);
 };
+
+export const paymentsGuard: CanActivateFn = () => {
+  const session = inject(AuthSession);
+  const router = inject(Router);
+  if (!session.token()) {
+    return router.createUrlTree(['/entrar']);
+  }
+  return session.canManagePayments() ? true : router.createUrlTree(['/equipe']);
+};

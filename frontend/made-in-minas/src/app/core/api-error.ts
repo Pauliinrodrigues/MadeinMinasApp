@@ -5,6 +5,20 @@ export function apiError(error: unknown, login = false): string {
     return 'Não foi possível concluir. Verifique a conexão e tente novamente.';
   }
   const codes: Record<string, string> = {
+    PaymentNotFound: 'Pagamento não encontrado para este pedido.',
+    PaymentOrderNotFound: 'Pedido não encontrado.',
+    PaymentOrderCancelled: 'Pedido cancelado não pode receber novos pagamentos.',
+    PaymentOrderChanged: 'O pedido mudou. Atualize os dados antes de definir o pagamento.',
+    PaymentAlreadyActive:
+      'O pedido já possui pagamento pendente ou recebido. Confira o pagamento atual.',
+    PaymentRequestConflict:
+      'Esta tentativa já foi registrada com outro conteúdo. Confira o histórico antes de continuar.',
+    PaymentVersionConflict: 'O pagamento foi alterado por outro atendimento. Atualize o histórico.',
+    PaymentTransitionDenied: 'Esta alteração não é permitida para o pagamento atual.',
+    PaymentInvalidCash:
+      'Em dinheiro, informe o valor entregue, igual ou maior que o pedido. Nas demais formas, não informe dinheiro entregue.',
+    OrderPaymentUnresolved:
+      'Cancele o pagamento pendente ou registre a devolução do valor recebido antes de cancelar o pedido.',
     OrderNotFound: 'Pedido não encontrado.',
     OrderReviewChanged: 'Os dados da compra mudaram. Revise os valores e o endereço novamente.',
     OrderRequestConflict:

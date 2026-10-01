@@ -12,7 +12,7 @@ flowchart LR
 
 ## Backend
 
-Controllers expõem HTTP, DTOs definem contratos e Services serão introduzidos quando houver regras de negócio. O AppDbContext concentra o acesso ao banco. Configurações de entidades ficarão em Data/Configurations e migrations em Data/Migrations.
+Controllers expõem HTTP, DTOs definem contratos e Services concentram regras de negócio. O AppDbContext concentra o acesso ao banco. Configurações de entidades ficam em Data/Configurations e migrations em Data/Migrations.
 
 A Fase 2A adiciona AuthController, RolesController, DTOs de autenticação, serviços de login/bootstrap, políticas e validação JWT. Users e Roles são persistidos pelo AppDbContext. Não há repository genérico, múltiplos projetos de domínio, CQRS ou barramento.
 
@@ -32,7 +32,7 @@ A Fase 2C mantém JWT em memória, sem persistência/refresh token. O intercepto
 
 Autenticação e autorização de funcionários já existem no backend. Cliente público e funcionário serão identidades distintas. Preços, permissões, status e totais serão definidos pelo backend. Integrações de IA ficarão atrás de contratos introduzidos quando esse módulo for implementado.
 
-JWT foi introduzido na Fase 2A; gestão de usuários, na Fase 2B; login e administração no frontend, na Fase 2C. KDS, impressão, pagamentos e infraestrutura de produção seguem nas fases posteriores.
+JWT foi introduzido na Fase 2A; gestão de usuários, na Fase 2B; login e administração no frontend, na Fase 2C. KDS, impressão, integrações bancárias e infraestrutura de produção seguem nas fases posteriores.
 
 A Fase 3A introduz CategoriesController, DTOs, CategoryService, configuração EF e migration AddCategories, com páginas em features/catalog. catalog.manage separa administração de catálogo da gestão de funcionários. Não há novo repository nem camada adicional; regras e testes constam em [categories.md](categories.md).
 
@@ -45,3 +45,5 @@ A Fase 3D liga Products e Ingredients por Recipes (uma por produto) e RecipeItem
 A Fase 4A adiciona CustomersController, CustomerService, contratos, validação de telefone, configurações EF e páginas em features/customers. Customers e Addresses têm status independentes e escrita transacional. A permissão customers.manage inclui atendente; o catálogo continua exclusivo do administrador. A API não autentica clientes por telefone. Detalhes: [customers.md](customers.md).
 
 A Fase 4B adiciona CartController, CartService e DTOs de consulta/revisão, sem novas entidades. O carrinho pertence à página Angular e usa a permissão existente orders.manage. O backend calcula valores em decimal com leituras AsNoTracking em transação RepeatableRead, sem reservar preço/disponibilidade. A futura confirmação deve revalidar os dados e gravar cópias históricas na mesma transação do pedido. Detalhes: [cart.md](cart.md).
+
+A Fase 4C persiste Orders, OrderItems e OrderStatusHistory pelo OrderService, com cópias comerciais, numeração, idempotência e transições versionadas. A Fase 4D adiciona PaymentService, Payments e PaymentStatusHistory no mesmo padrão, sem novas dependências. Pagamentos são manuais e independentes da produção; o bloqueio transacional do pedido coordena gravações de pagamento e cancelamento. A página em features/payments é acessada pelo detalhe do pedido e mantém apenas em memória a tentativa com resultado incerto. Detalhes: [orders.md](orders.md) e [payments.md](payments.md).

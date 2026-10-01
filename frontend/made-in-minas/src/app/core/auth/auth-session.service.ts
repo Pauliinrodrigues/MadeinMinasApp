@@ -23,6 +23,12 @@ export class AuthSession {
   readonly canManageOrders = computed(
     () => this.profile()?.permissions.includes('orders.manage') ?? false,
   );
+  readonly canManagePayments = computed(
+    () => this.profile()?.permissions.includes('payments.manage') ?? false,
+  );
+  readonly canRefundPayments = computed(
+    () => this.profile()?.permissions.includes('payments.refund') ?? false,
+  );
 
   token(): string | null {
     if (this.accessToken && Date.now() >= this.expiration) {

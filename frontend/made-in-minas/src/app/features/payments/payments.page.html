@@ -1,0 +1,200 @@
+<section>
+  <div class="actions">
+    @if (!saving()) {
+    <a class="button" [routerLink]="['/equipe/pedidos', orderId]">Voltar ao pedido</a>
+    }
+    <button
+      type="button"
+      (click)="load()"
+      [disabled]="loading() || saving() || retryCommand() !== null"
+    >
+      Atualizar pagamentos
+    </button>
+  </div>
+  <h1>Pagamentos</h1>
+  <p>Registre os valores já conferidos pela equipe. Pix e cartão são recebidos fora desta tela.</p>
+  @if (loading()) {
+  <p role="status">Carregando pagamentos…</p>
+  } @if (error()) {
+  <p class="error" role="alert">{{ error() }}</p>
+  } @if (notice()) {
+  <p class="notice" role="status">{{ notice() }}</p>
+  } @if (retryCommand()) {
+  <button type="button" class="primary" (click)="retry()" [disabled]="saving()">
+    {{ saving() ? 'Registrando…' : 'Repetir registro' }}
+  </button>
+  <p class="hint">
+    Se sair desta tela, consulte o histórico do pedido ao voltar, antes de registrar qualquer outra
+    ação.
+  </p>
+  } @if (result(); as data) {
+  <section class="panel" aria-labelledby="payment-summary-title">
+    <h2 id="payment-summary-title">Pedido #{{ data.orderNumber }}</h2>
+    <p>Status do pedido: <strong>{{ orderStatusLabel(data.orderStatus) }}</strong></p>
+    <p>Total do pedido: <strong>{{ formatPrice(data.orderTotal) }}</strong></p>
+    <p>Recebido, descontadas devoluções: {{ formatPrice(data.receivedAmount) }}</p>
+    <p>Saldo a receber: <strong>{{ formatPrice(data.balance) }}</strong></p>
+    @if (data.orderStatus === 'Cancelled') {
+    <p>Pedido cancelado. Novos pagamentos não estão disponíveis.</p>
+    }
+  </section>
+  @if (data.activePayment; as payment) {
+  <section class="panel" aria-labelledby="active-payment-title">
+    <h2 id="active-payment-title">Pagamento atual</h2>
+    <p>
+      <strong>{{ statusLabel(payment.status) }}</strong> · {{ methodLabel(payment.method) }} · {{
+      formatPrice(payment.amount) }}
+    </p>
+    @if (payment.cashTendered !== null) {
+    <p>
+      Dinheiro entregue: {{ formatPrice(payment.cashTendered) }} · Troco: {{
+      formatPrice(payment.changeAmount!) }}
+    </p>
+    }
+    <div class="actions">
+      @if (payment.status === 'Pending') {
+      <button
+        type="button"
+        class="primary"
+        (click)="choose('receive')"
+        [disabled]="blocked() || data.orderStatus === 'Cancelled'"
+      >
+        Registrar recebimento
+      </button>
+      <button type="button" (click)="choose('cancel')" [disabled]="blocked()">
+        Cancelar intenção de pagamento
+      </button>
+      } @if (payment.status === 'Received' && canRefund()) {
+      <button type="button" (click)="choose('refund')" [disabled]="blocked()">
+        Registrar devolução realizada
+      </button>
+      }
+    </div>
+    @if (payment.status === 'Received' && !canRefund()) {
+    <p>Para registrar uma devolução já realizada, solicite ao administrador.</p>
+    } @if (action(); as operation) {
+    <form (ngSubmit)="submit()" aria-label="Confirmar registro de pagamento">
+      @if (operation === 'receive') {
+      <h3>Recebimento de {{ formatPrice(payment.amount) }}</h3>
+      @if (payment.method === 'Cash') {
+      <label
+        >Dinheiro entregue pelo cliente (R$)<input
+          type="number"
+          name="cash"
+          min="0"
+          max="9999999999.99"
+          step="0.01"
+          inputmode="decimal"
+          [(ngModel)]="cashTendered"
+          [disabled]="blocked()"
+      /></label>
+      <p class="hint">Informe o dinheiro entregue. O troco será exibido após o registro.</p>
+      }
+      <label class="checkbox"
+        ><input
+          type="checkbox"
+          name="received"
+          [(ngModel)]="acknowledged"
+          [disabled]="blocked()"
+        />Confirmei o recebimento e conferi o valor.</label
+      >
+      } @else {
+      <h3>
+        {{ operation === 'refund' ? 'Devolução integral de ' + formatPrice(payment.amount) :
+        'Cancelar esta intenção de pagamento?' }}
+      </h3>
+      @if (operation === 'refund') {
+      <p>
+        Faça a devolução pelo meio utilizado no recebimento. Este registro não movimenta dinheiro.
+      </p>
+      <label class="checkbox"
+        ><input
+          type="checkbox"
+          name="refunded"
+          [(ngModel)]="acknowledged"
+          [disabled]="blocked()"
+        />Já devolvi o valor integral e conferi a devolução.</label
+      >
+      }
+      <label
+        >Motivo<textarea
+          name="reason"
+          maxlength="500"
+          rows="3"
+          [(ngModel)]="reason"
+          [disabled]="blocked()"
+        ></textarea>
+      </label>
+      }
+      <div class="actions">
+        <button class="primary" [disabled]="!validAction()">Confirmar registro</button>
+        <button type="button" (click)="action.set(null)" [disabled]="blocked()">Voltar</button>
+      </div>
+    </form>
+    }
+  </section>
+  } @else if (data.orderStatus !== 'Cancelled') {
+  <form class="panel" (ngSubmit)="create()" aria-label="Definir pagamento">
+    <h2>Definir pagamento</h2>
+    <p>
+      Uma forma para o valor integral de {{ formatPrice(data.orderTotal) }}. O recebimento será
+      confirmado em seguida.
+    </p>
+    <label
+      >Forma de pagamento<select name="method" [(ngModel)]="method" [disabled]="blocked()">
+        <option value="Pix">Pix</option>
+        <option value="Cash">Dinheiro</option>
+        <option value="CreditCard">Cartão de crédito</option>
+        <option value="DebitCard">Cartão de débito</option>
+      </select></label
+    >
+    <button class="primary" [disabled]="blocked()">Definir pagamento</button>
+  </form>
+  }
+  <section class="panel" aria-labelledby="payment-history-title">
+    <h2 id="payment-history-title">Histórico de pagamentos</h2>
+    @for (payment of data.items; track payment.id) {
+    <article class="panel">
+      <h3>
+        {{ methodLabel(payment.method) }} · {{ statusLabel(payment.status) }} · {{
+        formatPrice(payment.amount) }}
+      </h3>
+      @if (payment.cashTendered !== null) {
+      <p>
+        Dinheiro entregue: {{ formatPrice(payment.cashTendered) }} · Troco registrado: {{
+        formatPrice(payment.changeAmount!) }}
+      </p>
+      }
+      <ol>
+        @for (event of payment.history; track event.version) {
+        <li>
+          <p>
+            <strong>{{ statusLabel(event.toStatus) }}</strong> · {{ event.occurredAt |
+            date:'dd/MM/yyyy HH:mm:ss':'-0300' }} (Brasília) · {{ event.actorName }}
+          </p>
+          @if (event.reason) {
+          <p>Motivo: {{ event.reason }}</p>
+          }
+        </li>
+        }
+      </ol>
+    </article>
+    } @empty {
+    <p>Nenhum pagamento registrado.</p>
+    }
+    <div class="pagination">
+      <button type="button" (click)="load(data.page - 1)" [disabled]="blocked() || data.page <= 1">
+        Anterior
+      </button>
+      <span>Página {{ data.page }}</span>
+      <button
+        type="button"
+        (click)="load(data.page + 1)"
+        [disabled]="blocked() || data.page * data.pageSize >= data.totalCount"
+      >
+        Próxima
+      </button>
+    </div>
+  </section>
+  }
+</section>

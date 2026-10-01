@@ -91,3 +91,11 @@ A Fase 4C cria somente Orders, OrderItems e OrderStatusHistory. Número identity
 Itens e valores são imutáveis nesta etapa. Status usa versão e bloqueio de linha, com gravação atômica do histórico. Novo pode ser confirmado ou cancelado pela equipe de atendimento; cancelamento após confirmação exige administrador. Cancelado é terminal e exige motivo. A confirmação preserva preços e revalida disponibilidade, sem efeito financeiro/estoque.
 
 Adotada taxa manual validada e registrada pela API, a validar no aceite do usuário. Não há padrão silencioso de entrega gratuita. O navegador preserva a mesma tentativa enquanto a página existir e bloqueia edição após resultado desconhecido; ao perder a página/sessão, a equipe deve consultar os pedidos antes de registrar outra compra. Pagamentos seguem para incremento próprio. Detalhes: [orders.md](orders.md).
+
+## 016 — Pagamento manual integral, independente da produção
+
+A Fase 4D registra uma forma e o valor integral copiado do pedido. Pending → Received exige confirmação explícita, com dinheiro entregue validado e troco calculado no backend. Cancelled e Refunded são terminais. Refunded registra devolução integral já realizada externamente, por administrador; não chama banco, adquirente ou gateway. Divisão de pagamentos, recebimento parcial, taxas e conciliação ficam para incrementos próprios.
+
+Todas as gravações bloqueiam primeiro o pedido, depois o pagamento quando existir. Cancelamento do pedido consulta pagamentos ativos sob o mesmo bloqueio, evitando corrida com criação/recebimento. Índice parcial único reforça a exclusividade Pending/Received. Histórico é gravado na mesma transação, com autor revalidado, versão, data e motivo. Criação tem chave por funcionário; transições idênticas da última versão podem ser repetidas sem novo histórico.
+
+A leitura do resumo e da página usa snapshot consistente. O frontend preserva o comando exato durante falhas incertas e bloqueia novas decisões até resolver a tentativa; falha na consulta posterior à gravação exige consultar novamente, sem repetir a movimentação. Escolha inicial de pagamento manual integral aceita pelo usuário em 01/10/2026. Detalhes e contratos: [payments.md](payments.md).

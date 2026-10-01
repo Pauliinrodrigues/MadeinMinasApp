@@ -49,7 +49,9 @@
       itens ou valores, cancele e registre outro pedido.
     </p>
     <div class="actions">
-      @if (data.status === 'New') {
+      @if (canManagePayments() && !saving()) {
+      <a class="button" [routerLink]="['/equipe/pedidos', data.id, 'pagamentos']">Pagamentos</a>
+      } @if (data.status === 'New') {
       <button
         type="button"
         class="primary"
@@ -76,7 +78,10 @@
   <section class="panel" aria-label="Confirmar alteração do pedido">
     <h2>{{ status === 'Confirmed' ? 'Confirmar este pedido?' : 'Cancelar este pedido?' }}</h2>
     @if (status === 'Cancelled') {
-    <p>O cancelamento é definitivo e ficará no histórico.</p>
+    <p>
+      O cancelamento é definitivo e ficará no histórico. Antes, cancele o pagamento pendente ou
+      registre a devolução do valor recebido na tela de pagamentos.
+    </p>
     <label
       >Motivo do cancelamento<textarea
         maxlength="500"

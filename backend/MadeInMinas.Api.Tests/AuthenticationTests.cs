@@ -184,7 +184,7 @@ public sealed class AuthenticationTests(AuthenticationFactory factory) : IClassF
         var user = await factory.CreateUserAsync(roleId);
         using var client = factory.CreateStaffClient();
         var login = await SignInAsync(client, user);
-        string[] expectedPermissions = roleId == 2 ? [AccessPolicies.ManageCustomers, permission] : [permission];
+        string[] expectedPermissions = roleId == 2 ? [AccessPolicies.ManageCustomers, permission, AccessPolicies.ManagePayments] : [permission];
         Assert.Equal(expectedPermissions, login.User.Permissions);
         Authenticate(client, login.AccessToken);
         Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("/api/roles")).StatusCode);
