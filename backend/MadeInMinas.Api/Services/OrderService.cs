@@ -122,10 +122,10 @@ public sealed class OrderService(AppDbContext database, CartService cart, TimePr
         if (request.ExpectedVersion != order.Version)
             throw new OrderException(OrderError.OrderVersionConflict, "O pedido foi alterado por outro atendimento. Atualize os dados antes de continuar.");
         if (!(order.Status == "New" && request.Status is "Confirmed" or "Cancelled"
-            || order.Status == "Confirmed" && request.Status == "Cancelled"))
+            || order.Status is "Confirmed" or "InPreparation" or "Ready" && request.Status == "Cancelled"))
             throw new OrderException(OrderError.OrderTransitionDenied, "Esta alteração de status não é permitida.");
-        if (order.Status == "Confirmed" && !await database.Roles.AnyAsync(role => role.Id == actor.RoleId && role.Code == "Administrator", cancellationToken))
-            throw new OrderException(OrderError.OrderCancellationDenied, "Somente o administrador pode cancelar um pedido confirmado.");
+        if (request.Status == "Cancelled" && order.Status != "New" && !await database.Roles.AnyAsync(role => role.Id == actor.RoleId && role.Code == "Administrator", cancellationToken))
+            throw new OrderException(OrderError.OrderCancellationDenied, "Somente o administrador pode cancelar um pedido após a confirmação.");
         if (request.Status == "Confirmed")
         {
             var input = new CartQuoteRequest(order.CustomerId, order.Fulfillment,

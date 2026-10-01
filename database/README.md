@@ -111,3 +111,14 @@ dotnet ef database update 20261001180855_AddManualPayments --project backend/Mad
 ```
 
 Reinicie a API e faça novo login no frontend para carregar as permissões de pagamentos. O rollback desta migration remove as duas tabelas novas; depois de registrar pagamentos, preserve os dados e planeje a recuperação antes de qualquer rollback.
+
+## Cozinha/KDS — Fase 5A
+
+A migration `20261001191445_AddKitchenStatuses` amplia somente as constraints de status e histórico para InPreparation/Ready. Depois de conferir a conexão exclusiva para **made_in_minas** e fazer backup:
+
+```powershell
+dotnet ef migrations script 20261001180855_AddManualPayments 20261001191445_AddKitchenStatuses --project backend/MadeInMinas.Api
+dotnet ef database update 20261001191445_AddKitchenStatuses --project backend/MadeInMinas.Api
+```
+
+Reinicie a API atualizada e faça novo login. Para voltar à migration anterior, não pode haver pedidos nem eventos nos novos estados; não apague histórico de produção para satisfazer as constraints antigas. Regras e roteiro: [cozinha/KDS](../docs/kitchen.md).

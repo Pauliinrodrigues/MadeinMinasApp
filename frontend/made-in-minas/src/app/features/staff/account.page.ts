@@ -23,9 +23,7 @@ import { apiError } from '../../core/api-error';
     @if (session.canManageUsers()) {
       <a class="button primary" routerLink="/equipe/funcionarios">Gerenciar funcionários</a>
     }
-    <p class="hint">
-      Os módulos de cardápio, pedidos e cozinha serão disponibilizados nas próximas etapas.
-    </p>
+    <p class="hint">Use o menu para acessar os módulos disponíveis para seu perfil.</p>
   </section>`,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

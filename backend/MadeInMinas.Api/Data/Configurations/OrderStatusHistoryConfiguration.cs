@@ -10,7 +10,7 @@ public sealed class OrderStatusHistoryConfiguration : IEntityTypeConfiguration<O
     {
         builder.ToTable("OrderStatusHistory", table =>
         {
-            table.HasCheckConstraint("CK_OrderStatusHistory_Transition", "(\"Version\" = 1 AND \"FromStatus\" IS NULL AND \"ToStatus\" = 'New') OR (\"Version\" > 1 AND \"FromStatus\" IS NOT NULL AND ((\"FromStatus\" = 'New' AND \"ToStatus\" IN ('Confirmed','Cancelled')) OR (\"FromStatus\" = 'Confirmed' AND \"ToStatus\" = 'Cancelled')))");
+            table.HasCheckConstraint("CK_OrderStatusHistory_Transition", "(\"Version\" = 1 AND \"FromStatus\" IS NULL AND \"ToStatus\" = 'New') OR (\"Version\" > 1 AND \"FromStatus\" IS NOT NULL AND ((\"FromStatus\" = 'New' AND \"ToStatus\" IN ('Confirmed','Cancelled')) OR (\"FromStatus\" = 'Confirmed' AND \"ToStatus\" IN ('InPreparation','Cancelled')) OR (\"FromStatus\" = 'InPreparation' AND \"ToStatus\" IN ('Ready','Cancelled')) OR (\"FromStatus\" = 'Ready' AND \"ToStatus\" = 'Cancelled')))");
             table.HasCheckConstraint("CK_OrderStatusHistory_Reason", "\"ToStatus\" <> 'Cancelled' OR (\"Reason\" IS NOT NULL AND length(btrim(\"Reason\")) > 0)");
         });
         builder.HasKey(history => history.Id);

@@ -7,8 +7,8 @@ Cada fase exige implementação, testes e validação antes da próxima.
 | 1 | Estrutura, API, frontend, banco/configuração, Git e documentação | Implementada; ver docs/validation.md |
 | 2 | Autenticação, usuários e permissões | 2A, 2B e 2C implementadas; acesso validado pelo usuário |
 | 3 | Categorias, produtos, ingredientes e fichas técnicas | 3A–3D implementadas e validadas; fichas técnicas integradas pelo PR #1 |
-| 4 | Clientes, pedidos, carrinho e pagamentos | 4A–4C validadas e integradas pelos PRs #2/#3/#4; 4D pagamentos manuais implementada, testada e aceita pelo usuário em 01/10/2026, com publicação e integração autorizadas |
-| 5 | Cozinha/KDS, expedição e impressão | Planejada |
+| 4 | Clientes, pedidos, carrinho e pagamentos | 4A–4D validadas e integradas pelos PRs #2/#3/#4/#5 |
+| 5 | Cozinha/KDS, expedição e impressão | 5A cozinha/KDS implementada, testada e aceita pelo usuário em 01/10/2026; publicação e integração autorizadas após checks remotos; expedição e impressão em incrementos seguintes |
 | 6 | Estoque e CMV | Planejada |
 | 7 | Dashboard e relatórios | Planejada |
 | 8 | Chat próprio | Planejada |
@@ -18,7 +18,9 @@ Cada fase exige implementação, testes e validação antes da próxima.
 
 Combos e adicionais terão incrementos próprios associados ao catálogo e à montagem do pedido.
 
-A [Fase 4C](orders.md) registra pedidos manuais com numeração, cópias da compra, histórico, confirmação e cancelamento. Revisão exige taxa explícita para entrega. O aceite manual foi concluído em 01/10/2026 e o PR #4 foi integrado à master (`b98f41d`). A [Fase 4D](payments.md) acrescenta pagamentos manuais integrais, separados do status do pedido, com aceite concluído em 01/10/2026. Após a integração com checks aprovados, o próximo incremento será a Fase 5A (cozinha/KDS), sem antecipar expedição e impressão.
+A Fase 4D foi integrada pelo PR #5 (`5f84680`), com checks backend/frontend aprovados. O incremento atual é [cozinha/KDS — Fase 5A](kitchen.md): fila de confirmados, início de preparo e conclusão, sem dados comerciais no contrato da cozinha. Aceite manual concluído em 01/10/2026; após integrar com checks aprovados, o próximo incremento será expedição (5B).
+
+A [Fase 4C](orders.md) registra pedidos manuais com numeração, cópias da compra, histórico, confirmação e cancelamento. Revisão exige taxa explícita para entrega. O aceite manual foi concluído em 01/10/2026 e o PR #4 foi integrado à master (`b98f41d`). A [Fase 4D](payments.md) acrescenta pagamentos manuais integrais, separados do status do pedido, com aceite concluído em 01/10/2026. A Fase 5A sucede essa integração; expedição e impressão dependem de incrementos e aceites próprios.
 
 Em 30/09/2026 foram concluídas a [manutenção técnica](maintenance.md), as verificações do GitHub e o aceite manual das fichas técnicas. O PR #1 foi integrado na `master` por squash. Clientes e endereços também foram validados e integrados pelo PR #2, commit `511c228`. Em 01/10/2026, a branch `feat/staff-cart` iniciou a [Fase 4B](cart.md): carrinho temporário e revisão, sem persistência de pedidos. Regras, execução e aceite da etapa anterior estão em [clientes e endereços](customers.md).
 

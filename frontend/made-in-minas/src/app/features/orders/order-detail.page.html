@@ -70,7 +70,8 @@
       </button>
       }
     </div>
-    @if (data.status === 'Confirmed' && !canCancel()) {
+    @if ((data.status === 'Confirmed' || data.status === 'InPreparation' || data.status === 'Ready')
+    && !canCancel()) {
     <p>Para cancelar este pedido confirmado, solicite ao administrador.</p>
     }
   </section>

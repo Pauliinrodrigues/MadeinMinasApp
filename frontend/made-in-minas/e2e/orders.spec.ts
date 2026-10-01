@@ -378,6 +378,32 @@ for (const role of ['Administrator', 'Attendant']) {
   });
 }
 
+for (const status of ['InPreparation', 'Ready'] as const) {
+  for (const role of ['Administrator', 'Attendant']) {
+    test('pedidos: cancelamento durante produção ' + status + ' por ' + role, async ({ page }) => {
+      const state = await setup(page, role);
+      state.orders[0].status = status;
+      state.orders[0].version = 3;
+      await detail(page);
+      if (role === 'Attendant') {
+        await expect(
+          page.getByRole('button', { name: 'Cancelar pedido', exact: true }),
+        ).toHaveCount(0);
+        await expect(page.getByText('solicite ao administrador', { exact: false })).toBeVisible();
+        expect(state.changes).toHaveLength(0);
+        return;
+      }
+      await page.getByRole('button', { name: 'Cancelar pedido', exact: true }).click();
+      await page.getByLabel('Motivo do cancelamento', { exact: true }).fill('Cliente desistiu');
+      await page.getByRole('button', { name: 'Confirmar alteração', exact: true }).click();
+      await expect(page.getByRole('status')).toContainText('Pedido cancelado');
+      expect(state.changes).toEqual([
+        { status: 'Cancelled', expectedVersion: 3, reason: 'Cliente desistiu' },
+      ]);
+    });
+  }
+}
+
 test('pedidos: conflito de status exige atualização antes de nova ação', async ({ page }) => {
   const state = await setup(page);
   state.changeStatus = 409;

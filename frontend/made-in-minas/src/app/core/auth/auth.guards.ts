@@ -51,3 +51,12 @@ export const paymentsGuard: CanActivateFn = () => {
   }
   return session.canManagePayments() ? true : router.createUrlTree(['/equipe']);
 };
+
+export const kitchenGuard: CanActivateFn = () => {
+  const session = inject(AuthSession);
+  const router = inject(Router);
+  if (!session.token()) {
+    return router.createUrlTree(['/entrar']);
+  }
+  return session.canWorkKitchen() ? true : router.createUrlTree(['/equipe']);
+};

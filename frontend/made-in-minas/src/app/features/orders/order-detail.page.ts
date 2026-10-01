@@ -67,7 +67,9 @@ export class OrderDetailPage {
   canCancel(): boolean {
     const status = this.order()?.status;
     return (
-      status === 'New' || (status === 'Confirmed' && this.session.user()?.role === 'Administrator')
+      status === 'New' ||
+      ((status === 'Confirmed' || status === 'InPreparation' || status === 'Ready') &&
+        this.session.user()?.role === 'Administrator')
     );
   }
 

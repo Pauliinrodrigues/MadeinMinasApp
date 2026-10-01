@@ -20,6 +20,7 @@ builder.Services.AddExceptionHandler<CartExceptionHandler>();
 builder.Services.AddExceptionHandler<OrderExceptionHandler>();
 builder.Services.AddExceptionHandler<PaymentExceptionHandler>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.PaymentService>();
+builder.Services.AddScoped<MadeInMinas.Api.Services.KitchenService>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.OrderService>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.CartService>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.CustomerService>();

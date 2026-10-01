@@ -2,7 +2,7 @@
 
 Sistema de gestão e pedidos da hamburgueria Made in Minas, desenvolvido por fases.
 
-**Fases 1, 2, 3 e 4 implementadas e validadas nos incrementos descritos no roteiro.** A Fase 4C foi integrada pelo [PR #4](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/4). A Fase 4D acrescenta pagamentos manuais: recebimentos, troco, cancelamento de intenção e registro de devolução integral. O usuário concluiu o aceite e autorizou publicação e integração em 01/10/2026. Próximo incremento: cozinha/KDS (5A); expedição, impressão, estoque/CMV e atendimento por IA seguem nas fases planejadas.
+**Fases 1, 2, 3 e 4 implementadas e validadas nos incrementos descritos no roteiro.** Pagamentos manuais foram integrados pelo [PR #5](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/5). A Fase 5A acrescenta cozinha/KDS, com testes e aceite manual concluídos em 01/10/2026 na branch `feat/kitchen-kds`; publicação e integração autorizadas, condicionadas aos checks remotos. Expedição, impressão, estoque/CMV e atendimento por IA seguem nas fases planejadas.
 
 ## Estrutura
 
@@ -78,6 +78,8 @@ O carrinho ainda é temporário e é descartado ao sair da tela. Se o registro t
 
 ## Verificar a fase
 
+**Cozinha/KDS:** faça novo login como administrador ou cozinha e abra **Cozinha**. Pedidos confirmados pelo atendimento entram na fila. Confira quantidades e observações, use **Iniciar preparo**, confirme a etapa e depois **Marcar pronto**. O painel atualiza a cada 10 segundos; falha de conexão bloqueia ações até uma consulta bem-sucedida. Prontos permanecem no painel até a etapa de expedição. O administrador pode cancelar pedidos em preparação/prontos pela tela de Pedidos, após resolver o pagamento. Regras, arquivos e roteiro de aceite: [Fase 5A](docs/kitchen.md).
+
 Com os dois processos iniciados:
 
 ```powershell
@@ -109,7 +111,7 @@ O fluxo local completo está em `scripts/Test-Quality.ps1`: formatação, testes
 powershell -NoProfile -File scripts/Test-Quality.ps1
 ```
 
-O GitHub Actions executa as verificações em pushes para `master` e pull requests. O PR #4 passou nos checks de backend e frontend antes da integração. Detalhes e limites: [manutenção técnica](docs/maintenance.md). O incremento atual está em [pagamentos manuais](docs/payments.md), com validação local registrada em [validation.md](docs/validation.md).
+O GitHub Actions executa as verificações em pushes para `master` e pull requests. O PR #5 passou nos checks de backend e frontend antes da integração. Detalhes e limites: [manutenção técnica](docs/maintenance.md). O incremento atual está em [cozinha/KDS](docs/kitchen.md), com validação local registrada em [validation.md](docs/validation.md).
 
 ## Configuração e segurança
 
@@ -130,6 +132,7 @@ O GitHub Actions executa as verificações em pushes para `master` e pull reques
 - [Carrinho da equipe](docs/cart.md)
 - [Pedidos manuais](docs/orders.md)
 - [Pagamentos manuais](docs/payments.md)
+- [Cozinha/KDS](docs/kitchen.md)
 - [Arquitetura](docs/architecture.md)
 - [Autenticação, administrador inicial e testes](docs/authentication.md)
 - [Gestão de funcionários e permissões](docs/users.md)

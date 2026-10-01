@@ -25,6 +25,8 @@ A Fase 4B (carrinho/revisão) consulta esse modelo sem criar tabelas ou migratio
 
 ## Diretrizes
 
+A Fase 5A usa a migration `20261001191445_AddKitchenStatuses` para ampliar apenas CK_Orders_Status e CK_OrderStatusHistory_Transition. Não cria tabelas, colunas ou dados de produção. Instantes de confirmação/preparo/conclusão são derivados dos eventos existentes. O retorno às constraints antigas falha se houver estados/eventos novos; não modificar histórico para forçar rollback. Veja [kitchen.md](kitchen.md).
+
 - UUID para identificadores técnicos; número de pedido separado, único e gerado atomicamente.
 - Dinheiro em decimal/numeric e quantidades de ingredientes com precisão explícita.
 - Instantes em UTC (timestamptz); exibição no fuso America/Sao_Paulo.

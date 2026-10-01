@@ -17,6 +17,9 @@ export class AuthSession {
     () => this.profile()?.permissions.includes('catalog.manage') ?? false,
   );
   readonly notice = signal('');
+  readonly canWorkKitchen = computed(
+    () => this.profile()?.permissions.includes('kitchen.work') ?? false,
+  );
   readonly canManageCustomers = computed(
     () => this.profile()?.permissions.includes('customers.manage') ?? false,
   );
