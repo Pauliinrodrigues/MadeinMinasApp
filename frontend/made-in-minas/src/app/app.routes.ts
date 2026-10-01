@@ -6,10 +6,17 @@ import {
   ordersGuard,
   paymentsGuard,
   kitchenGuard,
+  dispatchGuard,
+  printGuard,
   staffGuard,
 } from './core/auth/auth.guards';
 
 export const routes: Routes = [
+  {
+    path: 'comanda/:id/:mode',
+    canActivate: [printGuard],
+    loadComponent: () => import('./features/printing/print.page').then((page) => page.PrintPage),
+  },
   {
     path: '',
     pathMatch: 'full',
@@ -26,6 +33,12 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/staff/staff-layout.page').then((page) => page.StaffLayoutPage),
     children: [
+      {
+        path: 'expedicao',
+        canActivate: [dispatchGuard],
+        loadComponent: () =>
+          import('./features/dispatch/dispatch.page').then((page) => page.DispatchPage),
+      },
       {
         path: 'cozinha',
         canActivate: [kitchenGuard],

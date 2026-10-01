@@ -1,0 +1,105 @@
+<div class="print-tools staff-page">
+  <h1>Comanda de {{ mode === 'kitchen' ? 'produção' : 'expedição' }}</h1>
+  <div class="actions">
+    <a class="button" [routerLink]="returnPath">Voltar</a
+    ><button type="button" (click)="load()" [disabled]="loading()">Atualizar comanda</button>
+    <button
+      class="primary"
+      type="button"
+      (click)="print()"
+      [disabled]="loading() || !document() || stale()"
+    >
+      Imprimir comanda
+    </button>
+  </div>
+  <label
+    >Largura do papel<select [value]="width()" (change)="width.set($any($event.target).value)">
+      <option value="80">80 mm</option>
+      <option value="58">58 mm</option>
+      <option value="A4">A4</option>
+    </select></label
+  >
+  <p>
+    Selecione o mesmo papel no diálogo/driver e confira a prévia. A comanda não é documento fiscal.
+    Cada impressão ou reimpressão exige ação explícita.
+  </p>
+  @if (loading()) {
+  <p role="status">Carregando comanda…</p>
+  } @if (error()) {
+  <p class="error" role="alert">{{ error() }}</p>
+  } @if (document() && stale()) {
+  <p class="error" role="alert">Comanda desatualizada. Atualize antes de imprimir.</p>
+  } @if (notice()) {
+  <p role="status">{{ notice() }}</p>
+  }
+</div>
+@if (document(); as data) {
+<article
+  class="receipt"
+  [class.narrow]="width() === '58'"
+  [class.a4]="width() === 'A4'"
+  aria-label="Prévia da comanda"
+>
+  <h2>MADE IN MINAS</h2>
+  <p>VIA DE {{ mode === 'kitchen' ? 'PRODUÇÃO' : 'EXPEDIÇÃO' }}</p>
+  <h2>Pedido #{{ data.order.number }}</h2>
+  <p>
+    <strong>{{ statusLabel(data.order.status) }}</strong> · {{ data.order.fulfillment === 'Pickup' ?
+    'RETIRADA' : 'ENTREGA' }}
+  </p>
+  @if (data.order.status === 'New') {
+  <p><strong>AGUARDANDO CONFIRMAÇÃO — NÃO PRODUZIR</strong></p>
+  } @if (data.order.status === 'Cancelled') {
+  <p><strong>CANCELADO — NÃO PRODUZIR / NÃO ENTREGAR</strong></p>
+  } @if (data.order.status === 'Finalized') {
+  <p><strong>FINALIZADO — VIA PARA CONSULTA</strong></p>
+  }
+  <p>Pedido em {{ data.order.createdAt | date:'dd/MM/yyyy HH:mm:ss':'-0300' }} (Brasília).</p>
+  @if (mode === 'dispatch') {
+  <p>{{ data.order.customerName }}<br />{{ data.order.customerPhone }}</p>
+  @if (data.order.address; as address) {
+  <p>
+    {{ address.street }}, {{ address.number }}<br />{{ address.neighborhood }} · {{ address.city
+    }}/{{ address.state }}<br />{{ address.complement }} {{ address.postalCode }}<br />{{
+    address.reference }}
+  </p>
+  } }
+  <hr />
+  @for (item of data.order.items; track $index) {
+  <section class="receipt-item">
+    <p><strong>{{ item.quantity }} × {{ item.name }}</strong></p>
+    @if (item.notes) {
+    <p class="note">{{ item.notes }}</p>
+    } @if (mode === 'dispatch') {
+    <p>{{ item.unitPrice | currency:'BRL' }} / un. · {{ item.lineTotal | currency:'BRL' }}</p>
+    }
+  </section>
+  } @if (data.order.notes) {
+  <p class="note"><strong>OBSERVAÇÕES:</strong> {{ data.order.notes }}</p>
+  } @if (mode === 'dispatch') {
+  <hr />
+  <p>
+    Subtotal: {{ data.order.subtotal | currency:'BRL' }}<br />Entrega: {{ data.order.deliveryFee |
+    currency:'BRL' }}<br /><strong>TOTAL: {{ data.order.total | currency:'BRL' }}</strong>
+  </p>
+  @if (data.order.payment; as payment) {
+  <p>
+    {{ method(payment.method) }} ·
+    <strong>{{ payment.status === 'Received' ? 'RECEBIDO' : 'PENDENTE' }}</strong>
+  </p>
+  @if (payment.cashTendered !== null) {
+  <p>
+    Dinheiro recebido: {{ payment.cashTendered | currency:'BRL' }}<br />Troco registrado: {{
+    payment.changeAmount | currency:'BRL' }}
+  </p>
+  } } @else {
+  <p><strong>PAGAMENTO NÃO DEFINIDO / SEM RECEBIMENTO ATIVO</strong></p>
+  } }
+  <hr />
+  <p>
+    Consulta em {{ data.generatedAt | date:'dd/MM/yyyy HH:mm:ss':'-0300' }} (Brasília). Versão {{
+    data.order.version }}.
+  </p>
+  <p>COMANDA — NÃO É DOCUMENTO FISCAL</p>
+</article>
+}

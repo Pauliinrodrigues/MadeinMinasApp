@@ -14,6 +14,10 @@
   } @if (order(); as data) {
   <section class="panel" aria-labelledby="order-title">
     <p class="eyebrow">ATENDIMENTO MANUAL</p>
+    <div class="actions">
+      <a class="button" [routerLink]="['/comanda', data.id, 'kitchen']">Comanda de produção</a>
+      <a class="button" [routerLink]="['/comanda', data.id, 'dispatch']">Comanda de expedição</a>
+    </div>
     <h1 id="order-title">Pedido #{{ data.number }}</h1>
     <p>
       Status: <strong>{{ statusLabel(data.status) }}</strong> · {{ data.fulfillment === 'Pickup' ?
@@ -70,8 +74,8 @@
       </button>
       }
     </div>
-    @if ((data.status === 'Confirmed' || data.status === 'InPreparation' || data.status === 'Ready')
-    && !canCancel()) {
+    @if ((data.status === 'Confirmed' || data.status === 'InPreparation' || data.status === 'Ready'
+    || data.status === 'AwaitingDelivery' || data.status === 'OutForDelivery') && !canCancel()) {
     <p>Para cancelar este pedido confirmado, solicite ao administrador.</p>
     }
   </section>

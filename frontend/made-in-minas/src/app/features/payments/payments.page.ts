@@ -82,7 +82,13 @@ export class PaymentsPage {
 
   create(): void {
     const data = this.result();
-    if (!data || this.blocked() || data.activePayment || data.orderStatus === 'Cancelled') {
+    if (
+      !data ||
+      this.blocked() ||
+      data.activePayment ||
+      data.orderStatus === 'Cancelled' ||
+      data.orderStatus === 'Finalized'
+    ) {
       return;
     }
     this.send({

@@ -2,7 +2,7 @@
 
 Sistema de gestão e pedidos da hamburgueria Made in Minas, desenvolvido por fases.
 
-**Fases 1, 2, 3 e 4 implementadas e validadas nos incrementos descritos no roteiro.** Pagamentos manuais foram integrados pelo [PR #5](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/5). A Fase 5A acrescenta cozinha/KDS, com testes e aceite manual concluídos em 01/10/2026 na branch `feat/kitchen-kds`; publicação e integração autorizadas, condicionadas aos checks remotos. Expedição, impressão, estoque/CMV e atendimento por IA seguem nas fases planejadas.
+**Fases 1, 2, 3 e 4 implementadas e validadas nos incrementos descritos no roteiro.** Pagamentos manuais foram integrados pelo [PR #5](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/5). A cozinha/KDS foi integrada pelo [PR #6](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/6). Expedição e impressão pelo navegador (5B/5C) foram aceitas pelo usuário em 01/10/2026 na branch `feat/dispatch-printing`, com publicação e integração autorizadas após checks remotos; impressão automática depende da definição e validação do equipamento. Estoque/CMV e IA seguem nas fases planejadas.
 
 ## Estrutura
 
@@ -111,7 +111,7 @@ O fluxo local completo está em `scripts/Test-Quality.ps1`: formatação, testes
 powershell -NoProfile -File scripts/Test-Quality.ps1
 ```
 
-O GitHub Actions executa as verificações em pushes para `master` e pull requests. O PR #5 passou nos checks de backend e frontend antes da integração. Detalhes e limites: [manutenção técnica](docs/maintenance.md). O incremento atual está em [cozinha/KDS](docs/kitchen.md), com validação local registrada em [validation.md](docs/validation.md).
+O GitHub Actions executa as verificações em pushes para `master` e pull requests. O PR #5 passou nos checks de backend e frontend antes da integração. Detalhes e limites: [manutenção técnica](docs/maintenance.md). O incremento atual está em [expedição e impressão](docs/dispatch-printing.md), com validação local registrada em [validation.md](docs/validation.md).
 
 ## Configuração e segurança
 
@@ -141,3 +141,5 @@ O GitHub Actions executa as verificações em pushes para `master` e pull reques
 - [Decisões técnicas](docs/decisions.md)
 - [Regras de negócio](docs/business-rules.md)
 - [Etapas](docs/roadmap.md)
+
+**Expedição e impressão (5B/5C):** faça novo login como administrador ou expedição e abra **Expedição**. Confira destino, produtos e pagamento antes de avançar. Retirada segue direto de Pronto para Entregue; finalize após recebimento integral registrado pelo atendimento. As comandas de produção e expedição abrem prévia com impressão explícita pelo navegador (58/80 mm ou A4). Impressão automática e acerto de margens/corte dependem do equipamento real. Roteiro: [expedição e impressão](docs/dispatch-printing.md).

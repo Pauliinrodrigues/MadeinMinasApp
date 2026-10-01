@@ -69,3 +69,5 @@ Pagamento, estados da cozinha e uso real em produção continuam fora deste acei
 - Testes: OrderTests e CartTests; navegador em e2e/orders.spec.ts e e2e/cart.spec.ts.
 - Frontend: core/services/order-api.service.ts, features/orders, extensão do carrinho, rotas, menu e mensagens de erro.
 - Documentação: README, orders, cart, API, modelo, decisões, regras, roteiro e validação.
+
+Na Fase 5B, o pedido também acompanha AwaitingDelivery, OutForDelivery, Delivered e Finalized. Atendimento visualiza esses estados e histórico; expedição conduz as transições por rota própria. Cancelamento administrativo é permitido até a saída em rota, com pagamento resolvido; após entrega não há cancelamento. Finalizar exige recebimento integral. Os dois tipos de comanda são acessados pelo detalhe. Ver [expedição e impressão](dispatch-printing.md).

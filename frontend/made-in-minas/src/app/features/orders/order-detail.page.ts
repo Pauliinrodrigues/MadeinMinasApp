@@ -68,7 +68,11 @@ export class OrderDetailPage {
     const status = this.order()?.status;
     return (
       status === 'New' ||
-      ((status === 'Confirmed' || status === 'InPreparation' || status === 'Ready') &&
+      ((status === 'Confirmed' ||
+        status === 'InPreparation' ||
+        status === 'Ready' ||
+        status === 'AwaitingDelivery' ||
+        status === 'OutForDelivery') &&
         this.session.user()?.role === 'Administrator')
     );
   }

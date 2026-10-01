@@ -17,3 +17,20 @@
 * {
   box-sizing: border-box;
 }
+
+@media print {
+  @page {
+    margin: 4mm;
+  }
+  html:has(body.print-view),
+  body.print-view,
+  body.print-view ion-app {
+    position: static !important;
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+    contain: none !important;
+    background: white !important;
+    color: black !important;
+  }
+}

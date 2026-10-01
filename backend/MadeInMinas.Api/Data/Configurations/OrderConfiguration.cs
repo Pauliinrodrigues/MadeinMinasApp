@@ -11,7 +11,7 @@ public sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.ToTable("Orders", table =>
         {
             table.HasCheckConstraint("CK_Orders_Number", "\"Number\" > 0");
-            table.HasCheckConstraint("CK_Orders_Status", "\"Status\" IN ('New','Confirmed','InPreparation','Ready','Cancelled') AND \"Version\" >= 1");
+            table.HasCheckConstraint("CK_Orders_Status", "\"Status\" IN ('New','Confirmed','InPreparation','Ready','AwaitingDelivery','OutForDelivery','Delivered','Finalized','Cancelled') AND \"Version\" >= 1");
             table.HasCheckConstraint("CK_Orders_Origin", "\"Origin\" = 'Manual'");
             table.HasCheckConstraint("CK_Orders_Amounts", "\"Subtotal\" > 0 AND \"DeliveryFee\" BETWEEN 0 AND 9999.99 AND \"Total\" = \"Subtotal\" + \"DeliveryFee\"");
             table.HasCheckConstraint("CK_Orders_Fulfillment", "(\"Fulfillment\" = 'Pickup' AND \"AddressId\" IS NULL AND \"AddressStreet\" IS NULL AND \"AddressNumber\" IS NULL AND \"AddressNeighborhood\" IS NULL AND \"AddressCity\" IS NULL AND \"AddressState\" IS NULL AND \"AddressComplement\" IS NULL AND \"AddressPostalCode\" IS NULL AND \"AddressReference\" IS NULL AND \"DeliveryFee\" = 0) OR (\"Fulfillment\" = 'Delivery' AND \"AddressId\" IS NOT NULL AND \"AddressStreet\" IS NOT NULL AND \"AddressNumber\" IS NOT NULL AND \"AddressNeighborhood\" IS NOT NULL AND \"AddressCity\" IS NOT NULL AND \"AddressState\" IS NOT NULL)");

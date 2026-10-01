@@ -36,6 +36,11 @@
     <p>Saldo a receber: <strong>{{ formatPrice(data.balance) }}</strong></p>
     @if (data.orderStatus === 'Cancelled') {
     <p>Pedido cancelado. Novos pagamentos não estão disponíveis.</p>
+    } @if (data.orderStatus === 'Finalized') {
+    <p>
+      Pedido finalizado. Novos pagamentos não estão disponíveis; devoluções realizadas podem ser
+      registradas pelo administrador.
+    </p>
     }
   </section>
   @if (data.activePayment; as payment) {
@@ -133,7 +138,7 @@
     </form>
     }
   </section>
-  } @else if (data.orderStatus !== 'Cancelled') {
+  } @else if (data.orderStatus !== 'Cancelled' && data.orderStatus !== 'Finalized') {
   <form class="panel" (ngSubmit)="create()" aria-label="Definir pagamento">
     <h2>Definir pagamento</h2>
     <p>

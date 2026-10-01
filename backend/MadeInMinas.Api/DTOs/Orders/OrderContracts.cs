@@ -37,7 +37,7 @@ public sealed class OrderListQuery
     [Range(1, 1_000_000)] public int Page { get; init; } = 1;
     [Range(1, 100)] public int PageSize { get; init; } = 20;
     [StringLength(120)] public string? Search { get; init; }
-    [RegularExpression("^(New|Confirmed|InPreparation|Ready|Cancelled)$")] public string? Status { get; init; }
+    [RegularExpression("^(New|Confirmed|InPreparation|Ready|AwaitingDelivery|OutForDelivery|Delivered|Finalized|Cancelled)$")] public string? Status { get; init; }
     public Guid? CustomerId { get; init; }
 }
 

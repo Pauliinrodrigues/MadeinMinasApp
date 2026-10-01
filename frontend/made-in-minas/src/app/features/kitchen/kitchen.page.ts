@@ -8,6 +8,8 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { RouterLink } from '@angular/router';
+import { AuthSession } from '../../core/auth/auth-session.service';
 import { finalize, interval } from 'rxjs';
 import { apiError } from '../../core/api-error';
 import {
@@ -22,12 +24,13 @@ import { orderStatusLabel } from '../../core/services/order-api.service';
 
 @Component({
   selector: 'app-kitchen',
-  imports: [DatePipe],
+  imports: [DatePipe, RouterLink],
   templateUrl: './kitchen.page.html',
   styleUrl: './kitchen.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class KitchenPage {
+  readonly session = inject(AuthSession);
   private readonly api = inject(KitchenApi);
   private readonly destroyRef = inject(DestroyRef);
   private readonly tick = signal(performance.now());
