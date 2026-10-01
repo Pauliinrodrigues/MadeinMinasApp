@@ -3,6 +3,7 @@ import {
   administratorGuard,
   catalogGuard,
   customersGuard,
+  ordersGuard,
   staffGuard,
 } from './core/auth/auth.guards';
 
@@ -23,6 +24,11 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/staff/staff-layout.page').then((page) => page.StaffLayoutPage),
     children: [
+      {
+        path: 'carrinho',
+        canActivate: [ordersGuard],
+        loadComponent: () => import('./features/cart/cart.page').then((page) => page.CartPage),
+      },
       {
         path: 'clientes',
         canActivate: [customersGuard],

@@ -20,6 +20,9 @@ export class AuthSession {
   readonly canManageCustomers = computed(
     () => this.profile()?.permissions.includes('customers.manage') ?? false,
   );
+  readonly canManageOrders = computed(
+    () => this.profile()?.permissions.includes('orders.manage') ?? false,
+  );
 
   token(): string | null {
     if (this.accessToken && Date.now() >= this.expiration) {

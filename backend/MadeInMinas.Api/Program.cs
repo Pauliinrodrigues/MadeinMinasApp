@@ -16,6 +16,8 @@ builder.Services.AddExceptionHandler<ProductExceptionHandler>();
 builder.Services.AddExceptionHandler<IngredientExceptionHandler>();
 builder.Services.AddExceptionHandler<RecipeExceptionHandler>();
 builder.Services.AddExceptionHandler<CustomerExceptionHandler>();
+builder.Services.AddExceptionHandler<CartExceptionHandler>();
+builder.Services.AddScoped<MadeInMinas.Api.Services.CartService>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.CustomerService>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.RecipeService>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.IngredientService>();

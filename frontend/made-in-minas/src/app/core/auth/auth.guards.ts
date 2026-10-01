@@ -33,3 +33,12 @@ export const customersGuard: CanActivateFn = () => {
   }
   return session.canManageCustomers() ? true : router.createUrlTree(['/equipe']);
 };
+
+export const ordersGuard: CanActivateFn = () => {
+  const session = inject(AuthSession);
+  const router = inject(Router);
+  if (!session.token()) {
+    return router.createUrlTree(['/entrar']);
+  }
+  return session.canManageOrders() ? true : router.createUrlTree(['/equipe']);
+};

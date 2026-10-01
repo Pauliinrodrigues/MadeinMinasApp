@@ -1,7 +1,7 @@
 # Regras de negócio acordadas
 
 Estas regras orientam os módulos futuros; ainda não estão implementadas.
-As regras já implementadas por incremento constam em authentication.md, users.md, categories.md, products.md, ingredients.md, recipes.md e [customers.md](customers.md).
+As regras já implementadas por incremento constam em authentication.md, users.md, categories.md, products.md, ingredients.md, recipes.md, [customers.md](customers.md) e [cart.md](cart.md).
 
 - WhatsApp é canal de entrada por link; o atendimento próprio centraliza o pedido.
 - Backend/banco definem produtos, preços, promoções, estoque e totais. A IA não decide regras críticas.

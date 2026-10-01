@@ -2,6 +2,8 @@
 
 Modelagem incremental. InitialAccessControl implementa Users e Roles; AddCategories implementa Categories; AddProducts implementa Products com FK restrita para Categories; AddIngredients implementa Ingredients; AddRecipes implementa Recipes e RecipeItems; AddCustomersAndAddresses implementa Customers e Addresses. As demais entidades continuam propostas.
 
+A Fase 4B (carrinho/revisão) consulta esse modelo sem criar tabelas ou migrations. Carrinhos não são persistidos. Orders, OrderItems, Payments e OrderStatusHistory continuam propostos; suas regras de criação, cópias históricas e transições serão definidas no incremento de pedidos.
+
 | Entidade | Dados e relações previstos | Fase |
 | --- | --- | --- |
 | Roles | Código único, nome | 2 |

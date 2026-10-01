@@ -77,3 +77,9 @@ Branches não isolam o banco de dados. Migrations exigem conferir o destino e o 
 Clientes exigem somente nome e telefone brasileiro normalizado; o índice único cobre também inativos e concorrência. Identificação por telefone não autentica nem expõe o cadastro publicamente. Administrador e atendente recebem customers.manage, enquanto o catálogo mantém sua política própria.
 
 Endereços pertencem a um cliente e só podem ser acessados pelo vínculo correto. Cliente e endereço têm inativação independente; uma futura compra copiará os dados de entrega. Gravações revalidam sessão e perfil na transação, e serializam alterações pelo cliente. Não há exclusão física, pedido antecipado, consulta externa de CEP ou abstração de repositório. Contratos e limites: [customers.md](customers.md).
+
+## 014 — Carrinho temporário e revisão antes da persistência de pedidos
+
+A Fase 4B separa montagem/revisão da futura criação do pedido. O carrinho vive na página Angular e é descartado na navegação/saída da sessão; não há tabela de carrinho nem armazenamento de dados pessoais no navegador. A permissão orders.manage permite consultar o catálogo de venda sem abrir o CRUD administrativo ao atendente.
+
+A API aceita somente IDs, quantidades, modalidade e observações, e rejeita campos comerciais extras. A revisão valida os cadastros em um snapshot consistente e calcula os valores em decimal, sem gravar ou reservar preço/estoque. Exibe subtotal dos produtos; taxa de entrega, descontos, confirmação e pagamento exigem incrementos próprios. O próximo módulo deve revalidar e registrar cópias históricas, com criação idempotente, numeração atômica e transições explícitas. Regras e aceite: [cart.md](cart.md).

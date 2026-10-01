@@ -7,7 +7,7 @@ Cada fase exige implementação, testes e validação antes da próxima.
 | 1 | Estrutura, API, frontend, banco/configuração, Git e documentação | Implementada; ver docs/validation.md |
 | 2 | Autenticação, usuários e permissões | 2A, 2B e 2C implementadas; acesso validado pelo usuário |
 | 3 | Categorias, produtos, ingredientes e fichas técnicas | 3A–3D implementadas e validadas; fichas técnicas integradas pelo PR #1 |
-| 4 | Clientes, pedidos, carrinho e pagamentos | 4A: clientes e endereços implementados e validados pelo usuário no PR #2; demais incrementos planejados |
+| 4 | Clientes, pedidos, carrinho e pagamentos | 4A validada e integrada pelo PR #2; 4B carrinho/revisão implementados e aprovados pelo usuário em 01/10/2026 no PR #3; gravação de pedidos e pagamentos em incrementos posteriores |
 | 5 | Cozinha/KDS, expedição e impressão | Planejada |
 | 6 | Estoque e CMV | Planejada |
 | 7 | Dashboard e relatórios | Planejada |
@@ -18,7 +18,7 @@ Cada fase exige implementação, testes e validação antes da próxima.
 
 Combos e adicionais terão incrementos próprios associados ao catálogo e à montagem do pedido.
 
-Em 30/09/2026 foram concluídas a [manutenção técnica](maintenance.md), as verificações do GitHub e o aceite manual das fichas técnicas. O PR #1 foi integrado na `master` por squash. A Fase 4A segue em `feat/customers-addresses`; regras, execução e aceite estão em [clientes e endereços](customers.md).
+Em 30/09/2026 foram concluídas a [manutenção técnica](maintenance.md), as verificações do GitHub e o aceite manual das fichas técnicas. O PR #1 foi integrado na `master` por squash. Clientes e endereços também foram validados e integrados pelo PR #2, commit `511c228`. Em 01/10/2026, a branch `feat/staff-cart` iniciou a [Fase 4B](cart.md): carrinho temporário e revisão, sem persistência de pedidos. Regras, execução e aceite da etapa anterior estão em [clientes e endereços](customers.md).
 
 ## Aceite da Fase 1
 
