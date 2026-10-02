@@ -2,7 +2,7 @@
 
 Sistema de gestão e pedidos da hamburgueria Made in Minas, desenvolvido por fases.
 
-**Fases 1 a 5 implementadas nos incrementos descritos no roteiro.** Expedição e impressão pelo navegador foram integradas pelo [PR #7](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/7), após aceite e checks aprovados; impressão automática e validação física dependem do equipamento. O estoque manual (6A) foi validado e integrado pelo [PR #8](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/8), commit `71f7c41`. [Consumo de estoque — 6B](docs/order-stock.md) e [CMV teórico — 6C](docs/cmv.md) estão implementados e testados, preservados nos commits locais `98ecb4a` e `5ce0ba8`. O incremento atual é [Dashboard do dia — 7A](docs/daily-dashboard.md), na branch `feat/daily-dashboard`, derivada da 6C. A continuidade foi autorizada; aceites manuais e publicação/integração de 6B, 6C e 7A permanecem pendentes.
+**Fases 1 a 5 implementadas nos incrementos descritos no roteiro.** Expedição e impressão pelo navegador foram integradas pelo [PR #7](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/7), após aceite e checks aprovados; impressão automática e validação física dependem do equipamento. O estoque manual (6A) foi validado e integrado pelo [PR #8](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/8), commit `71f7c41`. [Consumo de estoque — 6B](docs/order-stock.md), [CMV teórico — 6C](docs/cmv.md) e [dashboard diário — 7A](docs/daily-dashboard.md) estão implementados e testados, preservados nos commits locais `98ecb4a`, `5ce0ba8` e `15e4fa0`. O incremento atual é [Relatórios por período — 7B](docs/period-reports.md), na branch `feat/period-reports`, derivada da 7A. A continuidade foi autorizada; aceites manuais e publicação/integração desses incrementos permanecem pendentes.
 
 ## Estrutura
 
@@ -111,7 +111,7 @@ O fluxo local completo está em `scripts/Test-Quality.ps1`: formatação, testes
 powershell -NoProfile -File scripts/Test-Quality.ps1
 ```
 
-O GitHub Actions executa as verificações em pushes para `master` e pull requests. O PR #7 passou nos checks de backend e frontend antes da integração. Detalhes e limites: [manutenção técnica](docs/maintenance.md). O incremento atual está em [dashboard diário](docs/daily-dashboard.md), com validação local registrada em [validation.md](docs/validation.md).
+O GitHub Actions executa as verificações em pushes para `master` e pull requests. O PR #7 passou nos checks de backend e frontend antes da integração. Detalhes e limites: [manutenção técnica](docs/maintenance.md). O incremento atual está em [relatórios por período](docs/period-reports.md), com validação local registrada em [validation.md](docs/validation.md).
 
 ## Configuração e segurança
 
@@ -137,6 +137,7 @@ O GitHub Actions executa as verificações em pushes para `master` e pull reques
 - [Consumo de estoque por pedidos](docs/order-stock.md)
 - [CMV teórico por produto](docs/cmv.md)
 - [Dashboard do dia](docs/daily-dashboard.md)
+- [Relatórios por período](docs/period-reports.md)
 - [Arquitetura](docs/architecture.md)
 - [Autenticação, administrador inicial e testes](docs/authentication.md)
 - [Gestão de funcionários e permissões](docs/users.md)
@@ -148,4 +149,6 @@ O GitHub Actions executa as verificações em pushes para `master` e pull reques
 
 **Expedição e impressão (5B/5C):** faça novo login como administrador ou expedição e abra **Expedição**. Confira destino, produtos e pagamento antes de avançar. Retirada segue direto de Pronto para Entregue; finalize após recebimento integral registrado pelo atendimento. As comandas de produção e expedição abrem prévia com impressão explícita pelo navegador (58/80 mm ou A4). Impressão automática e acerto de margens/corte dependem do equipamento real. Roteiro: [expedição e impressão](docs/dispatch-printing.md).
 
-**Dashboard (7A):** faça novo login como administrador e abra **Dashboard** no menu. Confira pedidos, valor confirmado, recebimentos/estornos, filas atuais, tempo de produção e produtos mais pedidos. O dia segue o horário de Brasília; use **Atualizar painel** para consultar novamente. Relatórios por período ficam para a 7B. Regras e roteiro: [dashboard do dia](docs/daily-dashboard.md).
+**Dashboard (7A):** faça novo login como administrador e abra **Dashboard** no menu. Confira pedidos, valor confirmado, recebimentos/estornos, filas atuais, tempo de produção e produtos mais pedidos. O dia segue o horário de Brasília; use **Atualizar painel** para consultar novamente. Consultas de vários dias estão em **Relatórios (7B)**. Regras e roteiro: [dashboard do dia](docs/daily-dashboard.md).
+
+**Relatórios (7B):** faça novo login como administrador e abra **Relatórios**. A primeira consulta traz os últimos sete dias; selecione início e fim e use **Gerar relatório** para consultar até 90 dias. Confira resumo, detalhamento diário, formas de pagamento e produtos mais pedidos. Datas seguem Brasília e os valores distinguem confirmação, recebimento e estorno. Regras, arquivos e roteiro: [relatórios por período](docs/period-reports.md).

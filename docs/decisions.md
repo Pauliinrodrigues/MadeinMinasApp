@@ -139,3 +139,11 @@ A Fase 7A usa o dia civil em America/Sao_Paulo, determinado pelo servidor, com i
 Permissão dashboard.view inicialmente exclusiva de administrador, sem expor dados pessoais. Consultas em snapshot consistente, somas em decimal, médias ausentes como null e atualização manual no frontend. Não criar tabelas de agregados nem transformar o CMV teórico atual em custo histórico. Relatórios por período ficam para a 7B.
 
 Continuidade autorizada após concluir implementação/testes da 6C, preservada em 5ce0ba8. feat/daily-dashboard parte desse commit e mantém a dependência da 6B; o pedido de continuidade não substitui aceite manual nem publicação. Contratos e validação: [daily-dashboard.md](daily-dashboard.md).
+
+## 023 — Relatórios limitados por período e consistentes com o dashboard
+
+A 7B acrescenta consulta administrativa de vendas/recebimentos, protegida por reports.view, com resumo, dias, formas de pagamento e ranking de dez produtos. Períodos de 1 a 90 dias inclusivos evitam respostas sem limite; sete dias é o padrão definido pelo backend. Conversão e agrupamento explícitos em America/Sao_Paulo evitam depender dos fusos do navegador/servidor/conexão. Datas históricas com horário de verão usam o primeiro instante local válido.
+
+Reutilizar as definições comerciais da 7A, com teste de consistência para um único dia. O ticket do período usa a quantidade total de confirmações válidas, e todos os dias vazios permanecem na resposta. Quatro consultas agregadas em snapshot, sem carregar pedidos completos nem introduzir tabelas de indicadores. Não inventar fechamento contábil, CMV realizado ou filas históricas. A interface descarta o resultado ao alterar filtros e permite repetir consultas após falha.
+
+O dashboard foi preservado no commit local 15e4fa0, e feat/period-reports parte dele após autorização para continuar. Integração deve preservar a sequência dos incrementos ainda locais, com aceites próprios. Regras e limites: [period-reports.md](period-reports.md).

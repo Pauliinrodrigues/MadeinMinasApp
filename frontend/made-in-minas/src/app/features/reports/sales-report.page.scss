@@ -1,0 +1,49 @@
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+  gap: 12px;
+  margin: 20px 0;
+
+  > div {
+    padding: 18px;
+    border: 1px solid #e4d8ca;
+    border-radius: 12px;
+    overflow-wrap: anywhere;
+    min-width: 0;
+  }
+
+  dt {
+    font-size: 14px;
+    color: #65584e;
+  }
+  dd {
+    margin: 8px 0 0;
+    font-size: 24px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.filters legend {
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+.table-scroll {
+  max-width: 100%;
+}
+.money,
+th[scope='row'] {
+  white-space: nowrap;
+}
+.products {
+  padding-left: 24px;
+  li {
+    padding: 12px 8px;
+    overflow-wrap: anywhere;
+  }
+  span {
+    display: block;
+    color: #65584e;
+    margin-top: 4px;
+  }
+}

@@ -24,6 +24,9 @@ import { StaffApi } from '../../core/services/staff-api.service';
         @if (session.canViewDashboard()) {
           <a routerLink="/equipe/dashboard" routerLinkActive="selected">Dashboard</a>
         }
+        @if (session.canViewReports()) {
+          <a routerLink="/equipe/relatorios" routerLinkActive="selected">Relatórios</a>
+        }
         @if (session.canWorkDispatch()) {
           <a routerLink="/equipe/expedicao" routerLinkActive="selected">Expedição</a>
         }

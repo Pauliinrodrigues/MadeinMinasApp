@@ -86,4 +86,4 @@ Resultados executados estão em [validation.md](validation.md). Aceite manual da
 
 ## Próximo incremento
 
-**7B — relatórios por período**, com filtros e regras de datas explícitas. Fechamento por turno, exportação, CMV realizado/margem histórica, despesas e conciliação exigem definições próprias; não são simulados pelo dashboard diário.
+A 7A foi preservada no commit local `15e4fa0`. Após autorização de continuidade, foi iniciada a [7B — relatórios por período](period-reports.md), em `feat/period-reports`, com filtros e regras de datas explícitas. Fechamento por turno, exportação, CMV realizado/margem histórica, despesas e conciliação exigem definições próprias; não são simulados pelo dashboard diário. Aceite manual e publicação continuam pendentes.
