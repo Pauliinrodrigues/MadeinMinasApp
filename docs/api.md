@@ -59,3 +59,5 @@ A Fase 6B mantém as rotas e entradas de pedidos. A confirmação em PUT /api/or
 
 
 A Fase 6C adiciona GET /api/products/{productId}/costing, exclusivo de catalog.manage, com no-store. Retorna preço/custos atuais, composição, rendimento, CMV e margem teóricos. Estados Ready, MissingRecipe e MissingCosts; pendências retornam 200 com indicadores nulos, produto ausente retorna 404/ProductNotFound. Não há escrita. Contrato: [cmv.md](cmv.md).
+
+A Fase 7A adiciona GET /api/dashboard/today, exclusivo de dashboard.view (administrador), com no-store. Retorna data civil/fuso/limites UTC, pedidos criados e confirmados, valores/ticket, recebimentos/estornos pelos eventos, filas sem corte de data, média de produção e até cinco produtos por quantidade. Médias sem amostra são null; não envia dados pessoais. 401 sem sessão válida, 403 sem permissão. Contrato e critérios: [daily-dashboard.md](daily-dashboard.md).

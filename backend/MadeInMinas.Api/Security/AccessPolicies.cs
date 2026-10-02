@@ -3,6 +3,7 @@ namespace MadeInMinas.Api.Security;
 public static class AccessPolicies
 {
     public const string ManageUsers = "users.manage";
+    public const string ViewDashboard = "dashboard.view";
     public const string ManageCatalog = "catalog.manage";
     public const string ManageCustomers = "customers.manage";
     public const string ManageOrders = "orders.manage";
@@ -20,6 +21,7 @@ public static class AccessPolicies
         new Dictionary<string, string[]>
         {
             [ManageUsers] = ["Administrator"],
+            [ViewDashboard] = ["Administrator"],
             [ManageCatalog] = ["Administrator"],
             [ManageCustomers] = ["Administrator", "Attendant"],
             [ManageOrders] = ["Administrator", "Attendant"],

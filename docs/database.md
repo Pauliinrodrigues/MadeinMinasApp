@@ -59,3 +59,7 @@ Migration `20261002181034_AddOrderStock` acrescenta Orders.StockStatus, OrderSto
 ## CMV teórico — 6C
 
 Sem migration ou tabela nova. ProductCostService consulta Products, Categories, Recipes, RecipeItems e Ingredients em RepeatableRead, sem gravações. Resultados não são persistidos nem usados para reescrever custos de pedidos passados. A migration mais recente permanece AddOrderStock, herdada da 6B. Regras: [cmv.md](cmv.md).
+
+## Dashboard diário — 7A
+
+Sem migration, atualização de dados ou tabela de indicadores. DashboardService consulta Orders, OrderItems, OrderStatusHistory, Payments e PaymentStatusHistory em RepeatableRead. Confirmações e produção usam histórico do pedido; recebimentos e estornos usam histórico do pagamento, preservando a data efetiva dos eventos. Agregados não são persistidos. O modelo e a migration mais recente continuam os da 6B. Regras: [daily-dashboard.md](daily-dashboard.md).

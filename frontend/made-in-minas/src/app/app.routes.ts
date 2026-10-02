@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import {
   administratorGuard,
+  dashboardGuard,
   catalogGuard,
   customersGuard,
   ordersGuard,
@@ -33,6 +34,12 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/staff/staff-layout.page').then((page) => page.StaffLayoutPage),
     children: [
+      {
+        path: 'dashboard',
+        canActivate: [dashboardGuard],
+        loadComponent: () =>
+          import('./features/dashboard/dashboard.page').then((page) => page.DashboardPage),
+      },
       {
         path: 'expedicao',
         canActivate: [dispatchGuard],

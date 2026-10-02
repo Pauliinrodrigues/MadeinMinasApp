@@ -1,0 +1,136 @@
+<div class="page-heading">
+  <div>
+    <p class="eyebrow">GESTÃO</p>
+    <h1>Dashboard do dia</h1>
+  </div>
+  <button type="button" (click)="load()" [disabled]="loading()">
+    {{ loading() ? 'Atualizando…' : 'Atualizar painel' }}
+  </button>
+</div>
+<p class="hint">Indicadores do dia civil, de 00h a 24h, no horário de Brasília.</p>
+@if (loading()) {
+<p role="status">Consultando os indicadores…</p>
+} @if (error()) {
+<p class="error" role="alert">{{ error() }}</p>
+} @if (data(); as dashboard) {
+<p class="hint">
+  Dia {{ formatDate(dashboard.date) }} · Consultado em {{ formatTimestamp(dashboard.calculatedAt) }}
+  (Brasília). Use “Atualizar painel” para consultar novamente.
+</p>
+
+<section class="panel" aria-labelledby="orders-heading">
+  <h2 id="orders-heading">Pedidos do dia</h2>
+  <dl class="metrics">
+    <div>
+      <dt>Criados hoje</dt>
+      <dd>{{ number.format(dashboard.orders.created) }}</dd>
+    </div>
+    <div>
+      <dt>Criados hoje e cancelados</dt>
+      <dd>{{ number.format(dashboard.orders.createdAndCancelled) }}</dd>
+    </div>
+    <div>
+      <dt>Confirmados hoje</dt>
+      <dd>{{ number.format(dashboard.orders.confirmed) }}</dd>
+    </div>
+    <div class="highlight">
+      <dt>Valor confirmado hoje</dt>
+      <dd>{{ price(dashboard.orders.confirmedValue) }}</dd>
+    </div>
+    <div>
+      <dt>Ticket médio confirmado</dt>
+      <dd>
+        {{ dashboard.orders.averageTicket === null ? 'Sem pedidos confirmados' :
+        price(dashboard.orders.averageTicket) }}
+      </dd>
+    </div>
+  </dl>
+  <p class="hint">
+    Confirmações de hoje excluem pedidos cancelados e incluem a taxa de entrega. O valor confirmado
+    pode ainda não ter sido recebido.
+  </p>
+</section>
+
+<section class="panel" aria-labelledby="receipts-heading">
+  <h2 id="receipts-heading">Recebimentos do dia</h2>
+  <dl class="metrics">
+    <div>
+      <dt>Recebido hoje</dt>
+      <dd>{{ price(dashboard.receipts.received) }}</dd>
+    </div>
+    <div>
+      <dt>Estornado hoje</dt>
+      <dd>{{ price(dashboard.receipts.refunded) }}</dd>
+    </div>
+    <div class="highlight">
+      <dt>Recebido menos estornos</dt>
+      <dd>{{ price(dashboard.receipts.netReceived) }}</dd>
+    </div>
+  </dl>
+  <p class="hint">
+    Pagamentos e estornos registrados hoje, inclusive de pedidos de outros dias. Valores sem troco.
+    Este total não representa o lucro.
+  </p>
+</section>
+
+<section class="panel" aria-labelledby="queues-heading">
+  <h2 id="queues-heading">Filas da operação agora</h2>
+  <p class="hint">Incluem pedidos de dias anteriores que ainda precisam de atendimento.</p>
+  <dl class="metrics queues">
+    @for (queue of dashboard.queues; track queue.status) {
+    <div>
+      <dt>{{ statusLabels[queue.status] || queue.status }}</dt>
+      <dd>{{ number.format(queue.count) }}</dd>
+    </div>
+    }
+  </dl>
+  <div class="actions">
+    @if (session.canManageOrders()) {
+    <a class="button" routerLink="/equipe/pedidos">Abrir pedidos</a> } @if
+    (session.canWorkKitchen()) { <a class="button" routerLink="/equipe/cozinha">Abrir cozinha</a> }
+    @if (session.canWorkDispatch()) {
+    <a class="button" routerLink="/equipe/expedicao">Abrir expedição</a> }
+  </div>
+</section>
+
+<section class="panel" aria-labelledby="production-heading">
+  <h2 id="production-heading">Produção concluída hoje</h2>
+  <dl class="metrics">
+    <div>
+      <dt>Tempo médio de produção</dt>
+      <dd>
+        {{ dashboard.production.averageMinutes === null ? 'Sem produções concluídas' :
+        number.format(dashboard.production.averageMinutes) + ' min' }}
+      </dd>
+    </div>
+    <div>
+      <dt>Pedidos na média</dt>
+      <dd>{{ number.format(dashboard.production.completed) }}</dd>
+    </div>
+  </dl>
+  <p class="hint">
+    Do início do preparo até “Pronto”, para pedidos que ficaram prontos hoje com os dois horários
+    registrados. Inclui trabalho concluído antes de um cancelamento.
+  </p>
+</section>
+
+<section class="panel" aria-labelledby="products-heading">
+  <h2 id="products-heading">Produtos mais pedidos hoje</h2>
+  <p class="hint">
+    Até 5 produtos por quantidade nos pedidos confirmados hoje, excluindo cancelados. Valores dos
+    itens, sem taxa de entrega.
+  </p>
+  @if (dashboard.topProducts.length === 0) {
+  <p>Nenhum produto em pedidos confirmados hoje.</p>
+  } @else {
+  <ol class="top-products">
+    @for (product of dashboard.topProducts; track product.productId) {
+    <li>
+      <strong>{{ product.productName }}</strong>
+      <span>{{ number.format(product.quantity) }} un. · {{ price(product.itemValue) }}</span>
+    </li>
+    }
+  </ol>
+  }
+</section>
+}

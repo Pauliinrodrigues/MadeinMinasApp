@@ -1,0 +1,56 @@
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr));
+  gap: 12px;
+  margin: 20px 0;
+
+  > div {
+    padding: 18px;
+    border: 1px solid #e4d8ca;
+    border-radius: 12px;
+    overflow-wrap: anywhere;
+    min-width: 0;
+  }
+
+  dt {
+    font-size: 14px;
+    color: #65584e;
+  }
+
+  dd {
+    margin: 8px 0 0;
+    font-size: clamp(20px, 2.5vw, 28px);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .highlight {
+    background: #f1e5d7;
+    border-color: #b8a89b;
+  }
+}
+
+.queues {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+}
+
+.top-products {
+  padding-left: 24px;
+  margin-bottom: 0;
+
+  li {
+    padding: 14px 8px;
+    border-bottom: 1px solid #e4d8ca;
+    overflow-wrap: anywhere;
+  }
+
+  li:last-child {
+    border-bottom: 0;
+  }
+
+  span {
+    display: block;
+    color: #65584e;
+    margin-top: 4px;
+  }
+}

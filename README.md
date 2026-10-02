@@ -2,7 +2,7 @@
 
 Sistema de gestão e pedidos da hamburgueria Made in Minas, desenvolvido por fases.
 
-**Fases 1 a 5 implementadas nos incrementos descritos no roteiro.** Expedição e impressão pelo navegador foram integradas pelo [PR #7](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/7), após aceite e checks aprovados; impressão automática e validação física dependem do equipamento. O estoque manual (6A) foi validado e integrado pelo [PR #8](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/8), commit `71f7c41`. O [consumo de estoque por pedidos — Fase 6B](docs/order-stock.md) está implementado e testado, preservado no commit local `98ecb4a`. O incremento atual é [CMV teórico por produto — Fase 6C](docs/cmv.md), na branch `feat/product-cmv`, derivada da 6B ainda não integrada. O usuário autorizou a continuidade; o aceite manual e a publicação dos incrementos continuam pendentes.
+**Fases 1 a 5 implementadas nos incrementos descritos no roteiro.** Expedição e impressão pelo navegador foram integradas pelo [PR #7](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/7), após aceite e checks aprovados; impressão automática e validação física dependem do equipamento. O estoque manual (6A) foi validado e integrado pelo [PR #8](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/8), commit `71f7c41`. [Consumo de estoque — 6B](docs/order-stock.md) e [CMV teórico — 6C](docs/cmv.md) estão implementados e testados, preservados nos commits locais `98ecb4a` e `5ce0ba8`. O incremento atual é [Dashboard do dia — 7A](docs/daily-dashboard.md), na branch `feat/daily-dashboard`, derivada da 6C. A continuidade foi autorizada; aceites manuais e publicação/integração de 6B, 6C e 7A permanecem pendentes.
 
 ## Estrutura
 
@@ -111,7 +111,7 @@ O fluxo local completo está em `scripts/Test-Quality.ps1`: formatação, testes
 powershell -NoProfile -File scripts/Test-Quality.ps1
 ```
 
-O GitHub Actions executa as verificações em pushes para `master` e pull requests. O PR #7 passou nos checks de backend e frontend antes da integração. Detalhes e limites: [manutenção técnica](docs/maintenance.md). O incremento atual está em [estoque manual](docs/stock.md), com validação local registrada em [validation.md](docs/validation.md).
+O GitHub Actions executa as verificações em pushes para `master` e pull requests. O PR #7 passou nos checks de backend e frontend antes da integração. Detalhes e limites: [manutenção técnica](docs/maintenance.md). O incremento atual está em [dashboard diário](docs/daily-dashboard.md), com validação local registrada em [validation.md](docs/validation.md).
 
 ## Configuração e segurança
 
@@ -134,6 +134,9 @@ O GitHub Actions executa as verificações em pushes para `master` e pull reques
 - [Pagamentos manuais](docs/payments.md)
 - [Cozinha/KDS](docs/kitchen.md)
 - [Estoque manual de ingredientes](docs/stock.md)
+- [Consumo de estoque por pedidos](docs/order-stock.md)
+- [CMV teórico por produto](docs/cmv.md)
+- [Dashboard do dia](docs/daily-dashboard.md)
 - [Arquitetura](docs/architecture.md)
 - [Autenticação, administrador inicial e testes](docs/authentication.md)
 - [Gestão de funcionários e permissões](docs/users.md)
@@ -144,3 +147,5 @@ O GitHub Actions executa as verificações em pushes para `master` e pull reques
 - [Etapas](docs/roadmap.md)
 
 **Expedição e impressão (5B/5C):** faça novo login como administrador ou expedição e abra **Expedição**. Confira destino, produtos e pagamento antes de avançar. Retirada segue direto de Pronto para Entregue; finalize após recebimento integral registrado pelo atendimento. As comandas de produção e expedição abrem prévia com impressão explícita pelo navegador (58/80 mm ou A4). Impressão automática e acerto de margens/corte dependem do equipamento real. Roteiro: [expedição e impressão](docs/dispatch-printing.md).
+
+**Dashboard (7A):** faça novo login como administrador e abra **Dashboard** no menu. Confira pedidos, valor confirmado, recebimentos/estornos, filas atuais, tempo de produção e produtos mais pedidos. O dia segue o horário de Brasília; use **Atualizar painel** para consultar novamente. Relatórios por período ficam para a 7B. Regras e roteiro: [dashboard do dia](docs/daily-dashboard.md).

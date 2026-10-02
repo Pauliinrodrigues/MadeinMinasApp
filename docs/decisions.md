@@ -131,3 +131,11 @@ A 6C começa com consulta administrativa somente leitura, usando preço e custos
 Custo zero é tratado como pendência: o cadastro não distingue ingrediente gratuito de custo ainda não informado. Exibir composição e total conhecido como parcial, com indicadores completos nulos. Ingrediente inativo permanece no cálculo com aviso. Sem ficha, orientar cadastro; consultar não cria composição. CMV realizado e custo histórico exigirão outro incremento.
 
 O usuário autorizou a continuidade em nova branch após a conclusão técnica da 6B. O commit local 98ecb4a preserva a 6B; feat/product-cmv parte dele e permanece dependente até integração. Esta organização não registra aceite manual nem publicação que ainda não tenham ocorrido. Regras e escopo: [cmv.md](cmv.md).
+
+## 022 — Dashboard diário antes dos relatórios por período
+
+A Fase 7A usa o dia civil em America/Sao_Paulo, determinado pelo servidor, com início inclusivo e fim exclusivo. Diferenciar criação, confirmação comercial e recebimento: pedidos cancelados saem do valor confirmado, mas eventos de recebimento/estorno conservam suas datas. Total confirmado inclui entrega; ranking considera apenas os valores dos itens. Filas incluem dias anteriores. A média de produção considera trabalho que chegou a Pronto hoje com início válido, incluindo posterior cancelamento.
+
+Permissão dashboard.view inicialmente exclusiva de administrador, sem expor dados pessoais. Consultas em snapshot consistente, somas em decimal, médias ausentes como null e atualização manual no frontend. Não criar tabelas de agregados nem transformar o CMV teórico atual em custo histórico. Relatórios por período ficam para a 7B.
+
+Continuidade autorizada após concluir implementação/testes da 6C, preservada em 5ce0ba8. feat/daily-dashboard parte desse commit e mantém a dependência da 6B; o pedido de continuidade não substitui aceite manual nem publicação. Contratos e validação: [daily-dashboard.md](daily-dashboard.md).
