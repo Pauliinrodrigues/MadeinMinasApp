@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import {
   administratorGuard,
   dashboardGuard,
+  reportsGuard,
   catalogGuard,
   customersGuard,
   ordersGuard,
@@ -34,6 +35,12 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/staff/staff-layout.page').then((page) => page.StaffLayoutPage),
     children: [
+      {
+        path: 'relatorios',
+        canActivate: [reportsGuard],
+        loadComponent: () =>
+          import('./features/reports/sales-report.page').then((page) => page.SalesReportPage),
+      },
       {
         path: 'dashboard',
         canActivate: [dashboardGuard],

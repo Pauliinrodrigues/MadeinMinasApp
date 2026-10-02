@@ -1,6 +1,6 @@
 # CMV teórico por produto — Fase 6C
 
-Branch `feat/product-cmv`, criada a partir do commit local `98ecb4a` da Fase 6B. O usuário autorizou continuar em uma nova branch após a conclusão técnica da 6B. Esta branch depende da 6B, ainda não integrada à master; a publicação deve respeitar essa ordem. Não foi registrado aceite manual que ainda não tenha ocorrido.
+Incremento desenvolvido na branch `feat/product-cmv` e integrado pelo [PR #10](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/10), commit `e4f71b2`, depois da integração da Fase 6B. Publicação e integração autorizadas pelo responsável em 02/10/2026, com checks backend/frontend aprovados. A atualização da base preservou o conteúdo testado localmente.
 
 O administrador acessa **Produtos → CMV**, ou **Ficha técnica → Consultar CMV da ficha salva**. A consulta apresenta custo da composição atual, custo por unidade vendida, CMV percentual e margem bruta teórica. Nenhuma tabela, migration, dependência ou configuração adicional.
 

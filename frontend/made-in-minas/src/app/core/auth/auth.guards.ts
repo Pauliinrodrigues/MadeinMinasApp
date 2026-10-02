@@ -25,6 +25,15 @@ export const dashboardGuard: CanActivateFn = () => {
   return session.canViewDashboard() ? true : router.createUrlTree(['/equipe']);
 };
 
+export const reportsGuard: CanActivateFn = () => {
+  const session = inject(AuthSession);
+  const router = inject(Router);
+  if (!session.token()) {
+    return router.createUrlTree(['/entrar']);
+  }
+  return session.canViewReports() ? true : router.createUrlTree(['/equipe']);
+};
+
 export const catalogGuard: CanActivateFn = () => {
   const session = inject(AuthSession);
   const router = inject(Router);

@@ -1,6 +1,6 @@
 # Consumo de estoque por pedidos — Fase 6B
 
-Incremento na branch `feat/order-stock`, após a integração do estoque manual pelo PR #8 (`71f7c41`). A implementação reutiliza a confirmação/cancelamento do pedido e o histórico de estoque. CMV permanece no próximo incremento. Aceite manual desta etapa ainda pendente.
+Incremento desenvolvido na branch `feat/order-stock`, após o estoque manual do PR #8 (`71f7c41`), e integrado pelo [PR #9](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/9), commit `ed94d80`, com checks backend/frontend aprovados. Publicação e integração autorizadas pelo responsável em 02/10/2026. A implementação reutiliza a confirmação/cancelamento do pedido e o histórico de estoque; o [CMV teórico](cmv.md) foi entregue no incremento seguinte.
 
 ## Operação
 

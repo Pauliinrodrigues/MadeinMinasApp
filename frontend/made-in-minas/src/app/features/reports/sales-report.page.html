@@ -1,0 +1,198 @@
+<div class="page-heading">
+  <div>
+    <p class="eyebrow">GESTÃO</p>
+    <h1>Relatórios por período</h1>
+  </div>
+</div>
+<form class="panel" (ngSubmit)="load()" novalidate>
+  <fieldset class="filters" [disabled]="loading()">
+    <legend>Vendas e recebimentos</legend>
+    <label
+      >Data inicial<input
+        type="date"
+        name="startDate"
+        required
+        [(ngModel)]="startDate"
+        (ngModelChange)="filtersChanged()"
+    /></label>
+    <label
+      >Data final<input
+        type="date"
+        name="endDate"
+        required
+        max="9999-12-30"
+        [(ngModel)]="endDate"
+        (ngModelChange)="filtersChanged()"
+    /></label>
+    <button type="submit" class="primary">
+      {{ loading() ? 'Consultando…' : 'Gerar relatório' }}
+    </button>
+    <button type="button" (click)="load(true)">Últimos 7 dias</button>
+  </fieldset>
+  <p class="hint">Até 90 dias, incluindo as duas datas, no horário de Brasília.</p>
+</form>
+@if (loading()) {
+<p role="status">Consultando o período…</p>
+} @if (edited() && !error()) {
+<p role="status">Datas alteradas. Clique em “Gerar relatório” para consultar.</p>
+} @if (error()) {
+<p class="error" role="alert">{{ error() }}</p>
+} @if (data(); as report) {
+<p class="hint">
+  Período consultado: {{ formatDate(report.startDate) }} a {{ formatDate(report.endDate) }} ·
+  Atualizado em {{ formatTimestamp(report.calculatedAt) }} (Brasília).
+</p>
+<section class="panel" aria-labelledby="summary-heading">
+  <h2 id="summary-heading">Resumo do período</h2>
+  <dl class="metrics">
+    <div>
+      <dt>Pedidos criados</dt>
+      <dd>{{ number.format(report.summary.created) }}</dd>
+    </div>
+    <div>
+      <dt>Criados e cancelados</dt>
+      <dd>{{ number.format(report.summary.createdAndCancelled) }}</dd>
+    </div>
+    <div>
+      <dt>Pedidos confirmados</dt>
+      <dd>{{ number.format(report.summary.confirmed) }}</dd>
+    </div>
+    <div>
+      <dt>Valor confirmado</dt>
+      <dd>{{ price(report.summary.confirmedValue) }}</dd>
+    </div>
+    <div>
+      <dt>Ticket médio confirmado</dt>
+      <dd>
+        {{ report.summary.averageTicket === null ? 'Sem pedidos confirmados' :
+        price(report.summary.averageTicket) }}
+      </dd>
+    </div>
+    <div>
+      <dt>Recebido no período</dt>
+      <dd>{{ price(report.summary.received) }}</dd>
+    </div>
+    <div>
+      <dt>Estornado no período</dt>
+      <dd>{{ price(report.summary.refunded) }}</dd>
+    </div>
+    <div>
+      <dt>Recebido menos estornos</dt>
+      <dd>{{ price(report.summary.netReceived) }}</dd>
+    </div>
+  </dl>
+  <p class="hint">
+    Confirmações excluem pedidos atualmente cancelados e incluem a taxa de entrega. Recebimentos e
+    estornos seguem a data do pagamento, inclusive de pedidos de outros períodos. Valores sem troco;
+    recebido menos estornos não representa lucro.
+  </p>
+  <p class="hint">
+    Este é um retrato dos registros atuais: cancelamentos posteriores podem alterar os valores
+    confirmados de períodos anteriores.
+  </p>
+</section>
+
+<section aria-labelledby="days-heading">
+  <h2 id="days-heading">Detalhamento por dia</h2>
+  <p class="hint">
+    Dias sem movimento também aparecem. Em telas pequenas, deslize a tabela na horizontal.
+  </p>
+  <div
+    class="panel table-scroll"
+    role="region"
+    aria-label="Tabela diária com rolagem horizontal"
+    tabindex="0"
+  >
+    <table>
+      <caption class="sr-only">
+        Vendas e recebimentos por dia de Brasília
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Dia</th>
+          <th scope="col">Criados</th>
+          <th scope="col">Criados e cancelados</th>
+          <th scope="col">Confirmados</th>
+          <th scope="col">Valor confirmado</th>
+          <th scope="col">Ticket médio</th>
+          <th scope="col">Recebido</th>
+          <th scope="col">Estornado</th>
+          <th scope="col">Recebido menos estornos</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (day of report.days; track day.date) {
+        <tr>
+          <th scope="row">{{ formatDate(day.date) }}</th>
+          <td>{{ number.format(day.metrics.created) }}</td>
+          <td>{{ number.format(day.metrics.createdAndCancelled) }}</td>
+          <td>{{ number.format(day.metrics.confirmed) }}</td>
+          <td class="money">{{ price(day.metrics.confirmedValue) }}</td>
+          <td class="money">
+            {{ day.metrics.averageTicket === null ? 'Sem confirmações' :
+            price(day.metrics.averageTicket) }}
+          </td>
+          <td class="money">{{ price(day.metrics.received) }}</td>
+          <td class="money">{{ price(day.metrics.refunded) }}</td>
+          <td class="money">{{ price(day.metrics.netReceived) }}</td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section aria-labelledby="methods-heading">
+  <h2 id="methods-heading">Recebimentos por forma de pagamento</h2>
+  <div
+    class="panel table-scroll"
+    role="region"
+    aria-label="Tabela de formas de pagamento com rolagem horizontal"
+    tabindex="0"
+  >
+    <table>
+      <caption class="sr-only">
+        Recebimentos e estornos por forma de pagamento
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Forma</th>
+          <th scope="col">Recebido</th>
+          <th scope="col">Estornado</th>
+          <th scope="col">Recebido menos estornos</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (method of report.paymentMethods; track method.method) {
+        <tr>
+          <th scope="row">{{ methodLabel(method.method) }}</th>
+          <td class="money">{{ price(method.received) }}</td>
+          <td class="money">{{ price(method.refunded) }}</td>
+          <td class="money">{{ price(method.netReceived) }}</td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="panel" aria-labelledby="products-heading">
+  <h2 id="products-heading">Produtos mais pedidos no período</h2>
+  <p class="hint">
+    Até 10 produtos por quantidade nas confirmações válidas do período. Valores dos itens, sem taxa
+    de entrega; nomes e preços preservados nos pedidos.
+  </p>
+  @if (report.topProducts.length === 0) {
+  <p>Nenhum produto em pedidos confirmados no período.</p>
+  } @else {
+  <ol class="products">
+    @for (product of report.topProducts; track product.productId) {
+    <li>
+      <strong>{{ product.productName }}</strong
+      ><span>{{ number.format(product.quantity) }} un. · {{ price(product.itemValue) }}</span>
+    </li>
+    }
+  </ol>
+  }
+</section>
+}

@@ -4,6 +4,7 @@ public static class AccessPolicies
 {
     public const string ManageUsers = "users.manage";
     public const string ViewDashboard = "dashboard.view";
+    public const string ViewReports = "reports.view";
     public const string ManageCatalog = "catalog.manage";
     public const string ManageCustomers = "customers.manage";
     public const string ManageOrders = "orders.manage";
@@ -22,6 +23,7 @@ public static class AccessPolicies
         {
             [ManageUsers] = ["Administrator"],
             [ViewDashboard] = ["Administrator"],
+            [ViewReports] = ["Administrator"],
             [ManageCatalog] = ["Administrator"],
             [ManageCustomers] = ["Administrator", "Attendant"],
             [ManageOrders] = ["Administrator", "Attendant"],

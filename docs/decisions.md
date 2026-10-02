@@ -139,3 +139,17 @@ A Fase 7A usa o dia civil em America/Sao_Paulo, determinado pelo servidor, com i
 Permissão dashboard.view inicialmente exclusiva de administrador, sem expor dados pessoais. Consultas em snapshot consistente, somas em decimal, médias ausentes como null e atualização manual no frontend. Não criar tabelas de agregados nem transformar o CMV teórico atual em custo histórico. Relatórios por período ficam para a 7B.
 
 Continuidade autorizada após concluir implementação/testes da 6C, preservada em 5ce0ba8. feat/daily-dashboard parte desse commit e mantém a dependência da 6B; o pedido de continuidade não substitui aceite manual nem publicação. Contratos e validação: [daily-dashboard.md](daily-dashboard.md).
+
+## 023 — Relatórios limitados por período e consistentes com o dashboard
+
+A 7B acrescenta consulta administrativa de vendas/recebimentos, protegida por reports.view, com resumo, dias, formas de pagamento e ranking de dez produtos. Períodos de 1 a 90 dias inclusivos evitam respostas sem limite; sete dias é o padrão definido pelo backend. Conversão e agrupamento explícitos em America/Sao_Paulo evitam depender dos fusos do navegador/servidor/conexão. Datas históricas com horário de verão usam o primeiro instante local válido.
+
+Reutilizar as definições comerciais da 7A, com teste de consistência para um único dia. O ticket do período usa a quantidade total de confirmações válidas, e todos os dias vazios permanecem na resposta. Quatro consultas agregadas em snapshot, sem carregar pedidos completos nem introduzir tabelas de indicadores. Não inventar fechamento contábil, CMV realizado ou filas históricas. A interface descarta o resultado ao alterar filtros e permite repetir consultas após falha.
+
+O dashboard foi preservado no commit local 15e4fa0, e feat/period-reports partiu dele após autorização para continuar. A publicação posterior está registrada na decisão 024. Regras e limites: [period-reports.md](period-reports.md).
+
+## 024 — Publicação sequencial dos incrementos 6B a 7B
+
+Em 02/10/2026, o responsável autorizou publicar todas as alterações seguindo o fluxo do projeto. Os incrementos foram separados nos PRs #9 (estoque por pedido), #10 (CMV), #11 (dashboard) e #12 (relatórios), com integração por squash após checks backend/frontend. Cada branch ainda não publicada foi atualizada sobre a master resultante do incremento anterior, verificando a igualdade do conteúdo com o commit local original. Não houve force push nem reescrita da master.
+
+A autorização de publicação não é apresentada como evidência de execução manual dos roteiros. Os registros anteriores descrevem o estado na conclusão de cada implementação; os resultados da publicação estão em [validation.md](validation.md). Esta operação de Git não executa migrations nem transfere User Secrets, credenciais, cadastros ou backups.

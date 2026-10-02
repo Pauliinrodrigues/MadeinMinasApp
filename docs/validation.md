@@ -407,3 +407,30 @@ A continuidade foi autorizada após a conclusão técnica da 6C. O incremento de
 - API atualizada iniciada em segundo plano na porta 5080; frontend existente em 8101. Logs `.local/dashboard-api.log` e `.local/dashboard-api-error.log`. Os nove checks de Test-Foundation com -ExpectDatabaseReady passaram. Rota do dashboard presente no OpenAPI e consulta sem sessão retorna 401.
 - Nenhuma escrita comercial, atualização de saldo ou alteração de esquema foi executada no banco local neste incremento. Não houve operação sobre o parsmartmanager. Aceite manual e publicação/integração continuam pendentes; a 7B de relatórios por período ainda não foi iniciada.
 - Arquivos e roteiro para conferir a tela estão em [daily-dashboard.md](daily-dashboard.md).
+
+## Fase 7B — relatórios por período (02/10/2026)
+
+Dashboard preservado no commit local `15e4fa0`, em feat/daily-dashboard. A branch `feat/period-reports` foi criada dele após autorização para a próxima etapa, mantendo a dependência dos incrementos locais 6B/6C/7A. Aceite manual e publicação/integração continuam pendentes.
+
+- **354/354 testes backend aprovados**, sem falhas ou ignorados, em 6 min 25 s, no PostgreSQL temporário isolado de 127.0.0.1:55433. Incluem 20 novos cenários de relatórios: autorização/revogação, parâmetros inválidos, limite de 90 dias, padrão de sete dias, preenchimento de dias vazios, meia-noite UTC/Brasília, histórico de confirmação/cancelamento, taxa de entrega, ticket ponderado, recebimentos/estornos por data e forma, troco, ranking/limite/desempate/nomes preservados, consistência com dashboard e ausência de gravações/dados pessoais. Verificados também início histórico de horário de verão e conexão PostgreSQL em Pacific/Auckland. Relatório `.local/reports-test-results/reports-backend.trx`; cluster temporário encerrado e removido pelo helper.
+- Antes da regressão completa, os 19 primeiros testes novos passaram em execução focada. O teste adicional de fuso da conexão foi incluído na execução completa, também aprovada. Não houve falha funcional nesta suíte.
+- **78/78 cenários de navegador aprovados**, em 6,3 min, desktop/mobile: 30 execuções de relatórios e 48 de regressão de dashboard/acesso/usuários. Fuso do navegador em Asia/Tokyo nos cenários novos; filtros, datas inválidas, consulta exata, descarte de resultado ao editar, bloqueio durante consulta, falha/recuperação, médias ausentes, líquido negativo, permissões, revogação, nomes extensos/escape e ausência de rolagem horizontal da página. As tabelas mantêm rolagem própria. API simulada, sem vendas reais. Comando: `npm.cmd run test:e2e -- reports.spec.ts dashboard.spec.ts staff.spec.ts`.
+- Formatação, lint e build de produção do frontend aprovados. Build Release da solução com zero avisos/erros; whitespace .NET verificado; EF confirmou ausência de mudanças de modelo pendentes. Sem dependências ou migrations novas.
+- API atualizada em 5080, iniciada em segundo plano com logs `.local/reports-api.log` e `.local/reports-api-error.log`; frontend existente em 8101. Os nove checks de Test-Foundation com -ExpectDatabaseReady passaram. `/api/reports/sales` consta no OpenAPI local e retorna 401 sem login.
+- Nenhuma escrita comercial, alteração de saldo ou atualização de esquema no banco operacional; nenhuma operação sobre parsmartmanager. O incremento permanece local para aceite manual, sem publicação. A próxima fase é o chat próprio, ainda não iniciado.
+- Contratos, lista de arquivos novos/alterados e roteiro de aceite: [period-reports.md](period-reports.md).
+
+## Publicação dos incrementos 6B a 7B — 02/10/2026
+
+O responsável autorizou publicar todas as alterações seguindo o fluxo de branches, pull requests, checks e squash na master. As menções a publicação pendente nas seções anteriores registram a situação ao concluir cada implementação. A autorização atual não comprova execução manual dos roteiros.
+
+| Incremento | Pull request | Validação no GitHub antes da integração |
+| --- | --- | --- |
+| 6B — estoque por pedido | [#9](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/9), integrado em `ed94d80` | 305 testes backend e 284 de navegador aprovados; ambos os jobs concluídos com sucesso |
+| 6C — CMV teórico | [#10](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/10), integrado em `e4f71b2` | 319 testes backend e 304 de navegador aprovados; ambos os jobs concluídos com sucesso |
+| 7A — dashboard | [#11](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/11), integrado em `23b2c38` | 334 testes backend e 324 de navegador aprovados; ambos os jobs concluídos com sucesso |
+| 7B — relatórios | [#12](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/12) | Execução e resultado do commit final disponíveis nos checks do PR; merge condicionado ao sucesso de backend e frontend |
+
+- As atualizações das bases de CMV, dashboard e relatórios preservaram os arquivos dos commits locais originais; comparação integral sem diferenças. A documentação desta publicação foi atualizada no PR de relatórios.
+- Autoria e destino conferidos: Pauliinrodrigues, repositório Pauliinrodrigues/MadeinMinasApp. Nenhum arquivo ignorado estava versionado.
+- A publicação não executou migration, movimentação comercial ou operação sobre o PostgreSQL compartilhado. Segredos, logs, resultados locais e backups permanecem fora do Git.
