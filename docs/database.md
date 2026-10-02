@@ -10,7 +10,8 @@ A Fase 4B (carrinho/revisão) consulta esse modelo sem criar tabelas ou migratio
 | Users | Login único, nome, hash de senha, ativo, RoleId | 2 |
 | Categories | Nome único normalizado, descrição opcional, ordem, ativo, criação/atualização UTC | 3A implementada |
 | Products | Categoria obrigatória, nome único por categoria, descrição, preço numeric(8,2), URL de imagem, ativo, disponibilidade manual, datas UTC | 3B implementada |
-| Ingredients | Nome único normalizado, unidade-base fixa (kg/l/un), custo numeric(10,4), mínimo numeric(9,3), fornecedor textual opcional, ativo, datas UTC; sem saldo nesta etapa | 3C implementada |
+| Ingredients | Nome único normalizado, unidade-base fixa (kg/l/un), custo numeric(10,4), mínimo e saldo numeric(9,3), versão de estoque, fornecedor textual opcional, ativo e datas UTC | Cadastro 3C; estoque 6A |
+| StockMovements | Ingrediente/autor com FK restrita, cópias de nomes/unidade, RequestId e versão únicos por ingrediente, tipo, quantidade, diferença, saldos, motivo e instante UTC | 6A |
 | Recipes | Produto único com FK restrita, rendimento inteiro (1–10000), instruções opcionais, datas UTC | 3D implementada |
 | RecipeItems | PK composta receita/ingrediente, quantidade numeric(9,3), posição; FK restrita de ingrediente e cascade de receita para seus itens | 3D implementada |
 | Combos | Nome, descrição, preço e disponibilidade próprios | Catálogo, incremento específico |
@@ -39,9 +40,13 @@ A Fase 5A usa a migration `20261001191445_AddKitchenStatuses` para ampliar apena
 - OrderStatusHistory registra criação e transições. Na Fase 4C, itens, endereço e valores do pedido não são editáveis; correções exigem cancelamento e novo registro.
 - Produtos referenciados por pedidos serão inativados.
 - Último pedido e contagem do cliente serão derivados inicialmente.
-- Fase 6 introduzirá movimentos de estoque e estornos; a regra de baixa será idempotente e transacional.
+- Fase 6A introduz movimentos manuais de estoque; baixa/compensação por pedido terão incremento próprio, idempotente e transacional.
 - Pagamentos manuais têm histórico de tentativas e estados independentes do status do pedido. Não há referência de provedor nem dados sensíveis de cartão. Integração online e conciliação exigirão contratos próprios.
 
 Índices, limites de campos, constraints, transações e estratégias de concorrência serão implementados com cada módulo, acompanhados de migrations e testes.
 
 Migration 20261001201327_AddDispatchStatuses (5B/5C): estende somente CK_Orders_Status e CK_OrderStatusHistory_Transition com AwaitingDelivery, OutForDelivery, Delivered e Finalized. Modalidade e recebimento integral são validados transacionalmente pelo serviço. Sem nova tabela ou dados de demonstração. Rollback não pode apagar histórico para eliminar estados novos; ver [expedição e impressão](dispatch-printing.md).
+
+## Estoque manual — 6A
+
+A migration `20261002130808_AddIngredientStock` acrescenta `CurrentStock numeric(9,3)` e `StockVersion bigint` a Ingredients, ambos inicialmente zero. `StockMovements` registra autor, ingrediente, cópias de nomes/unidade, RequestId, versão, tipo, quantidade, diferença, saldos anterior/novo, motivo e instante UTC. FKs restritas preservam referências; índices únicos por ingrediente/requestId e ingrediente/versão. Constraints de intervalo, tipo e equação do saldo complementam a transação do serviço. Não há consumo automático, custos históricos ou custo médio nesta etapa. Regras: [stock.md](stock.md).

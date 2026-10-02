@@ -133,3 +133,14 @@ dotnet ef database update 20261001201327_AddDispatchStatuses --project backend/M
 ```
 
 Não é necessário reaplicar ao trocar de branch se já estiver registrada. Rollback falha quando pedidos ou eventos usam estados novos; não apagar/regravar histórico para forçar retorno. Impressão pelo navegador não cria tabelas ou exige credenciais extras. Operação e limites: [expedição e impressão](../docs/dispatch-printing.md).
+
+## Migration de estoque manual — Fase 6A
+
+`20261002130808_AddIngredientStock` adiciona saldo/versão em Ingredients e a tabela StockMovements. Antes de aplicar em outra instalação, confirme a conexão exclusivamente com made_in_minas, faça backup e revise o script:
+
+```powershell
+dotnet ef migrations script 20261001201327_AddDispatchStatuses 20261002130808_AddIngredientStock --project backend/MadeInMinas.Api
+dotnet ef database update 20261002130808_AddIngredientStock --project backend/MadeInMinas.Api
+```
+
+Reinicie a API após a atualização. Ingredientes existentes começam com saldo de sistema zero; registre a contagem física inicial pela interface. Nenhum pedido antigo é baixado retroativamente. O Down elimina os saldos e o histórico de estoque; não executar em base operacional sem planejamento de recuperação e autorização específica. Roteiro: [estoque manual](../docs/stock.md).

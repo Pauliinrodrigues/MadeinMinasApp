@@ -2,7 +2,7 @@
 
 Sistema de gestão e pedidos da hamburgueria Made in Minas, desenvolvido por fases.
 
-**Fases 1, 2, 3 e 4 implementadas e validadas nos incrementos descritos no roteiro.** Pagamentos manuais foram integrados pelo [PR #5](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/5). A cozinha/KDS foi integrada pelo [PR #6](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/6). Expedição e impressão pelo navegador (5B/5C) foram aceitas pelo usuário em 01/10/2026 na branch `feat/dispatch-printing`, com publicação e integração autorizadas após checks remotos; impressão automática depende da definição e validação do equipamento. Estoque/CMV e IA seguem nas fases planejadas.
+**Fases 1 a 5 implementadas nos incrementos descritos no roteiro.** Expedição e impressão pelo navegador foram integradas pelo [PR #7](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/7), após aceite e checks aprovados; impressão automática e validação física dependem do equipamento. O incremento atual é o [estoque manual de ingredientes — Fase 6A](docs/stock.md), na branch `feat/ingredient-stock`, com aceite manual concluído em 02/10/2026 e publicação/integração autorizadas após checks aprovados. Baixa por pedidos, CMV e IA seguem nos próximos incrementos.
 
 ## Estrutura
 
@@ -111,7 +111,7 @@ O fluxo local completo está em `scripts/Test-Quality.ps1`: formatação, testes
 powershell -NoProfile -File scripts/Test-Quality.ps1
 ```
 
-O GitHub Actions executa as verificações em pushes para `master` e pull requests. O PR #5 passou nos checks de backend e frontend antes da integração. Detalhes e limites: [manutenção técnica](docs/maintenance.md). O incremento atual está em [expedição e impressão](docs/dispatch-printing.md), com validação local registrada em [validation.md](docs/validation.md).
+O GitHub Actions executa as verificações em pushes para `master` e pull requests. O PR #7 passou nos checks de backend e frontend antes da integração. Detalhes e limites: [manutenção técnica](docs/maintenance.md). O incremento atual está em [estoque manual](docs/stock.md), com validação local registrada em [validation.md](docs/validation.md).
 
 ## Configuração e segurança
 
@@ -133,6 +133,7 @@ O GitHub Actions executa as verificações em pushes para `master` e pull reques
 - [Pedidos manuais](docs/orders.md)
 - [Pagamentos manuais](docs/payments.md)
 - [Cozinha/KDS](docs/kitchen.md)
+- [Estoque manual de ingredientes](docs/stock.md)
 - [Arquitetura](docs/architecture.md)
 - [Autenticação, administrador inicial e testes](docs/authentication.md)
 - [Gestão de funcionários e permissões](docs/users.md)
