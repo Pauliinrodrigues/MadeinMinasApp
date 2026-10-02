@@ -55,3 +55,6 @@ As Fases 5B/5C acrescentam DispatchService/DispatchController e PrintController,
 A Fase 6A introduz StockController, StockService, DTOs e StockMovements, com saldo/versão no ingrediente. Mantém catalog.manage (administrador), transações e bloqueios existentes, sem repositories ou novas dependências. Leitura usa snapshot; escrita atualiza saldo e histórico atomicamente, com versão e idempotência. A página features/stock é acessada pelo ingrediente. Detalhes: [estoque manual](stock.md).
 
 A Fase 6B acrescenta OrderStockService na transação de OrderService e OrderStockComponents como composição histórica. StockMovements recebe OrderId opcional. Confirmação baixa ingredientes com bloqueios ordenados; cancelamento antes do preparo devolve o consumo original. Detalhes de pedido usam RepeatableRead e consultas separadas para coleções; a UI exibe o resultado sem calcular baixas. Nenhuma nova dependência. Ver [consumo por pedidos](order-stock.md).
+
+
+A Fase 6C acrescenta ProductCostsController, ProductCostService e DTOs/Costing. Consulta administrativa somente leitura, com RepeatableRead e cálculo decimal no backend. A página de CMV usa catalogGuard e uma resposta única para composição/indicadores. Sem entidades, migrations ou dependências novas. Ver [cmv.md](cmv.md).

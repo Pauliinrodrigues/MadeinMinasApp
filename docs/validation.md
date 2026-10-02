@@ -383,3 +383,15 @@ Branch `feat/order-stock`, criada da master `71f7c41`, após a integração da F
 - API iniciada com Release em 5080 e frontend em 8101, em segundo plano. Logs `.local/order-stock-api.log` e `.local/order-stock-frontend.log`. O inventário real precisa estar conferido antes de confirmar pedidos, pois saldo zero bloqueia consumo.
 - Alterações permanecem locais na branch para aceite manual; publicação/PR/integração serão feitos após a validação do incremento. CMV não foi iniciado.
 - Os nove checks de Test-Foundation com -ExpectDatabaseReady passaram: API/banco saudáveis, frontend acessível, CORS, ProblemDetails e OpenAPI. Os contratos locais incluem stockStatus/stockComponents no pedido e orderId no movimento.
+
+## Fase 6C — CMV teórico por produto (02/10/2026)
+
+O usuário autorizou continuar em nova branch após a conclusão técnica da 6B. O incremento anterior foi preservado no commit local `98ecb4a`, em `feat/order-stock`. A branch `feat/product-cmv` parte dele; as duas ainda não foram publicadas/integradas, e a sequência de integração deve preservar essa dependência. Não foi inferido aceite manual do pedido de continuidade.
+
+- **319/319 testes de backend aprovados**, sem falhas, em 3 min 23 s, no PostgreSQL temporário de 127.0.0.1:55433. Incluem 14 novos cenários de CMV: autorização, ficha ausente, custos zero/parciais, embalagem/rendimento/precisão, atualização de preço/custos/composição, cadastros inativos, margem negativa, valores mínimos/máximos e ausência de gravações. Relatório `.local/cmv-test-results/cmv-backend.trx`; cluster temporário encerrado e removido pelo helper.
+- A primeira execução do lint apontou seis blocos if novos sem chaves. Corrigidos somente os arquivos indicados, conforme a regra curly; formatação, lint e build de produção passaram depois. Nenhuma alteração de dependência.
+- O CMV usa apenas consultas; nenhuma migration, atualização de saldo ou escrita operacional foi executada neste incremento. O banco parsmartmanager não foi acessado. A migration herdada da 6B permanece como base.
+- **62/62 cenários de navegador aprovados** em 3 min 42 s, em desktop/mobile: 20 execuções novas de CMV e 42 de regressão de produtos/fichas técnicas. API simulada, sem escrita comercial real. Comando: `npm.cmd run test:e2e -- e2e/product-cost.spec.ts e2e/products.spec.ts e2e/recipes.spec.ts`.
+- Build Release da solução sem avisos/erros; whitespace .NET verificado e EF sem alterações de modelo pendentes. Apenas a API deste projeto foi reiniciada para usar o novo build, com logs `.local/cmv-api.log` e `.local/cmv-api-error.log`.
+- Os nove checks de Test-Foundation com -ExpectDatabaseReady passaram; API em 5080, PostgreSQL conectado e frontend em 8101 disponíveis. A rota de CMV está no OpenAPI local e uma consulta sem login retornou 401.
+- Arquivos novos/alterados e roteiro de aceite em [cmv.md](cmv.md). A 6C permanece em alterações locais na branch própria, sem publicação. Aceite manual de 6B/6C e integração seguem pendentes; dashboard não foi iniciado.

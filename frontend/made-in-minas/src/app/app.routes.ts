@@ -134,6 +134,12 @@ export const routes: Routes = [
           import('./features/catalog/recipe.page').then((page) => page.RecipePage),
       },
       {
+        path: 'produtos/:id/cmv',
+        canActivate: [catalogGuard],
+        loadComponent: () =>
+          import('./features/catalog/product-cost.page').then((page) => page.ProductCostPage),
+      },
+      {
         path: 'produtos/:id',
         canActivate: [catalogGuard],
         loadComponent: () =>

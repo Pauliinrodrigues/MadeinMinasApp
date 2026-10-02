@@ -4,6 +4,9 @@
   <h1>Ficha técnica</h1>
   @if (product(); as item) {
   <h2>{{ item.name }}</h2>
+  <a class="button" [routerLink]="['/equipe/produtos', productId, 'cmv']"
+    >Consultar CMV da ficha salva</a
+  >
   @if (!item.isActive) {
   <p class="notice">Produto inativo. Sua ficha pode ser mantida e editada.</p>
   } } @if (error()) {
@@ -111,8 +114,8 @@
         ></textarea>
       </label>
       <p class="hint">
-        Salvar a ficha não movimenta estoque. O cálculo de CMV será disponibilizado em uma próxima
-        etapa.
+        Salvar a ficha não movimenta estoque. Para consultar o CMV, salve as alterações e abra
+        “Consultar CMV da ficha salva”.
       </p>
       <button class="primary" [disabled]="form.invalid || !valid()">
         {{ busy() ? 'Salvando…' : 'Salvar ficha técnica' }}

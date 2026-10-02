@@ -54,3 +54,8 @@ A migration `20261002130808_AddIngredientStock` acrescenta `CurrentStock numeric
 ## Estoque por pedidos — 6B
 
 Migration `20261002181034_AddOrderStock` acrescenta Orders.StockStatus, OrderStockComponents (cópias de composição e consumo) e StockMovements.OrderId opcional. O índice único filtrado OrderId/IngredientId/Type impede duas baixas ou devoluções do mesmo ingrediente/pedido. FKs preservam os vínculos de auditoria. Pedidos anteriores não Novos ficam Legacy; Novos ficam Pending. Não há baixa retroativa nem alteração de saldo na migration. Rendimento e composição da confirmação são preservados, sem depender de versões posteriores da ficha. Ver [order-stock.md](order-stock.md).
+
+
+## CMV teórico — 6C
+
+Sem migration ou tabela nova. ProductCostService consulta Products, Categories, Recipes, RecipeItems e Ingredients em RepeatableRead, sem gravações. Resultados não são persistidos nem usados para reescrever custos de pedidos passados. A migration mais recente permanece AddOrderStock, herdada da 6B. Regras: [cmv.md](cmv.md).

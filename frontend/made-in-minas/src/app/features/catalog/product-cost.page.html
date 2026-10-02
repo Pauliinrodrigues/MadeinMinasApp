@@ -1,0 +1,105 @@
+<section>
+  <a routerLink="/equipe/produtos" class="back-link">← Produtos</a>
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">CUSTOS DO PRODUTO</p>
+      <h1>CMV teórico</h1>
+    </div>
+    <button type="button" (click)="load()" [disabled]="loading()">Atualizar cálculo</button>
+  </div>
+  <p>
+    Custo dos ingredientes e embalagens cadastrados na ficha, com os preços atuais. A margem abaixo
+    não inclui impostos, taxas, mão de obra ou despesas fixas.
+  </p>
+  @if (loading()) {
+  <p role="status">Consultando ficha técnica e custos…</p>
+  } @if (error()) {
+  <p class="error" role="alert">{{ error() }}</p>
+  <button type="button" (click)="load()">Tentar novamente</button>
+  } @if (data(); as cost) {
+  <section class="panel" aria-label="Dados do produto">
+    <h2>{{ cost.productName }}</h2>
+    <p>Preço de venda: <strong>{{ price(cost.salePrice) }}</strong></p>
+    <p>
+      Consulta em {{ cost.calculatedAt | date:'dd/MM/yyyy HH:mm:ss' }} (horário deste dispositivo).
+    </p>
+    @if (!cost.productIsActive) {
+    <p class="notice">Produto inativo. Os custos continuam disponíveis para revisão.</p>
+    } @else if (!cost.isAvailableForSale) {
+    <p class="notice">Produto indisponível para venda.</p>
+    }
+    <div class="actions">
+      <a class="button" [routerLink]="['/equipe/produtos', productId, 'ficha-tecnica']"
+        >Editar ficha técnica</a
+      >
+      <a class="button" [routerLink]="['/equipe/produtos', productId]">Editar produto e preço</a>
+      <a class="button" routerLink="/equipe/ingredientes">Revisar custos dos ingredientes</a>
+    </div>
+  </section>
+  @if (cost.status === 'MissingRecipe') {
+  <p class="notice" role="status">
+    Cadastre uma ficha técnica com ingredientes para calcular custo, CMV e margem.
+  </p>
+  } @else { @if (cost.hasInactiveIngredients) {
+  <p class="notice">
+    A ficha contém ingredientes inativos. Confira a composição antes de produzir; os custos
+    informados foram considerados.
+  </p>
+  } @if (cost.status === 'MissingCosts') {
+  <section class="panel" aria-label="Custos pendentes">
+    <h2>Complete os custos</h2>
+    <p>Há ingredientes com custo zero. Informe os custos para obter CMV e margem completos.</p>
+    <p>Custo conhecido da ficha (parcial): {{ formatCost(cost.knownRecipeCost) }}</p>
+  </section>
+  } @else {
+  <section class="panel" aria-label="Indicadores de CMV">
+    <h2>Custo e margem por unidade</h2>
+    <dl>
+      <dt>Custo da ficha completa</dt>
+      <dd>{{ formatCost(cost.recipeCost!) }}</dd>
+      <dt>Rendimento da ficha</dt>
+      <dd>{{ cost.recipeYield }} unidade(s)</dd>
+      <dt>Custo por unidade do produto</dt>
+      <dd>{{ formatCost(cost.unitCost!) }}</dd>
+      <dt>CMV sobre o preço de venda</dt>
+      <dd>{{ percentage.format(cost.cmvPercentage!) }}%</dd>
+      <dt>Margem bruta teórica por unidade</dt>
+      <dd>{{ formatCost(cost.grossMargin!) }}</dd>
+      <dt>Margem bruta teórica percentual</dt>
+      <dd>{{ percentage.format(cost.grossMarginPercentage!) }}%</dd>
+    </dl>
+    @if (cost.grossMargin! < 0) {
+    <p class="error" role="status">
+      O custo dos ingredientes supera o preço de venda. Revise custos, rendimento e preço.
+    </p>
+    }
+  </section>
+  }
+  <h2>Composição do custo</h2>
+  <p>
+    Quantidades para {{ cost.recipeYield }} unidade(s). Custo da linha = quantidade × custo por
+    unidade-base.
+  </p>
+  @for (item of cost.items; track item.ingredientId) {
+  <article class="panel" [attr.aria-label]="'Custo de ' + item.ingredientName">
+    <h3>{{ item.ingredientName }}</h3>
+    <p>Quantidade na ficha: {{ quantity.format(item.quantity) }} {{ unitLabel(item.unit) }}</p>
+    @if (item.unitCost === 0) {
+    <p class="notice">Custo não informado (zero).</p>
+    } @else {
+    <p>Custo por {{ unitLabel(item.unit) }}: {{ formatCost(item.unitCost) }}</p>
+    <p>Custo na ficha: <strong>{{ formatCost(item.recipeCost) }}</strong></p>
+    } @if (!item.ingredientIsActive) {
+    <p>Ingrediente inativo.</p>
+    }
+    <a [routerLink]="['/equipe/ingredientes', item.ingredientId]">Editar ingrediente</a>
+  </article>
+  }
+  <p class="hint">
+    Valores monetários exibidos com até seis casas decimais e percentuais com duas. O cálculo usa os
+    valores completos, sem arredondar a quantidade de consumo do estoque. Alterações salvas de
+    preço, ficha ou custos aparecem ao atualizar. Esta consulta não altera pedidos nem representa o
+    CMV realizado das vendas.
+  </p>
+  } }
+</section>
