@@ -96,6 +96,7 @@ async function setup(page: Page, role = 'Administrator') {
           ? input.quantity
           : previous + (input.type === 'Entry' ? input.quantity : -input.quantity);
       const movement: StockMovement = {
+        orderId: null,
         id: 'movement-' + input.requestId,
         requestId: input.requestId,
         type: input.type,

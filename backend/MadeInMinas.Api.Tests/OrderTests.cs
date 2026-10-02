@@ -23,6 +23,7 @@ public sealed class OrderTests(AuthenticationFactory factory) : IClassFixture<Au
 
     public Task InitializeAsync() => factory.WithDatabaseAsync(async database =>
     {
+        await database.StockMovements.ExecuteDeleteAsync();
         await database.Orders.ExecuteDeleteAsync();
         await database.RecipeItems.ExecuteDeleteAsync();
         await database.Recipes.ExecuteDeleteAsync();
@@ -34,11 +35,16 @@ public sealed class OrderTests(AuthenticationFactory factory) : IClassFixture<Au
         burger = new Product { Category = category, Name = "Uai Sô", NormalizedName = "UAI SÔ", Price = 29.90m, IsActive = true, IsAvailable = true };
         address = new Address { CustomerId = customer.Id, Street = "Rua A", Number = "10", Neighborhood = "Centro", City = "Belo Horizonte", State = "MG" };
         database.Products.Add(burger);
+        OrderStockFixture.AddRecipe(database, burger);
         database.Customers.Add(customer);
         database.Addresses.Add(address);
         await database.SaveChangesAsync();
     });
-    public Task DisposeAsync() => factory.WithDatabaseAsync(async database => await database.Orders.ExecuteDeleteAsync());
+    public Task DisposeAsync() => factory.WithDatabaseAsync(async database =>
+    {
+        await database.StockMovements.ExecuteDeleteAsync();
+        await database.Orders.ExecuteDeleteAsync();
+    });
     private CartQuoteRequest Cart(bool delivery = false) => new(customer.Id, delivery ? "Delivery" : "Pickup",
         [new(burger.Id, 2, " Sem cebola ")], delivery ? address.Id : null, " Embalar separado ")
     { DeliveryFee = delivery ? 4.50m : 0 };

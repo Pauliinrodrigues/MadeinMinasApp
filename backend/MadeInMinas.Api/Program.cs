@@ -25,6 +25,7 @@ builder.Services.AddScoped<MadeInMinas.Api.Services.PaymentService>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.KitchenService>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.DispatchService>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.OrderService>();
+builder.Services.AddScoped<MadeInMinas.Api.Services.OrderStockService>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.CartService>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.CustomerService>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.RecipeService>();

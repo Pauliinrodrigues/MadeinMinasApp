@@ -4,6 +4,7 @@ public sealed class StockMovement
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid IngredientId { get; set; }
+    public Guid? OrderId { get; set; }
     public Guid ActorId { get; set; }
     public string ActorName { get; set; } = string.Empty;
     public string IngredientName { get; set; } = string.Empty;

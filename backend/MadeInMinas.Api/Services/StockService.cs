@@ -39,7 +39,7 @@ public sealed class StockService(AppDbContext database, ILogger<StockService> lo
             item => item.IngredientId == ingredientId && item.RequestId == request.RequestId, cancellationToken);
         if (previous is not null)
         {
-            if (previous.ActorId != actorId || previous.Type != request.Type || previous.Quantity != request.Quantity ||
+            if (previous.OrderId is not null || previous.ActorId != actorId || previous.Type != request.Type || previous.Quantity != request.Quantity ||
                 previous.Reason != reason || previous.Version - 1 != request.ExpectedVersion)
                 throw new StockException(StockError.StockRequestConflict, "Este identificador já foi utilizado em outro lançamento.");
             await transaction.CommitAsync(cancellationToken);
@@ -92,5 +92,6 @@ public sealed class StockService(AppDbContext database, ILogger<StockService> lo
 
     private static StockMovementResponse ToResponse(StockMovement item) => new(item.Id, item.RequestId, item.Version,
         item.Type, item.Quantity, item.Delta, item.PreviousBalance, item.Balance, item.Reason, item.ActorId,
-        item.ActorName, item.IngredientName, item.Unit, item.CreatedAt);
+        item.ActorName, item.IngredientName, item.Unit, item.CreatedAt)
+    { OrderId = item.OrderId };
 }

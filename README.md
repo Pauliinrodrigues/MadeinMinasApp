@@ -2,7 +2,7 @@
 
 Sistema de gestão e pedidos da hamburgueria Made in Minas, desenvolvido por fases.
 
-**Fases 1 a 5 implementadas nos incrementos descritos no roteiro.** Expedição e impressão pelo navegador foram integradas pelo [PR #7](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/7), após aceite e checks aprovados; impressão automática e validação física dependem do equipamento. O incremento atual é o [estoque manual de ingredientes — Fase 6A](docs/stock.md), na branch `feat/ingredient-stock`, com aceite manual concluído em 02/10/2026 e publicação/integração autorizadas após checks aprovados. Baixa por pedidos, CMV e IA seguem nos próximos incrementos.
+**Fases 1 a 5 implementadas nos incrementos descritos no roteiro.** Expedição e impressão pelo navegador foram integradas pelo [PR #7](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/7), após aceite e checks aprovados; impressão automática e validação física dependem do equipamento. O estoque manual (6A) foi validado e integrado pelo [PR #8](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/8), commit `71f7c41`. O incremento atual é [consumo de estoque por pedidos — Fase 6B](docs/order-stock.md), na branch `feat/order-stock`, com aceite manual pendente. CMV e IA seguem nos próximos incrementos.
 
 ## Estrutura
 
@@ -64,7 +64,7 @@ Detalhes e arquivos da interface: [Fase 2C](docs/staff-frontend.md). Na pasta do
 
 **Produtos:** abra **Produtos → Novo produto**, escolha uma categoria ativa e informe o preço (exemplo: 29,90). Nome, descrição, imagem por link HTTPS, status e disponibilidade podem ser editados. A disponibilidade considera os estados do produto e da categoria. Contratos, migration e arquivos: [Fase 3B](docs/products.md).
 
-**Ingredientes:** abra **Ingredientes → Novo ingrediente**. Cadastre unidade-base (kg, L ou un), custo por unidade, mínimo desejado, fornecedor e status. A unidade fica fixa após salvar. Saldo e movimentações de estoque virão na fase 6. Contratos, migration, testes e arquivos: [Fase 3C](docs/ingredients.md).
+**Ingredientes:** abra **Ingredientes → Novo ingrediente**. Cadastre unidade-base (kg, L ou un), custo por unidade, mínimo desejado, fornecedor e status. A unidade fica fixa após salvar. Saldo e movimentos manuais estão em Ingredientes → Estoque; confirmação de pedidos passa a consumir a ficha técnica na Fase 6B. Contratos, migration, testes e arquivos: [Fase 3C](docs/ingredients.md).
 
 **Fichas técnicas:** abra **Produtos → Ficha técnica**. Informe rendimento, ingredientes, quantidades totais na unidade-base e instruções de preparo. A gravação preserva a composição inteira e alerta sobre ingredientes inativos. Contratos, limites, testes e arquivos: [Fase 3D](docs/recipes.md).
 

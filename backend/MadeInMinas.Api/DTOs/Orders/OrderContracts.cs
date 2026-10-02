@@ -49,5 +49,11 @@ public sealed record OrderHistoryResponse(int Version, string? FromStatus, strin
 public sealed record OrderResponse(Guid Id, int Number, string Origin, string Status, int Version,
     CartCustomerResponse Customer, string Fulfillment, CartAddressResponse? Address, CartItemResponse[] Items,
     string? Notes, decimal Subtotal, decimal DeliveryFee, decimal Total, DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt, OrderHistoryResponse[] History);
+    DateTimeOffset UpdatedAt, OrderHistoryResponse[] History)
+{
+    public string StockStatus { get; init; } = "Pending";
+    public OrderStockComponentResponse[] StockComponents { get; init; } = [];
+}
+public sealed record OrderStockComponentResponse(Guid ProductId, string ProductName, Guid IngredientId,
+    string IngredientName, string Unit, int ProductQuantity, int RecipeYield, decimal RecipeQuantity, decimal ConsumedQuantity);
 public sealed record OrderCreationResult(OrderResponse Order, bool Created);

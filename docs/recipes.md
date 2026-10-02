@@ -17,9 +17,9 @@ Remover uma linha só altera o formulário; é necessário salvar. Não é poss�
 
 ## Escopo
 
-Este incremento registra a composição. Não movimenta estoque, calcula custo/CMV/margem nem registra produção. Produtos sem ficha ou com ingredientes inativos mantêm a regra de disponibilidade já existente: produto ativo, categoria ativa e disponibilidade manual ligada. A interface avisa sobre insumos inativos para revisão antes da produção. É possível manter a ficha de um produto inativo.
+Este incremento registra a composição. Não movimenta estoque, calcula custo/CMV/margem nem registra produção. A listagem comercial mantém a disponibilidade manual; a Fase 6B passa a exigir ficha completa, ingredientes ativos e saldo suficiente ao confirmar o pedido. O carrinho não reserva estoque. A interface avisa sobre insumos inativos para revisão antes da produção. É possível manter a ficha de um produto inativo.
 
-Não há sub-receitas, fichas de combos, conversão automática de kg/g ou L/mL, perdas, histórico de versões, exclusão da ficha, ETag ou controle de edição simultânea na interface. A última gravação válida aplicada prevalece. As quantidades por unidade poderão ser derivadas de quantidade/rendimento na fase de estoque; precisão e arredondamento dessa baixa serão definidos naquela fase.
+Não há sub-receitas, fichas de combos, conversão automática de kg/g ou L/mL, perdas, histórico de versões, exclusão da ficha, ETag ou controle de edição simultânea na interface. A última gravação válida aplicada prevalece. O cálculo e arredondamento do consumo por rendimento estão definidos na [Fase 6B](order-stock.md); a ficha é copiada no instante da confirmação.
 
 ## Modelo e integridade
 

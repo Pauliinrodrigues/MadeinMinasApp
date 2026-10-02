@@ -23,6 +23,7 @@ public sealed class Order
     public string Origin { get; set; } = "Manual";
     public string Status { get; set; } = "New";
     public int Version { get; set; } = 1;
+    public string StockStatus { get; set; } = "Pending";
     public string? Notes { get; set; }
     public decimal Subtotal { get; set; }
     public decimal DeliveryFee { get; set; }
@@ -31,4 +32,5 @@ public sealed class Order
     public DateTimeOffset UpdatedAt { get; set; }
     public List<OrderItem> Items { get; set; } = [];
     public List<OrderStatusHistory> History { get; set; } = [];
+    public List<OrderStockComponent> StockComponents { get; set; } = [];
 }

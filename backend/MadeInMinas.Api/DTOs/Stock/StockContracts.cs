@@ -28,7 +28,10 @@ public sealed class StockQuery
 
 public sealed record StockMovementResponse(Guid Id, Guid RequestId, long Version, string Type, decimal Quantity,
     decimal Delta, decimal PreviousBalance, decimal Balance, string Reason, Guid ActorId, string ActorName,
-    string IngredientName, string Unit, DateTimeOffset CreatedAt);
+    string IngredientName, string Unit, DateTimeOffset CreatedAt)
+{
+    public Guid? OrderId { get; init; }
+}
 
 public sealed record StockResponse(Guid IngredientId, string Name, string Unit, bool IsActive, decimal CurrentStock,
     decimal MinimumStock, bool IsLowStock, long Version, IReadOnlyList<StockMovementResponse> Movements,
