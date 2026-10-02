@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MadeInMinas.Api.Services;
 
-public sealed class OrderService(AppDbContext database, CartService cart, TimeProvider clock, ILogger<OrderService> logger)
+public sealed class OrderService(AppDbContext database, CartService cart, OrderStockService stock, TimeProvider clock, ILogger<OrderService> logger)
 {
     public async Task<OrderPageResponse> ListAsync(OrderListQuery request, CancellationToken cancellationToken)
     {
@@ -36,8 +36,13 @@ public sealed class OrderService(AppDbContext database, CartService cart, TimePr
         return new OrderPageResponse(items, request.Page, request.PageSize, total);
     }
 
-    public async Task<OrderResponse> GetAsync(Guid id, CancellationToken cancellationToken) =>
-        ToResponse(await ReadOrders().SingleOrDefaultAsync(order => order.Id == id, cancellationToken) ?? throw NotFound());
+    public async Task<OrderResponse> GetAsync(Guid id, CancellationToken cancellationToken)
+    {
+        await using var transaction = await database.Database.BeginTransactionAsync(System.Data.IsolationLevel.RepeatableRead, cancellationToken);
+        var order = await ReadOrders().SingleOrDefaultAsync(order => order.Id == id, cancellationToken) ?? throw NotFound();
+        await transaction.CommitAsync(cancellationToken);
+        return ToResponse(order);
+    }
 
     public async Task<OrderCreationResult> CreateAsync(Guid actorId, Guid actorStamp, CreateOrderRequest request, CancellationToken cancellationToken)
     {
@@ -47,7 +52,12 @@ public sealed class OrderService(AppDbContext database, CartService cart, TimePr
         var lockKey = BinaryPrimitives.ReadInt64BigEndian(SHA256.HashData(Encoding.UTF8.GetBytes($"{actorId}:{request.RequestId}")));
         await database.Database.ExecuteSqlInterpolatedAsync($"SELECT pg_advisory_xact_lock({lockKey})", cancellationToken);
         var hash = OrderFingerprint.ForRequest(request);
-        var existing = await ReadOrders().SingleOrDefaultAsync(order => order.CreatedById == actorId && order.RequestId == request.RequestId, cancellationToken);
+        var existingId = await database.Orders.Where(order => order.CreatedById == actorId && order.RequestId == request.RequestId)
+            .Select(order => (Guid?)order.Id).SingleOrDefaultAsync(cancellationToken);
+        if (existingId is not null)
+            await database.Orders.FromSqlInterpolated($"SELECT * FROM \"Orders\" WHERE \"Id\" = {existingId.Value} FOR SHARE")
+                .AsNoTracking().ToArrayAsync(cancellationToken);
+        var existing = existingId is null ? null : await ReadOrders().SingleAsync(order => order.Id == existingId, cancellationToken);
         if (existing is not null)
         {
             if (existing.RequestHash != hash)
@@ -112,6 +122,7 @@ public sealed class OrderService(AppDbContext database, CartService cart, TimePr
             .SingleOrDefaultAsync(cancellationToken) ?? throw NotFound();
         await database.Entry(order).Collection(value => value.Items).LoadAsync(cancellationToken);
         await database.Entry(order).Collection(value => value.History).LoadAsync(cancellationToken);
+        await database.Entry(order).Collection(value => value.StockComponents).LoadAsync(cancellationToken);
         var reason = string.IsNullOrWhiteSpace(request.Reason) ? null : request.Reason.Trim().Normalize();
         var last = order.History.MaxBy(history => history.Version)!;
         if (order.Status == request.Status && request.ExpectedVersion == order.Version - 1 && last.ActorId == actorId && last.Reason == reason)
@@ -140,9 +151,14 @@ public sealed class OrderService(AppDbContext database, CartService cart, TimePr
             && (payment.Status == "Pending" || payment.Status == "Received"), cancellationToken))
             throw new OrderException(OrderError.OrderPaymentUnresolved, "Cancele o pagamento pendente ou registre a devolução do valor recebido antes de cancelar o pedido.");
         var previous = order.Status;
+        var now = UtcNow();
+        if (request.Status == "Confirmed")
+            await stock.ConsumeAsync(order, actor, now, cancellationToken);
+        else if (request.Status == "Cancelled")
+            await stock.CancelAsync(order, actor, now, cancellationToken);
         order.Status = request.Status;
         order.Version++;
-        order.UpdatedAt = UtcNow();
+        order.UpdatedAt = now;
         var history = new OrderStatusHistory
         {
             OrderId = order.Id,
@@ -190,7 +206,8 @@ public sealed class OrderService(AppDbContext database, CartService cart, TimePr
             .AsNoTracking().ToArrayAsync(cancellationToken);
     }
 
-    private IQueryable<Order> ReadOrders() => database.Orders.AsNoTracking().Include(order => order.Items).Include(order => order.History).AsSingleQuery();
+    private IQueryable<Order> ReadOrders() => database.Orders.AsNoTracking().Include(order => order.Items)
+        .Include(order => order.History).Include(order => order.StockComponents).AsSplitQuery();
     private DateTimeOffset UtcNow() => DateTimeOffset.FromUnixTimeMilliseconds(clock.GetUtcNow().ToUnixTimeMilliseconds());
     private static OrderException NotFound() => new(OrderError.OrderNotFound, "Pedido não encontrado.");
     private static OrderResponse ToResponse(Order order) => new(order.Id, order.Number, order.Origin, order.Status, order.Version,
@@ -200,5 +217,12 @@ public sealed class OrderService(AppDbContext database, CartService cart, TimePr
         order.Items.OrderBy(item => item.Position).Select(item => new CartItemResponse(item.ProductId, item.ProductName, item.Quantity,
             item.UnitPrice, item.LineTotal, item.Notes)).ToArray(), order.Notes, order.Subtotal, order.DeliveryFee, order.Total,
         order.CreatedAt, order.UpdatedAt, order.History.OrderBy(history => history.Version).Select(history => new OrderHistoryResponse(
-            history.Version, history.FromStatus, history.ToStatus, history.ActorId, history.ActorName, history.Reason, history.OccurredAt)).ToArray());
+            history.Version, history.FromStatus, history.ToStatus, history.ActorId, history.ActorName, history.Reason, history.OccurredAt)).ToArray())
+    {
+        StockStatus = order.StockStatus,
+        StockComponents = order.StockComponents.OrderBy(item => item.ProductName).ThenBy(item => item.IngredientName)
+            .ThenBy(item => item.ProductId).ThenBy(item => item.IngredientId)
+            .Select(item => new OrderStockComponentResponse(item.ProductId, item.ProductName, item.IngredientId,
+                item.IngredientName, item.Unit, item.ProductQuantity, item.RecipeYield, item.RecipeQuantity, item.ConsumedQuantity)).ToArray()
+    };
 }

@@ -117,6 +117,8 @@ async function setup(page: Page, role = 'Attendant') {
         origin: 'Manual',
         status: state.data.orderStatus,
         version: 1,
+        stockStatus: 'Pending',
+        stockComponents: [],
         customer: { id: 'customer', name: 'Maria', phone: '+5531999991234' },
         fulfillment: 'Pickup',
         address: null,

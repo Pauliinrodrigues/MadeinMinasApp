@@ -1,6 +1,6 @@
 # Estoque manual — Fase 6A
 
-Incremento na branch `feat/ingredient-stock`, iniciado em 02/10/2026. Implementação, testes automatizados e aceite manual concluídos em 02/10/2026. Publicação e integração autorizadas pelo usuário, seguindo o fluxo de PR e checks aprovados. Acesso em **Ingredientes → Estoque**, somente administrador (`catalog.manage`). Sem novas dependências.
+Incremento na branch `feat/ingredient-stock`, iniciado em 02/10/2026. Implementação, testes automatizados e aceite manual concluídos em 02/10/2026. Integrada pelo PR #8 (`71f7c41`), após aceite e checks aprovados. A [Fase 6B](order-stock.md) acrescenta consumo por pedidos. Acesso em **Ingredientes → Estoque**, somente administrador (`catalog.manage`). Sem novas dependências.
 
 Situação local em 02/10/2026: após a conclusão da instalação PostgreSQL, o acesso ao `made_in_minas` foi confirmado e a migration foi aplicada exclusivamente nesse banco, com backup prévio e preservação das contagens existentes. API em 5080 e frontend em 8101 disponíveis, com readiness saudável. O usuário concluiu o aceite pela interface; o inventário real deve ser registrado conforme a contagem física. Evidências em [validation.md](validation.md).
 
@@ -13,7 +13,7 @@ Situação local em 02/10/2026: após a conclusão da instalação PostgreSQL, o
 - Ingredientes existentes começam com saldo de sistema zero e sem movimentos. Isso não representa uma contagem física. Faça o inventário e registre a contagem inicial com motivo “Saldo inicial”. Uma contagem zero sobre saldo zero não gera comprovante de inventário nesta etapa.
 - Histórico mostra tipo, data/hora, nome do ingrediente e responsável copiados no lançamento, saldo anterior/novo, diferença e motivo. Horários são armazenados em UTC e exibidos no fuso do dispositivo.
 - Movimentos não são editados ou apagados pela API. Para corrigir, registre nova entrada, saída ou contagem com justificativa. Não há vínculo formal de estorno neste incremento.
-- O custo unitário continua sendo informado no cadastro. Entradas não recalculam custo médio nem geram despesas financeiras. Os pedidos ainda não consomem ou reservam estoque; não lance consumo manual que pretenda migrar automaticamente sem conciliação posterior.
+- O custo unitário continua sendo informado no cadastro. Entradas não recalculam custo médio nem geram despesas financeiras. A Fase 6B consome estoque na confirmação; não duplique esse consumo com saída manual. Consumos manuais anteriores exigem conciliação antes da ativação; nenhum pedido antigo é baixado retroativamente.
 
 ## Consistência e API
 
@@ -72,4 +72,4 @@ Testes automatizados: `StockTests` em PostgreSQL isolado e `e2e/stock.spec.ts` e
 - Testes: `backend/MadeInMinas.Api.Tests/StockTests.cs` e `frontend/made-in-minas/e2e/stock.spec.ts`.
 - Documentação: README, roadmap, arquitetura, banco, API, decisões, regras, ingredientes, validação, este roteiro e `database/README.md`.
 
-Próximos incrementos: consumo/compensação por pedidos, definindo momento da baixa, composição histórica e arredondamento por rendimento; depois CMV teórico por ficha técnica. Esses recursos exigem implementação e aceite próprios.
+O incremento [6B](order-stock.md) define consumo/compensação por pedidos, composição histórica e arredondamento por rendimento. CMV teórico por ficha técnica será o próximo incremento, após seu aceite.

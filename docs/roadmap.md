@@ -9,7 +9,7 @@ Cada fase exige implementação, testes e validação antes da próxima.
 | 3 | Categorias, produtos, ingredientes e fichas técnicas | 3A–3D implementadas e validadas; fichas técnicas integradas pelo PR #1 |
 | 4 | Clientes, pedidos, carrinho e pagamentos | 4A–4D validadas e integradas pelos PRs #2/#3/#4/#5 |
 | 5 | Cozinha/KDS, expedição e impressão | 5A integrada pelo PR #6; 5B/5C aceitas e integradas pelo PR #7, com checks aprovados; impressão automática/validação física dependem do equipamento |
-| 6 | Estoque e CMV | 6A estoque manual implementado e testado na branch feat/ingredient-stock; migration aplicada em made_in_minas após backup e conexão validada em 02/10/2026. Aceite manual concluído em 02/10/2026; publicação e integração autorizadas após checks aprovados. Baixa por pedidos e CMV em incrementos seguintes |
+| 6 | Estoque e CMV | 6A validada e integrada pelo PR #8 (`71f7c41`), com checks aprovados. 6B: consumo por pedido implementado na branch feat/order-stock; 305 testes de backend e 78 cenários de navegador aprovados. Migration aplicada em made_in_minas após backup, sem alterar saldos; aceite manual pendente. CMV no próximo incremento |
 | 7 | Dashboard e relatórios | Planejada |
 | 8 | Chat próprio | Planejada |
 | 9 | Integração com IA | Planejada |
@@ -18,7 +18,7 @@ Cada fase exige implementação, testes e validação antes da próxima.
 
 Combos e adicionais terão incrementos próprios associados ao catálogo e à montagem do pedido.
 
-A Fase 5 foi integrada pelos PRs #6 (`06d73a5`) e #7 (`7f32729`), com checks backend/frontend aprovados. O incremento atual é [estoque manual — 6A](stock.md): saldo por ingrediente, entradas, saídas, contagem física e histórico auditável, antes de implementar consumo por pedidos e CMV. A automação da impressora e a validação física continuam pendentes.
+A Fase 5 foi integrada pelos PRs #6 (`06d73a5`) e #7 (`7f32729`), com checks backend/frontend aprovados. A Fase 6A foi integrada pelo PR #8. O incremento atual é [consumo de estoque por pedidos — 6B](order-stock.md): baixa na confirmação, composição histórica e devolução somente antes do preparo. O CMV permanece no incremento seguinte. A automação da impressora e a validação física continuam pendentes.
 
 A [Fase 4C](orders.md) registra pedidos manuais com numeração, cópias da compra, histórico, confirmação e cancelamento. Revisão exige taxa explícita para entrega. O aceite manual foi concluído em 01/10/2026 e o PR #4 foi integrado à master (`b98f41d`). A [Fase 4D](payments.md) acrescenta pagamentos manuais integrais, separados do status do pedido, com aceite concluído em 01/10/2026. A Fase 5A sucede essa integração; expedição e impressão dependem de incrementos e aceites próprios.
 

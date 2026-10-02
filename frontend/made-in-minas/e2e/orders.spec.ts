@@ -44,6 +44,8 @@ const original: Order = {
   origin: 'Manual',
   status: 'New',
   version: 1,
+  stockStatus: 'Pending',
+  stockComponents: [],
   customer,
   fulfillment: 'Pickup',
   address: null,
@@ -86,6 +88,7 @@ async function setup(page: Page, role = 'Attendant') {
     createCode: 'OrderReviewChanged',
     listStatus: 200,
     changeStatus: 200,
+    changeCode: 'OrderVersionConflict',
     createGate: null as Promise<void> | null,
     orderRequests: 0,
   };
@@ -205,10 +208,20 @@ async function setup(page: Page, role = 'Attendant') {
         const input = request.postDataJSON() as OrderStatusInput;
         state.changes.push(input);
         if (state.changeStatus !== 200) {
-          return json({ code: 'OrderVersionConflict' }, state.changeStatus);
+          return json({ code: state.changeCode }, state.changeStatus);
         }
         const from = order.status;
         order.status = input.status;
+        order.stockStatus =
+          input.status === 'Confirmed'
+            ? 'Consumed'
+            : order.stockStatus === 'Consumed'
+              ? from === 'Confirmed'
+                ? 'Returned'
+                : 'Retained'
+              : order.stockStatus === 'Legacy'
+                ? 'Legacy'
+                : 'NotRequired';
         order.version++;
         order.history.push({
           version: order.version,
@@ -251,6 +264,94 @@ async function detail(page: Page) {
   await page.getByRole('link', { name: 'Pedidos', exact: true }).click();
   await page.getByRole('link', { name: 'Abrir pedido 1542', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Pedido #1542', exact: true })).toBeVisible();
+}
+
+test('estoque do pedido: informa baixa e mostra composição histórica', async ({ page }) => {
+  const state = await setup(page);
+  await detail(page);
+  await expect(page.getByRole('region', { name: 'Estoque do pedido' })).toContainText(
+    'Baixa pendente',
+  );
+  await page.getByRole('button', { name: 'Confirmar pedido', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Confirmar alteração do pedido' })).toContainText(
+    'saldo suficiente',
+  );
+  state.orders[0].stockComponents = [
+    {
+      productId: 'product',
+      productName: 'Uai Sô',
+      ingredientId: 'meat',
+      ingredientName: 'Carne histórica',
+      unit: 'kg',
+      productQuantity: 2,
+      recipeYield: 3,
+      recipeQuantity: 0.5,
+      consumedQuantity: 0.334,
+    },
+  ];
+  await page.getByRole('button', { name: 'Confirmar alteração', exact: true }).click();
+  const stock = page.getByRole('region', { name: 'Estoque do pedido' });
+  await expect(stock).toContainText('Ingredientes baixados');
+  await stock.getByText('Composição registrada na confirmação', { exact: true }).click();
+  await expect(stock).toContainText('Carne histórica — 0,334 kg');
+  expect(state.changes[0]).not.toHaveProperty('stockComponents');
+});
+
+for (const status of ['Confirmed', 'InPreparation'] as const) {
+  test('estoque do pedido: revisão explica cancelamento em ' + status, async ({ page }) => {
+    const state = await setup(page, 'Administrator');
+    state.orders[0].status = status;
+    state.orders[0].stockStatus = 'Consumed';
+    await detail(page);
+    await page.getByRole('button', { name: 'Cancelar pedido', exact: true }).click();
+    const confirmation = page.getByRole('region', { name: 'Confirmar alteração do pedido' });
+    await expect(confirmation).toContainText(
+      status === 'Confirmed' ? 'serão devolvidos' : 'não haverá devolução automática',
+    );
+    await page.getByLabel('Motivo do cancelamento', { exact: true }).fill('Desistência');
+    await page.getByRole('button', { name: 'Confirmar alteração', exact: true }).click();
+    await expect(page.getByRole('region', { name: 'Estoque do pedido' })).toContainText(
+      status === 'Confirmed' ? 'devolvidos ao estoque' : 'Consumo mantido',
+    );
+  });
+}
+
+test('estoque do pedido: pedido antigo não promete devolução', async ({ page }) => {
+  const state = await setup(page, 'Administrator');
+  state.orders[0].status = 'Confirmed';
+  state.orders[0].stockStatus = 'Legacy';
+  await detail(page);
+  await expect(page.getByRole('region', { name: 'Estoque do pedido' })).toContainText(
+    'sem baixa retroativa',
+  );
+  await page.getByRole('button', { name: 'Cancelar pedido', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Confirmar alteração do pedido' })).toContainText(
+    'não alterará o estoque',
+  );
+});
+
+for (const code of ['OrderInsufficientStock', 'OrderRecipeRequired']) {
+  test(
+    'estoque do pedido: conflito ' + code + ' mantém novo e exige atualização',
+    async ({ page }) => {
+      const state = await setup(page);
+      state.changeStatus = 409;
+      state.changeCode = code;
+      await detail(page);
+      await page.getByRole('button', { name: 'Confirmar pedido', exact: true }).click();
+      await page.getByRole('button', { name: 'Confirmar alteração', exact: true }).click();
+      await expect(page.getByRole('alert')).toContainText(
+        code === 'OrderInsufficientStock' ? 'Saldo insuficiente' : 'ficha técnica',
+      );
+      await expect(
+        page.getByRole('button', { name: 'Confirmar pedido', exact: true }),
+      ).toBeDisabled();
+      await expect(page.getByRole('region', { name: 'Estoque do pedido' })).toContainText(
+        'Baixa pendente',
+      );
+      expect(state.changes).toHaveLength(1);
+    },
+  );
 }
 
 test('pedidos: registra entrega revisada e abre detalhes com histórico', async ({ page }) => {

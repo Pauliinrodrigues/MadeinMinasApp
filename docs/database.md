@@ -50,3 +50,7 @@ Migration 20261001201327_AddDispatchStatuses (5B/5C): estende somente CK_Orders_
 ## Estoque manual — 6A
 
 A migration `20261002130808_AddIngredientStock` acrescenta `CurrentStock numeric(9,3)` e `StockVersion bigint` a Ingredients, ambos inicialmente zero. `StockMovements` registra autor, ingrediente, cópias de nomes/unidade, RequestId, versão, tipo, quantidade, diferença, saldos anterior/novo, motivo e instante UTC. FKs restritas preservam referências; índices únicos por ingrediente/requestId e ingrediente/versão. Constraints de intervalo, tipo e equação do saldo complementam a transação do serviço. Não há consumo automático, custos históricos ou custo médio nesta etapa. Regras: [stock.md](stock.md).
+
+## Estoque por pedidos — 6B
+
+Migration `20261002181034_AddOrderStock` acrescenta Orders.StockStatus, OrderStockComponents (cópias de composição e consumo) e StockMovements.OrderId opcional. O índice único filtrado OrderId/IngredientId/Type impede duas baixas ou devoluções do mesmo ingrediente/pedido. FKs preservam os vínculos de auditoria. Pedidos anteriores não Novos ficam Legacy; Novos ficam Pending. Não há baixa retroativa nem alteração de saldo na migration. Rendimento e composição da confirmação são preservados, sem depender de versões posteriores da ficha. Ver [order-stock.md](order-stock.md).

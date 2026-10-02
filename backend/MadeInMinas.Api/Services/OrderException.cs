@@ -10,6 +10,11 @@ public enum OrderError
     OrderCancellationDenied,
     OrderPaymentUnresolved,
     OrderPaymentRequired,
+    OrderRecipeRequired,
+    OrderIngredientInactive,
+    OrderInsufficientStock,
+    OrderStockQuantityExceeded,
+    OrderStockReturnOverflow,
     InvalidSession,
     PermissionDenied
 }

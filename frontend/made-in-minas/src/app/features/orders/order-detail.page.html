@@ -48,6 +48,30 @@
     <p>Subtotal: {{ formatPrice(data.subtotal) }}</p>
     <p>Taxa de entrega: {{ formatPrice(data.deliveryFee) }}</p>
     <p>Total: <strong>{{ formatPrice(data.total) }}</strong></p>
+    <section aria-label="Estoque do pedido">
+      <h2>Estoque</h2>
+      <p>{{ stockLabels[data.stockStatus] }}</p>
+      @if (data.stockComponents.length) {
+      <details>
+        <summary>Composição registrada na confirmação</summary>
+        <ul>
+          @for (component of data.stockComponents; track component.productId +
+          component.ingredientId) {
+          <li>
+            {{ component.productQuantity }} × {{ component.productName }}: {{
+            component.ingredientName }} — {{ decimal.format(component.consumedQuantity) }} {{
+            component.unit }}. Ficha: {{ decimal.format(component.recipeQuantity) }} {{
+            component.unit }} para {{ component.recipeYield }} unidade(s).
+          </li>
+          }
+        </ul>
+        <p>
+          Quantidades da baixa original, preservadas mesmo após devolução ou alteração da ficha
+          técnica.
+        </p>
+      </details>
+      }
+    </section>
     <p class="hint">
       Os dados acima são os registrados na compra. Confirmar não registra pagamento. Para corrigir
       itens ou valores, cancele e registre outro pedido.
@@ -87,6 +111,15 @@
       O cancelamento é definitivo e ficará no histórico. Antes, cancele o pagamento pendente ou
       registre a devolução do valor recebido na tela de pagamentos.
     </p>
+    @if (data.stockStatus === 'Consumed') {
+    <p class="notice">
+      {{ data.status === 'Confirmed' ? 'Os ingredientes baixados serão devolvidos ao estoque.' : 'O
+      preparo já começou. O consumo dos ingredientes será mantido; não haverá devolução automática.'
+      }}
+    </p>
+    } @else if (data.stockStatus === 'Legacy') {
+    <p>Este pedido antigo não possui baixa automática. O cancelamento não alterará o estoque.</p>
+    }
     <label
       >Motivo do cancelamento<textarea
         maxlength="500"
@@ -96,7 +129,14 @@
       ></textarea>
     </label>
     } @else {
-    <p>Confira os itens e o endereço. A disponibilidade será verificada novamente.</p>
+    <p>
+      Confira os itens e o endereço. A confirmação dará baixa nos ingredientes conforme as fichas
+      técnicas atuais. Todos os produtos precisam de ficha e saldo suficiente.
+    </p>
+    <p>
+      Observações como “sem cebola” não alteram o cálculo da ficha técnica. Ajustes físicos exigem
+      conferência pelo administrador.
+    </p>
     }
     <div class="actions">
       <button

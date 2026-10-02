@@ -71,3 +71,5 @@ Pagamento, estados da cozinha e uso real em produção continuam fora deste acei
 - Documentação: README, orders, cart, API, modelo, decisões, regras, roteiro e validação.
 
 Na Fase 5B, o pedido também acompanha AwaitingDelivery, OutForDelivery, Delivered e Finalized. Atendimento visualiza esses estados e histórico; expedição conduz as transições por rota própria. Cancelamento administrativo é permitido até a saída em rota, com pagamento resolvido; após entrega não há cancelamento. Finalizar exige recebimento integral. Os dois tipos de comanda são acessados pelo detalhe. Ver [expedição e impressão](dispatch-printing.md).
+
+Na Fase 6B, confirmar também exige fichas completas, ingredientes ativos e saldo suficiente, gravando baixa e composição histórica na transação do pedido. Cancelamento antes do preparo devolve o consumo original; após início do preparo mantém o consumo. Pedidos antigos já processados ficam Legacy, sem efeitos retroativos. O detalhe mostra stockStatus e stockComponents; a interface explica os efeitos antes de confirmar. Regras e aceite específicos: [consumo de estoque por pedidos](order-stock.md).

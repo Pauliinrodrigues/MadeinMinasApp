@@ -11,6 +11,7 @@ public sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.ToTable("Orders", table =>
         {
             table.HasCheckConstraint("CK_Orders_Number", "\"Number\" > 0");
+            table.HasCheckConstraint("CK_Orders_StockStatus", "\"StockStatus\" IN ('Pending','Consumed','Returned','Retained','Legacy','NotRequired')");
             table.HasCheckConstraint("CK_Orders_Status", "\"Status\" IN ('New','Confirmed','InPreparation','Ready','AwaitingDelivery','OutForDelivery','Delivered','Finalized','Cancelled') AND \"Version\" >= 1");
             table.HasCheckConstraint("CK_Orders_Origin", "\"Origin\" = 'Manual'");
             table.HasCheckConstraint("CK_Orders_Amounts", "\"Subtotal\" > 0 AND \"DeliveryFee\" BETWEEN 0 AND 9999.99 AND \"Total\" = \"Subtotal\" + \"DeliveryFee\"");
@@ -29,6 +30,7 @@ public sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(order => order.Fulfillment).HasMaxLength(10).IsRequired();
         builder.Property(order => order.Origin).HasMaxLength(20).IsRequired();
         builder.Property(order => order.Status).HasMaxLength(20).IsRequired();
+        builder.Property(order => order.StockStatus).HasMaxLength(12).IsRequired();
         builder.Property(order => order.Notes).HasMaxLength(500);
         builder.Property(order => order.AddressStreet).HasMaxLength(120);
         builder.Property(order => order.AddressNumber).HasMaxLength(20);
@@ -46,5 +48,6 @@ public sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.HasOne<User>().WithMany().HasForeignKey(order => order.CreatedById).OnDelete(DeleteBehavior.Restrict);
         builder.HasMany(order => order.Items).WithOne().HasForeignKey(item => item.OrderId).OnDelete(DeleteBehavior.Cascade);
         builder.HasMany(order => order.History).WithOne().HasForeignKey(history => history.OrderId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasMany(order => order.StockComponents).WithOne().HasForeignKey(item => item.OrderId).OnDelete(DeleteBehavior.Cascade);
     }
 }

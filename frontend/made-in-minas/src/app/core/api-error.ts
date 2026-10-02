@@ -5,6 +5,15 @@ export function apiError(error: unknown, login = false): string {
     return 'Não foi possível concluir. Verifique a conexão e tente novamente.';
   }
   const codes: Record<string, string> = {
+    OrderRecipeRequired:
+      'Cadastre a ficha técnica de todos os produtos antes de confirmar o pedido.',
+    OrderIngredientInactive: 'A ficha contém ingrediente inativo. Solicite a revisão do cadastro.',
+    OrderInsufficientStock:
+      'Saldo insuficiente para os ingredientes deste pedido. Solicite a conferência do estoque.',
+    OrderStockQuantityExceeded:
+      'O consumo calculado ultrapassa o limite. Revise as quantidades e as fichas técnicas.',
+    OrderStockReturnOverflow:
+      'A devolução ultrapassa o limite do estoque. Solicite uma conferência antes de cancelar.',
     InactiveIngredient: 'Reative o ingrediente antes de movimentar o estoque.',
     StockVersionConflict: 'O estoque mudou. Atualize o saldo e revise o lançamento.',
     StockRequestConflict:

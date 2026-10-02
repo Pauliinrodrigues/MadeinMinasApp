@@ -17,6 +17,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<Address> Addresses => Set<Address>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+    public DbSet<OrderStockComponent> OrderStockComponents => Set<OrderStockComponent>();
     public DbSet<OrderStatusHistory> OrderStatusHistory => Set<OrderStatusHistory>();
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<PaymentStatusHistory> PaymentStatusHistory => Set<PaymentStatusHistory>();

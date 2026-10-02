@@ -122,6 +122,9 @@
       decimal.format(movement.delta) }})
     </p>
     <p>{{ movement.reason }}</p>
+    @if (movement.orderId) {
+    <a [routerLink]="['/equipe/pedidos', movement.orderId]">Ver pedido desta movimentação</a>
+    }
   </article>
   } @empty {
   <p class="panel">Nenhuma movimentação nesta página.</p>

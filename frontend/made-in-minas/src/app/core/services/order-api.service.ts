@@ -35,6 +35,18 @@ export interface Order extends Omit<CartQuote, 'calculatedAt' | 'reviewToken'> {
   origin: 'Manual';
   status: OrderStatus;
   version: number;
+  stockStatus: 'Pending' | 'Consumed' | 'Returned' | 'Retained' | 'Legacy' | 'NotRequired';
+  stockComponents: {
+    productId: string;
+    productName: string;
+    ingredientId: string;
+    ingredientName: string;
+    unit: string;
+    productQuantity: number;
+    recipeYield: number;
+    recipeQuantity: number;
+    consumedQuantity: number;
+  }[];
   createdAt: string;
   updatedAt: string;
   history: {

@@ -22,6 +22,7 @@ public sealed class KitchenTests(AuthenticationFactory factory) : IClassFixture<
     private Product product = null!;
     public Task InitializeAsync() => factory.WithDatabaseAsync(async database =>
     {
+        await database.StockMovements.ExecuteDeleteAsync();
         await database.Payments.ExecuteDeleteAsync();
         await database.Orders.ExecuteDeleteAsync();
         await database.RecipeItems.ExecuteDeleteAsync();
@@ -41,11 +42,13 @@ public sealed class KitchenTests(AuthenticationFactory factory) : IClassFixture<
             Category = new Category { Name = "Lanches", NormalizedName = "LANCHES" }
         };
         database.Products.Add(product);
+        OrderStockFixture.AddRecipe(database, product);
         database.Customers.Add(customer);
         await database.SaveChangesAsync();
     });
     public Task DisposeAsync() => factory.WithDatabaseAsync(async database =>
     {
+        await database.StockMovements.ExecuteDeleteAsync();
         await database.Payments.ExecuteDeleteAsync();
         await database.Orders.ExecuteDeleteAsync();
     });

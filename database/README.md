@@ -144,3 +144,14 @@ dotnet ef database update 20261002130808_AddIngredientStock --project backend/Ma
 ```
 
 Reinicie a API após a atualização. Ingredientes existentes começam com saldo de sistema zero; registre a contagem física inicial pela interface. Nenhum pedido antigo é baixado retroativamente. O Down elimina os saldos e o histórico de estoque; não executar em base operacional sem planejamento de recuperação e autorização específica. Roteiro: [estoque manual](../docs/stock.md).
+
+## Migration de consumo por pedidos — Fase 6B
+
+`20261002181034_AddOrderStock` cria a composição histórica, o estado do estoque no pedido e o vínculo de movimentos com pedidos. Confira exclusivamente **made_in_minas**, faça backup e confira fichas/inventário físico antes de ativar:
+
+```powershell
+dotnet ef migrations script 20261002130808_AddIngredientStock 20261002181034_AddOrderStock --project backend/MadeInMinas.Api
+dotnet ef database update 20261002181034_AddOrderStock --project backend/MadeInMinas.Api
+```
+
+Reinicie a API com o código desta branch. Pedidos antigos não Novos ficam Legacy e não alteram estoque retroativamente; Novos exigirão ficha e saldo ao confirmar. A migration não insere movimentos, modifica quantidades nem confirma pedidos. O Down apaga a composição e o vínculo dos movimentos sem devolver saldos, perdendo informação de processamento: não executar após operação sem plano de recuperação. Veja [consumo por pedidos](../docs/order-stock.md).

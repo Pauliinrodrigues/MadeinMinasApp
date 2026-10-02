@@ -12,6 +12,7 @@ export interface StockInput {
   reason: string;
 }
 export interface StockMovement {
+  orderId: string | null;
   id: string;
   requestId: string;
   version: number;

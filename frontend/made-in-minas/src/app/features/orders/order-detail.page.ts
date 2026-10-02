@@ -35,6 +35,15 @@ export class OrderDetailPage {
   readonly statusLabel = orderStatusLabel;
   readonly formatPrice = formatProductPrice;
   readonly canManagePayments = this.session.canManagePayments;
+  readonly decimal = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 3 });
+  readonly stockLabels = {
+    Pending: 'Baixa pendente da confirmação',
+    Consumed: 'Ingredientes baixados na confirmação',
+    Returned: 'Ingredientes devolvidos ao estoque',
+    Retained: 'Consumo mantido após início do preparo',
+    Legacy: 'Pedido anterior ao controle automático; sem baixa retroativa',
+    NotRequired: 'Cancelado antes da confirmação; sem consumo',
+  };
   reason = '';
 
   constructor() {
