@@ -27,3 +27,5 @@ As regras já implementadas por incremento constam em authentication.md, users.m
 
 
 - Fase 6C: CMV teórico usa custos e preço atuais; custo por produto deriva da ficha/rendimento, sem arredondamento físico da baixa. Custo zero é pendência e impede apresentar CMV/margem completos. Margem pode ser negativa e exclui despesas fora da ficha. A consulta é administrativa e não altera dados operacionais; não representa CMV realizado das vendas. Ver [cmv.md](cmv.md).
+
+- Fase 7A: dashboard administrativo usa dia civil de Brasília. Confirmações válidas excluem cancelados e incluem entrega; recebimentos e estornos pertencem ao dia do evento, independentemente da data/status do pedido. Filas incluem dias anteriores. Produção mede preparo até Pronto com horários válidos, inclusive quando há cancelamento posterior. Ranking soma itens por produto nas confirmações de hoje, usando cópias históricas; médias sem amostra são nulas. Não há cálculo de lucro ou CMV realizado no painel. Ver [daily-dashboard.md](daily-dashboard.md).

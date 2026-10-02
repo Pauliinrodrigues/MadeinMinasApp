@@ -58,3 +58,5 @@ A Fase 6B acrescenta OrderStockService na transação de OrderService e OrderSto
 
 
 A Fase 6C acrescenta ProductCostsController, ProductCostService e DTOs/Costing. Consulta administrativa somente leitura, com RepeatableRead e cálculo decimal no backend. A página de CMV usa catalogGuard e uma resposta única para composição/indicadores. Sem entidades, migrations ou dependências novas. Ver [cmv.md](cmv.md).
+
+A Fase 7A acrescenta DashboardController, DashboardService e DTOs/Dashboard, protegidos por dashboard.view (administrador). O serviço determina o dia de Brasília pelo TimeProvider e consulta pedidos, itens e históricos em RepeatableRead. Somatórios e ranking são agregados no banco; duração usa somente pares de horários projetados do dia. A página features/dashboard recebe uma resposta única, com atualização manual, timeout e descarte de valores antigos em falhas. Sem tabelas ou dependências novas. Ver [daily-dashboard.md](daily-dashboard.md).

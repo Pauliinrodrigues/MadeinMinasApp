@@ -58,7 +58,7 @@ cd frontend/made-in-minas
 npm.cmd run test:e2e -- e2e/product-cost.spec.ts e2e/products.spec.ts e2e/recipes.spec.ts
 ```
 
-Backend usa PostgreSQL temporário isolado. Navegador usa API simulada em desktop/mobile. Resultados e disponibilidade local em [validation.md](validation.md). Aceite manual da 6C ainda pendente; nenhum avanço ao dashboard nesta entrega.
+Backend usa PostgreSQL temporário isolado. Navegador usa API simulada em desktop/mobile. Resultados e disponibilidade local em [validation.md](validation.md). A 6C foi preservada no commit local `5ce0ba8`, com aceite manual/publicação pendentes. Após nova autorização de continuidade, o dashboard passou a um incremento separado: [Fase 7A](daily-dashboard.md), em `feat/daily-dashboard`.
 
 ## Arquivos
 

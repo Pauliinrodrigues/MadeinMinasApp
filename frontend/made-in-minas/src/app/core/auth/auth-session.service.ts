@@ -10,6 +10,9 @@ export class AuthSession {
   private expiration = 0;
   private timer?: ReturnType<typeof setTimeout>;
   readonly user = this.profile.asReadonly();
+  readonly canViewDashboard = computed(
+    () => this.profile()?.permissions.includes('dashboard.view') ?? false,
+  );
   readonly canManageUsers = computed(
     () => this.profile()?.permissions.includes('users.manage') ?? false,
   );
