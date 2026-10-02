@@ -2,7 +2,7 @@
 
 Consulta administrativa em **Área da equipe → Relatórios**, rota `/equipe/relatorios`. Apresenta resumo do período, detalhamento diário, recebimentos/estornos por forma de pagamento e até dez produtos mais pedidos. Usa os pedidos, itens e históricos existentes; não cria tabelas, migrations ou lançamentos.
 
-Branch `feat/period-reports`, criada a partir do dashboard preservado no commit local `15e4fa0`. A sequência ainda pendente de publicação/integração é 6B (`98ecb4a`) → 6C (`5ce0ba8`) → 7A (`15e4fa0`) → 7B. O usuário autorizou a continuidade, sem registrar novo aceite manual ou publicação.
+Incremento na branch `feat/period-reports`, publicado no [PR #12](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/12) após a integração de estoque, CMV e dashboard pelos PRs #9/#10/#11. Publicação e integração autorizadas pelo responsável em 02/10/2026; o merge exige os checks backend/frontend aprovados para o commit final. A atualização da base preservou o conteúdo testado localmente.
 
 ## Período e regras
 

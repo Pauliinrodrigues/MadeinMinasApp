@@ -2,7 +2,7 @@
 
 Primeiro incremento da Fase 7, disponível para administrador em **Área da equipe → Dashboard** (`/equipe/dashboard`). Consulta pedidos, pagamentos e históricos existentes. Não cria tabelas, migrations, dependências ou lançamentos financeiros.
 
-A branch `feat/daily-dashboard` parte do commit local `5ce0ba8` (CMV — 6C), que depende de `98ecb4a` (consumo de estoque — 6B). A continuidade foi autorizada pelo usuário; os aceites manuais e a publicação/integração desses incrementos permanecem pendentes. Preservar a sequência 6B → 6C → 7A ao integrar.
+Incremento desenvolvido na branch `feat/daily-dashboard` e integrado pelo [PR #11](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/11), commit `23b2c38`, após as Fases 6B/6C. Publicação e integração autorizadas pelo responsável em 02/10/2026, com checks backend/frontend aprovados.
 
 ## Definições dos indicadores
 
@@ -86,4 +86,4 @@ Resultados executados estão em [validation.md](validation.md). Aceite manual da
 
 ## Próximo incremento
 
-A 7A foi preservada no commit local `15e4fa0`. Após autorização de continuidade, foi iniciada a [7B — relatórios por período](period-reports.md), em `feat/period-reports`, com filtros e regras de datas explícitas. Fechamento por turno, exportação, CMV realizado/margem histórica, despesas e conciliação exigem definições próprias; não são simulados pelo dashboard diário. Aceite manual e publicação continuam pendentes.
+A [7B — relatórios por período](period-reports.md) acrescenta filtros e regras de datas explícitas no [PR #12](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/12), com publicação e integração autorizadas. Fechamento por turno, exportação, CMV realizado/margem histórica, despesas e conciliação exigem definições próprias; não são simulados pelo dashboard diário.

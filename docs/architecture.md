@@ -32,7 +32,7 @@ A Fase 2C mantém JWT em memória, sem persistência/refresh token. O intercepto
 
 Autenticação e autorização de funcionários já existem no backend. Cliente público e funcionário serão identidades distintas. Preços, permissões, status e totais serão definidos pelo backend. Integrações de IA ficarão atrás de contratos introduzidos quando esse módulo for implementado.
 
-JWT foi introduzido na Fase 2A; gestão de usuários, na Fase 2B; login e administração no frontend, na Fase 2C. KDS, impressão, integrações bancárias e infraestrutura de produção seguem nas fases posteriores.
+JWT foi introduzido na Fase 2A; gestão de usuários, na Fase 2B; login e administração no frontend, na Fase 2C. KDS, expedição e impressão pelo navegador foram adicionados na Fase 5. Impressão automática, integrações bancárias e infraestrutura de produção seguem para incrementos posteriores.
 
 A Fase 3A introduz CategoriesController, DTOs, CategoryService, configuração EF e migration AddCategories, com páginas em features/catalog. catalog.manage separa administração de catálogo da gestão de funcionários. Não há novo repository nem camada adicional; regras e testes constam em [categories.md](categories.md).
 

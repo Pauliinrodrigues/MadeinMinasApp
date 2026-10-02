@@ -419,3 +419,18 @@ Dashboard preservado no commit local `15e4fa0`, em feat/daily-dashboard. A branc
 - API atualizada em 5080, iniciada em segundo plano com logs `.local/reports-api.log` e `.local/reports-api-error.log`; frontend existente em 8101. Os nove checks de Test-Foundation com -ExpectDatabaseReady passaram. `/api/reports/sales` consta no OpenAPI local e retorna 401 sem login.
 - Nenhuma escrita comercial, alteração de saldo ou atualização de esquema no banco operacional; nenhuma operação sobre parsmartmanager. O incremento permanece local para aceite manual, sem publicação. A próxima fase é o chat próprio, ainda não iniciado.
 - Contratos, lista de arquivos novos/alterados e roteiro de aceite: [period-reports.md](period-reports.md).
+
+## Publicação dos incrementos 6B a 7B — 02/10/2026
+
+O responsável autorizou publicar todas as alterações seguindo o fluxo de branches, pull requests, checks e squash na master. As menções a publicação pendente nas seções anteriores registram a situação ao concluir cada implementação. A autorização atual não comprova execução manual dos roteiros.
+
+| Incremento | Pull request | Validação no GitHub antes da integração |
+| --- | --- | --- |
+| 6B — estoque por pedido | [#9](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/9), integrado em `ed94d80` | 305 testes backend e 284 de navegador aprovados; ambos os jobs concluídos com sucesso |
+| 6C — CMV teórico | [#10](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/10), integrado em `e4f71b2` | 319 testes backend e 304 de navegador aprovados; ambos os jobs concluídos com sucesso |
+| 7A — dashboard | [#11](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/11), integrado em `23b2c38` | 334 testes backend e 324 de navegador aprovados; ambos os jobs concluídos com sucesso |
+| 7B — relatórios | [#12](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/12) | Execução e resultado do commit final disponíveis nos checks do PR; merge condicionado ao sucesso de backend e frontend |
+
+- As atualizações das bases de CMV, dashboard e relatórios preservaram os arquivos dos commits locais originais; comparação integral sem diferenças. A documentação desta publicação foi atualizada no PR de relatórios.
+- Autoria e destino conferidos: Pauliinrodrigues, repositório Pauliinrodrigues/MadeinMinasApp. Nenhum arquivo ignorado estava versionado.
+- A publicação não executou migration, movimentação comercial ou operação sobre o PostgreSQL compartilhado. Segredos, logs, resultados locais e backups permanecem fora do Git.

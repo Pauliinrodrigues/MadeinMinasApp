@@ -2,7 +2,9 @@
 
 Sistema de gestão e pedidos da hamburgueria Made in Minas, desenvolvido por fases.
 
-**Fases 1 a 5 implementadas nos incrementos descritos no roteiro.** Expedição e impressão pelo navegador foram integradas pelo [PR #7](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/7), após aceite e checks aprovados; impressão automática e validação física dependem do equipamento. O estoque manual (6A) foi validado e integrado pelo [PR #8](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/8), commit `71f7c41`. [Consumo de estoque — 6B](docs/order-stock.md), [CMV teórico — 6C](docs/cmv.md) e [dashboard diário — 7A](docs/daily-dashboard.md) estão implementados e testados, preservados nos commits locais `98ecb4a`, `5ce0ba8` e `15e4fa0`. O incremento atual é [Relatórios por período — 7B](docs/period-reports.md), na branch `feat/period-reports`, derivada da 7A. A continuidade foi autorizada; aceites manuais e publicação/integração desses incrementos permanecem pendentes.
+**Fases 1 a 7 implementadas no escopo inicial descrito no roteiro.** Expedição e impressão pelo navegador foram integradas pelo [PR #7](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/7); impressão automática e validação física dependem do equipamento. O estoque manual (6A) foi integrado pelo [PR #8](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/8). Consumo de estoque (6B), CMV teórico (6C) e dashboard diário (7A) foram integrados pelos PRs [#9](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/9), [#10](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/10) e [#11](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/11), após os checks de backend e frontend.
+
+[Relatórios por período — 7B](docs/period-reports.md) completa as consultas iniciais de vendas e recebimentos no [PR #12](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/12). A publicação e integração dos quatro incrementos foram autorizadas em 02/10/2026, seguindo uma branch por incremento, checks e squash na `master`. Os resultados estão em [validação](docs/validation.md); a próxima fase planejada é o chat próprio.
 
 ## Estrutura
 
@@ -111,7 +113,7 @@ O fluxo local completo está em `scripts/Test-Quality.ps1`: formatação, testes
 powershell -NoProfile -File scripts/Test-Quality.ps1
 ```
 
-O GitHub Actions executa as verificações em pushes para `master` e pull requests. O PR #7 passou nos checks de backend e frontend antes da integração. Detalhes e limites: [manutenção técnica](docs/maintenance.md). O incremento atual está em [relatórios por período](docs/period-reports.md), com validação local registrada em [validation.md](docs/validation.md).
+O GitHub Actions executa as verificações em pushes para `master` e pull requests. Cada integração exige os checks de backend e frontend aprovados para o commit final do PR. Detalhes e limites: [manutenção técnica](docs/maintenance.md). O incremento mais recente está em [relatórios por período](docs/period-reports.md), com os resultados registrados em [validation.md](docs/validation.md).
 
 ## Configuração e segurança
 

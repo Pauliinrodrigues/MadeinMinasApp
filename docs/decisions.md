@@ -146,4 +146,10 @@ A 7B acrescenta consulta administrativa de vendas/recebimentos, protegida por re
 
 Reutilizar as definições comerciais da 7A, com teste de consistência para um único dia. O ticket do período usa a quantidade total de confirmações válidas, e todos os dias vazios permanecem na resposta. Quatro consultas agregadas em snapshot, sem carregar pedidos completos nem introduzir tabelas de indicadores. Não inventar fechamento contábil, CMV realizado ou filas históricas. A interface descarta o resultado ao alterar filtros e permite repetir consultas após falha.
 
-O dashboard foi preservado no commit local 15e4fa0, e feat/period-reports parte dele após autorização para continuar. Integração deve preservar a sequência dos incrementos ainda locais, com aceites próprios. Regras e limites: [period-reports.md](period-reports.md).
+O dashboard foi preservado no commit local 15e4fa0, e feat/period-reports partiu dele após autorização para continuar. A publicação posterior está registrada na decisão 024. Regras e limites: [period-reports.md](period-reports.md).
+
+## 024 — Publicação sequencial dos incrementos 6B a 7B
+
+Em 02/10/2026, o responsável autorizou publicar todas as alterações seguindo o fluxo do projeto. Os incrementos foram separados nos PRs #9 (estoque por pedido), #10 (CMV), #11 (dashboard) e #12 (relatórios), com integração por squash após checks backend/frontend. Cada branch ainda não publicada foi atualizada sobre a master resultante do incremento anterior, verificando a igualdade do conteúdo com o commit local original. Não houve force push nem reescrita da master.
+
+A autorização de publicação não é apresentada como evidência de execução manual dos roteiros. Os registros anteriores descrevem o estado na conclusão de cada implementação; os resultados da publicação estão em [validation.md](validation.md). Esta operação de Git não executa migrations nem transfere User Secrets, credenciais, cadastros ou backups.
