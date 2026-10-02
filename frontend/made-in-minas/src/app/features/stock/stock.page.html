@@ -1,0 +1,146 @@
+<section>
+  <a routerLink="/equipe/ingredientes">Voltar aos ingredientes</a>
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">ESTOQUE</p>
+      <h1>Estoque do ingrediente</h1>
+    </div>
+    <button type="button" (click)="load()" [disabled]="loading() || saving() || !!pending()">
+      Atualizar saldo
+    </button>
+  </div>
+  <p>
+    Registre quantidades na unidade-base. Para iniciar, conte o estoque físico e registre uma
+    contagem com o motivo “Saldo inicial”.
+  </p>
+  @if (error()) {
+  <p role="alert" class="error">{{ error() }}</p>
+  } @if (notice()) {
+  <p role="status" class="notice">{{ notice() }}</p>
+  } @if (loading()) {
+  <p role="status">Carregando estoque…</p>
+  } @if (data(); as stock) {
+  <section class="panel" aria-label="Saldo do ingrediente">
+    <h2>{{ stock.name }}</h2>
+    <p>
+      Saldo: <strong>{{ decimal.format(stock.currentStock) }} {{ unitLabel(stock.unit) }}</strong>
+    </p>
+    <p>Mínimo: {{ decimal.format(stock.minimumStock) }} {{ unitLabel(stock.unit) }}</p>
+    @if (stock.version === 0) {
+    <p>Nenhuma movimentação registrada. O saldo físico ainda precisa ser conferido.</p>
+    } @if (stock.isLowStock) {
+    <p class="notice">Estoque no mínimo ou abaixo do mínimo.</p>
+    } @if (!stock.isActive) {
+    <p class="notice">Ingrediente inativo. Reative o cadastro para movimentar.</p>
+    } @if (needsRefresh() && !loading()) {
+    <p role="status">Atualize o saldo antes de revisar uma movimentação.</p>
+    }
+  </section>
+  <form class="panel" (ngSubmit)="review()">
+    <h2>Nova movimentação</h2>
+    <fieldset
+      [disabled]="loading() || saving() || !!pending() || needsRefresh() || !stock.isActive"
+    >
+      <label
+        >Tipo<select name="type" [(ngModel)]="type">
+          <option value="Entry">Entrada</option>
+          <option value="Exit">Saída</option>
+          <option value="Count">Contagem física</option>
+        </select></label
+      >
+      <label
+        >{{ type === 'Count' ? 'Quantidade contada' : 'Quantidade' }} ({{ unitLabel(stock.unit)
+        }})<input
+          name="quantity"
+          [(ngModel)]="quantity"
+          inputmode="decimal"
+          maxlength="10"
+          required
+      /></label>
+      <p>
+        Até três casas decimais, sem separador de milhar. A contagem substitui o saldo pela
+        quantidade conferida; entradas somam e saídas descontam.
+      </p>
+      @if (quantity && value() === null) {
+      <p role="alert" class="error">
+        Informe uma quantidade válida com até três casas decimais. Zero somente para contagem.
+      </p>
+      } @if (value() !== null && projected({type: type, quantity: value()!}) < 0) {
+      <p role="alert" class="error">A saída ultrapassa o saldo disponível.</p>
+      } @if (value() !== null && projected({type: type, quantity: value()!}) > 999999.999) {
+      <p role="alert" class="error">O saldo máximo é 999999,999.</p>
+      } @if (type === 'Count' && value() === stock.currentStock) {
+      <p>Contagem igual ao saldo. Nenhum ajuste necessário.</p>
+      }
+      <label
+        >Motivo<textarea
+          name="reason"
+          [(ngModel)]="reason"
+          maxlength="500"
+          rows="3"
+          required
+        ></textarea>
+      </label>
+      <button class="primary" [disabled]="!canReview()">Revisar movimentação</button>
+    </fieldset>
+  </form>
+  @if (pending(); as input) {
+  <section class="panel confirmation" role="region" aria-label="Confirmar movimentação">
+    <h2>Confirmar {{ labels[input.type].toLowerCase() }}?</h2>
+    <p>{{ decimal.format(input.quantity) }} {{ unitLabel(stock.unit) }} — {{ input.reason }}</p>
+    <p>
+      Saldo: {{ decimal.format(stock.currentStock) }} → {{ decimal.format(projected(input)) }} {{
+      unitLabel(stock.unit) }}
+    </p>
+    <p>O histórico será preservado. Correções exigem uma nova movimentação justificada.</p>
+    @if (uncertain()) {
+    <p role="status">
+      Não recebemos a confirmação. Tente novamente aqui para consultar ou concluir o mesmo
+      lançamento. Se sair desta tela, confira o histórico antes de lançar novamente.
+    </p>
+    }
+    <div class="actions">
+      <button type="button" class="primary" (click)="save()" [disabled]="saving()">
+        {{ saving() ? 'Salvando…' : uncertain() ? 'Tentar o mesmo lançamento' : 'Confirmar
+        movimentação' }}
+      </button>
+      <button type="button" (click)="cancel()" [disabled]="saving() || uncertain()">
+        Cancelar
+      </button>
+    </div>
+  </section>
+  }
+  <h2>Histórico</h2>
+  <p>{{ stock.totalCount }} movimentação(ões). Horários no fuso deste dispositivo.</p>
+  @for (movement of stock.movements; track movement.id) {
+  <article class="panel">
+    <h3>{{ labels[movement.type] }} — {{ formatDate(movement.createdAt) }}</h3>
+    <p>{{ movement.ingredientName }} · {{ movement.actorName }}</p>
+    <p>
+      {{ decimal.format(movement.previousBalance) }} → {{ decimal.format(movement.balance) }} {{
+      unitLabel(movement.unit) }} ({{ movement.delta > 0 ? '+' : '' }}{{
+      decimal.format(movement.delta) }})
+    </p>
+    <p>{{ movement.reason }}</p>
+  </article>
+  } @empty {
+  <p class="panel">Nenhuma movimentação nesta página.</p>
+  }
+  <div class="pagination">
+    <button
+      type="button"
+      (click)="load(stock.page - 1)"
+      [disabled]="stock.page <= 1 || loading() || saving() || !!pending()"
+    >
+      Anterior</button
+    ><span>Página {{ stock.page }}</span
+    ><button
+      type="button"
+      (click)="load(stock.page + 1)"
+      [disabled]="stock.page * stock.pageSize >= stock.totalCount || loading() || saving() || !!pending()"
+    >
+      Próxima
+    </button>
+  </div>
+  }
+</section>

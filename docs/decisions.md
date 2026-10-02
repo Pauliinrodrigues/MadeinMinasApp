@@ -109,3 +109,9 @@ O painel consulta três colunas em um snapshot consistente, com paginação inde
 ## 018 — Expedição e comandas na mesma branch
 
 Por solicitação do usuário, 5B e 5C compartilham feat/dispatch-printing, com validação técnica por módulo e aceite conjunto. Expedição utiliza estados e histórico existentes, distinguindo entrega de retirada e exigindo recebimento integral para finalizar. Impressão pelo navegador usa contratos/permissions específicos e nenhuma escrita comercial; não manter flag de impresso com base em abertura/fechamento de diálogo. Impressão automática depende de equipamento/agente e teste físico. Não criar tabelas de entregador, jobs ou integrações fictícias. Detalhes: [dispatch-printing.md](dispatch-printing.md).
+
+## 019 — Estoque manual antes de consumo automático e CMV
+
+A Fase 6 começa pela base auditável por ingrediente: saldo e versão no cadastro, movimentos anexados em transação e sem edição/exclusão pela API. A política administrativa catalog.manage já limita o público necessário; uma permissão própria será introduzida quando houver necessidade de delegar estoque. Saldo negativo é rejeitado, contagens são valores absolutos com versão esperada, e entrada/saída exigem quantidade positiva. Custo não é recalculado por movimentação.
+
+A chave idempotente é por ingrediente; o bloqueio desse ingrediente serializa verificação da chave, versão, saldo e inserção do histórico. A mesma transação revalida o autor. Leituras usam RepeatableRead. Não há trigger nem integração com pedidos neste incremento. Inventário inicial é conferido pelo operador, sem inferir saldo físico a partir das fichas técnicas. Consumo automático exigirá decidir composição histórica, arredondamento e compensação por estágio do pedido. Regras: [stock.md](stock.md).

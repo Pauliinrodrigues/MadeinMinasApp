@@ -105,6 +105,11 @@ export const routes: Routes = [
           import('./features/catalog/ingredient-form.page').then((page) => page.IngredientFormPage),
       },
       {
+        path: 'ingredientes/:id/estoque',
+        canActivate: [catalogGuard],
+        loadComponent: () => import('./features/stock/stock.page').then((page) => page.StockPage),
+      },
+      {
         path: 'ingredientes/:id',
         canActivate: [catalogGuard],
         loadComponent: () =>

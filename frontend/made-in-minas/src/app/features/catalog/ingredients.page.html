@@ -7,8 +7,8 @@
     <a routerLink="novo" class="button primary">Novo ingrediente</a>
   </div>
   <p>
-    Cadastre insumos e embalagens com custo por unidade-base. O saldo de estoque será
-    disponibilizado em uma próxima etapa.
+    Cadastre insumos e embalagens com custo por unidade-base. Acesse Estoque para conferir o saldo e
+    registrar movimentações.
   </p>
   @if (notice()) {
   <p role="status" class="notice">{{ notice() }}</p>
@@ -78,6 +78,12 @@
           </td>
           <td>
             <div class="actions">
+              <a
+                [routerLink]="[ingredient.id, 'estoque']"
+                class="button"
+                [attr.aria-label]="'Estoque de ' + ingredient.name"
+                >Estoque</a
+              >
               <a
                 [routerLink]="[ingredient.id]"
                 class="button"

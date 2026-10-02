@@ -5,6 +5,13 @@ export function apiError(error: unknown, login = false): string {
     return 'Não foi possível concluir. Verifique a conexão e tente novamente.';
   }
   const codes: Record<string, string> = {
+    InactiveIngredient: 'Reative o ingrediente antes de movimentar o estoque.',
+    StockVersionConflict: 'O estoque mudou. Atualize o saldo e revise o lançamento.',
+    StockRequestConflict:
+      'Este identificador já foi utilizado. Confira o histórico antes de continuar.',
+    InsufficientStock: 'A saída ultrapassa o saldo disponível.',
+    StockLimitExceeded: 'O saldo máximo é 999999,999 na unidade-base.',
+    StockUnchanged: 'A contagem é igual ao saldo atual. Nenhum ajuste é necessário.',
     PaymentNotFound: 'Pagamento não encontrado para este pedido.',
     PaymentOrderNotFound: 'Pedido não encontrado.',
     PaymentOrderCancelled: 'Pedido cancelado não pode receber novos pagamentos.',
