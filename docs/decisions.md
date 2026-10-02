@@ -123,3 +123,11 @@ A Fase 6B exige ficha para todos os produtos confirmados, inclusive revenda com 
 Quantidades são arredondadas para cima a três casas por produto/ingrediente depois de agregar linhas do produto; depois são somadas entre produtos. Devolução usa a quantidade efetivamente baixada e nunca recalcula a ficha. Cancelamento antes do preparo devolve; após o início mantém consumo. Observações livres não alteram a composição. Essa política foi adotada e explicitada ao usuário durante a implementação; exige aceite manual antes da integração.
 
 Pedidos existentes que não estejam Novos ficam Legacy, evitando baixa ou devolução fictícia após a atualização. Os Novos passam pelas regras atuais ao confirmar. Migração sem ajuste retroativo de saldo. Não introduzir custos históricos/CMV nesta etapa. Leituras das coleções de pedido usam snapshot e consultas separadas para evitar produto cartesiano. Detalhes: [order-stock.md](order-stock.md).
+
+## 021 — CMV teórico consultado por produto
+
+A 6C começa com consulta administrativa somente leitura, usando preço e custos atuais e rendimento da ficha. Não persistir um cálculo que ficaria desatualizado após editar ingredientes/preço. Usar uma leitura RepeatableRead e decimal no backend; nenhum cálculo comercial no Angular. Percentuais com duas casas, margem percentual complementar e valores negativos preservados.
+
+Custo zero é tratado como pendência: o cadastro não distingue ingrediente gratuito de custo ainda não informado. Exibir composição e total conhecido como parcial, com indicadores completos nulos. Ingrediente inativo permanece no cálculo com aviso. Sem ficha, orientar cadastro; consultar não cria composição. CMV realizado e custo histórico exigirão outro incremento.
+
+O usuário autorizou a continuidade em nova branch após a conclusão técnica da 6B. O commit local 98ecb4a preserva a 6B; feat/product-cmv parte dele e permanece dependente até integração. Esta organização não registra aceite manual nem publicação que ainda não tenham ocorrido. Regras e escopo: [cmv.md](cmv.md).

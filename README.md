@@ -2,7 +2,7 @@
 
 Sistema de gestão e pedidos da hamburgueria Made in Minas, desenvolvido por fases.
 
-**Fases 1 a 5 implementadas nos incrementos descritos no roteiro.** Expedição e impressão pelo navegador foram integradas pelo [PR #7](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/7), após aceite e checks aprovados; impressão automática e validação física dependem do equipamento. O estoque manual (6A) foi validado e integrado pelo [PR #8](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/8), commit `71f7c41`. O incremento atual é [consumo de estoque por pedidos — Fase 6B](docs/order-stock.md), na branch `feat/order-stock`, com aceite manual pendente. CMV e IA seguem nos próximos incrementos.
+**Fases 1 a 5 implementadas nos incrementos descritos no roteiro.** Expedição e impressão pelo navegador foram integradas pelo [PR #7](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/7), após aceite e checks aprovados; impressão automática e validação física dependem do equipamento. O estoque manual (6A) foi validado e integrado pelo [PR #8](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/8), commit `71f7c41`. O [consumo de estoque por pedidos — Fase 6B](docs/order-stock.md) está implementado e testado, preservado no commit local `98ecb4a`. O incremento atual é [CMV teórico por produto — Fase 6C](docs/cmv.md), na branch `feat/product-cmv`, derivada da 6B ainda não integrada. O usuário autorizou a continuidade; o aceite manual e a publicação dos incrementos continuam pendentes.
 
 ## Estrutura
 

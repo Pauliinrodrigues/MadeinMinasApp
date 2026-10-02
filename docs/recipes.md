@@ -105,3 +105,6 @@ Aceite manual: selecione um produto real, salve sua composição, reabra, altere
 - Frontend integrado: app.routes.ts, core/api-error.ts, core/services/ingredient-api.service.ts, features/catalog/products.page.html e product-form.page.html, src/staff.scss.
 - Testes: RecipeTests.cs e e2e/recipes.spec.ts criados; limpeza dos fixtures CategoryTests.cs, ProductTests.cs e IngredientTests.cs ajustada às FKs.
 - Documentação: README.md; docs/recipes.md, roadmap.md, database.md, api.md, architecture.md, business-rules.md, decisions.md, products.md, ingredients.md e validation.md.
+
+
+A Fase 6C permite consultar o CMV pela ficha salva, com quantidade × custo atual dos ingredientes e divisão pelo rendimento. O formulário oferece link para a consulta, após salvar as alterações desejadas. Campos não salvos não participam do cálculo. Regras de precisão, pendências e limites: [cmv.md](cmv.md).

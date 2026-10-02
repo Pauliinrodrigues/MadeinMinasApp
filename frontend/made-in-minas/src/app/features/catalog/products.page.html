@@ -114,6 +114,12 @@
                 [attr.aria-label]="'Ficha técnica de ' + product.name"
                 >Ficha técnica</a
               >
+              <a
+                [routerLink]="[product.id, 'cmv']"
+                class="button"
+                [attr.aria-label]="'CMV de ' + product.name"
+                >CMV</a
+              >
               <button
                 type="button"
                 (click)="requestChange(product, 'status')"
