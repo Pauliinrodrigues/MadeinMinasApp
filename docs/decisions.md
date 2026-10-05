@@ -191,3 +191,9 @@ Continuidade autorizada em 05/10/2026; acompanhamento preservado em 687e10c, nov
 Criar somente duas tabelas. Eventos de assumir/encerrar usam mensagens System com autoria interna, evitando tabela adicional de histórico. Versionar a sequência por conversa; serializar gravações com bloqueios e deduplicar solicitações/mensagens por tentativa. Revalidar funcionário dentro da transação. Usar credencial com finalidade criptográfica própria, sem ampliar poderes do token de acompanhamento do pedido. Limitar texto/páginas/envios; histórico não pode ser editado pela API.
 
 Manter um responsável para impedir respostas simultâneas; administrador pode assumir conversa abandonada. A UI exige confirmação de encerramento e conserva envios incertos na aba, inclusive para a equipe. Consulta periódica é suficiente para este incremento; SignalR, anexos, IA, bot/humano e notificações exigem entregas próprias. Ver [human-chat.md](human-chat.md).
+
+## 05/10/2026 — entrega pública configurável, sem tarifa presumida
+
+A 8F usa regiões explícitas (bairro/cidade/UF e taxa) na configuração por ambiente, sem tabela ou módulo administrativo adicional. Cobertura vazia desabilita o envio para entrega; ativação depende de dados reais do responsável. Distância, geocodificação e subdivisões de bairros exigem regra própria se forem necessárias à operação. Configuração por requisição mantém coerência entre região e preço; revisão é recalculada no envio.
+
+Endereço autodeclarado pertence à compra, sem aumentar os endereços do cadastro de outra pessoa que compartilhe o telefone informado. Reaproveitar colunas históricas de Orders e permitir id de endereço nulo nas respostas evita cadastro não verificado. Confirmação pública verifica disponibilidade atual, sem reinterpretar o endereço já aceito usando uma nova tabela de frete. Preservar hashes de retirada mantém recuperação dos envios anteriores. Ver [public-delivery.md](public-delivery.md).

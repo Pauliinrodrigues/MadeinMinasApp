@@ -145,7 +145,18 @@ public sealed class OrderService(AppDbContext database, CartService cart, OrderS
             { DeliveryFee = order.DeliveryFee };
             await LockCartAsync(input, cancellationToken);
             // Confirma disponibilidade atual sem reescrever preços e dados já registrados na compra.
-            await cart.QuoteAsync(input, cancellationToken);
+            if (order.Origin == "DirectLink" && order.Fulfillment == "Delivery")
+            {
+                // A entrega pública usa a cópia histórica, sem consultar endereços do cadastro.
+                if (!await database.Customers.AnyAsync(customer => customer.Id == order.CustomerId && customer.IsActive, cancellationToken))
+                    throw new CartException(CartError.CartCustomerUnavailable, "O cliente não está disponível. Selecione um cliente ativo.");
+                var productIds = order.Items.Select(item => item.ProductId).Distinct().ToArray();
+                if (await database.Products.CountAsync(product => productIds.Contains(product.Id) && product.IsActive
+                    && product.IsAvailable && product.Category.IsActive, cancellationToken) != productIds.Length)
+                    throw new CartException(CartError.CartProductUnavailable, "Um produto do pedido está indisponível.");
+            }
+            else
+                await cart.QuoteAsync(input, cancellationToken);
         }
         if (request.Status == "Cancelled" && await database.Payments.AnyAsync(payment => payment.OrderId == id
             && (payment.Status == "Pending" || payment.Status == "Received"), cancellationToken))
@@ -212,7 +223,7 @@ public sealed class OrderService(AppDbContext database, CartService cart, OrderS
     private static OrderException NotFound() => new(OrderError.OrderNotFound, "Pedido não encontrado.");
     private static OrderResponse ToResponse(Order order) => new(order.Id, order.Number, order.Origin, order.Status, order.Version,
         new CartCustomerResponse(order.CustomerId, order.CustomerName, order.CustomerPhone), order.Fulfillment,
-        order.AddressId is null ? null : new CartAddressResponse(order.AddressId.Value, order.AddressStreet!, order.AddressNumber!,
+        order.Fulfillment != "Delivery" ? null : new CartAddressResponse(order.AddressId, order.AddressStreet!, order.AddressNumber!,
             order.AddressNeighborhood!, order.AddressCity!, order.AddressState!, order.AddressComplement, order.AddressPostalCode, order.AddressReference),
         order.Items.OrderBy(item => item.Position).Select(item => new CartItemResponse(item.ProductId, item.ProductName, item.Quantity,
             item.UnitPrice, item.LineTotal, item.Notes)).ToArray(), order.Notes, order.Subtotal, order.DeliveryFee, order.Total,

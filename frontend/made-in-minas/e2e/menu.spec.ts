@@ -110,7 +110,7 @@ test('visitante abre o cardápio pelo início, sem login nem gravações', async
   await expect(page.getByRole('article', { name: 'Uai Sô' })).toContainText('R$ 29,90');
   await expect(page.getByRole('article', { name: 'Especial' })).toContainText('Indisponível');
   await expect(
-    page.getByText('Monte seu carrinho e envie seu pedido para retirada no balcão.', {
+    page.getByText('Monte seu carrinho e escolha retirada ou entrega nas regiões atendidas.', {
       exact: false,
     }),
   ).toBeVisible();

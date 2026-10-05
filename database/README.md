@@ -177,3 +177,14 @@ dotnet ef database update 20261005183152_AddHumanChat --project backend/MadeInMi
 ```
 
 Reinicie a API com o código atualizado e faça novo login na equipe para carregar `chat.manage`. O Down recusa apagar tabelas quando existem conversas; arquivamento e reversão exigem plano que preserve o histórico. Aplicação local e backup estão registrados em [validação](../docs/validation.md). Contratos e roteiro: [atendimento humano](../docs/human-chat.md).
+
+## Migration de entrega pública — Fase 8F
+
+Após conferir exclusivamente `made_in_minas` e criar backup, revisar e aplicar:
+
+```powershell
+dotnet ef migrations script 20261005183152_AddHumanChat 20261005210534_AddPublicDelivery --project backend/MadeInMinas.Api
+dotnet ef database update 20261005210534_AddPublicDelivery --project backend/MadeInMinas.Api
+```
+
+Apenas duas constraints de Orders mudam; não há criação de cadastros ou movimentações. Down recusa reversão se houver entregas públicas. Reiniciar a API atualizada e configurar regiões/taxas aprovadas conforme [public-delivery.md](../docs/public-delivery.md). Sem regiões, entrega fica indisponível e retirada continua funcionando. Não aplicar em parsmartmanager. Resultado local e backup em [validation.md](../docs/validation.md).

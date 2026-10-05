@@ -46,6 +46,10 @@ builder.Services.AddScoped<MadeInMinas.Api.Services.SalesReportService>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.PublicMenuService>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.PublicCartService>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.PublicCheckoutService>();
+builder.Services.AddOptions<MadeInMinas.Api.Services.PublicDeliveryOptions>()
+    .BindConfiguration("PublicDelivery")
+    .Validate(options => options.IsValid(), "PublicDelivery exige regiões únicas, UF válida e taxa explícita de 0 a 9999.99, com até duas casas decimais.")
+    .ValidateOnStart();
 builder.Services.AddDataProtection().SetApplicationName("MadeInMinas.Api");
 builder.Services.AddSingleton<PublicOrderAccess>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.PublicOrderTrackingService>();

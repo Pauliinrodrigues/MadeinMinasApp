@@ -87,3 +87,7 @@ Sem migration ou escrita no banco. PublicOrderTrackingService lê Orders/OrderSt
 ## Fase 8E — conversas e mensagens
 
 Migration 20261005183152_AddHumanChat cria ChatConversations e ChatMessages, sem alterar tabelas comerciais. Conversa registra tentativa/hash, nome autodeclarado, status, responsável, versão e horários; mensagens registram sequência, tentativa, tipo/texto, autor/nome copiado e instante. Índices únicos por tentativa inicial, conversa/sequência e conversa/tentativa; constraints para estado/autoria e FKs para Users. Mensagens System registram assumir/encerrar. Down recusa apagar conversas existentes. Não há vínculo automático com Customers ou Orders. Transação/bloqueios preservam autoria e impedem respostas concorrentes por atendentes diferentes; leituras paginadas usam snapshot. Ver [human-chat.md](human-chat.md).
+
+## Entrega pública — 8F
+
+`20261005210534_AddPublicDelivery` altera somente `CK_Orders_Origin` e `CK_Orders_Fulfillment`: DirectLink permite entrega com AddressId nulo e cópia histórica completa; Manual exige referência ao endereço de cadastro. Não cria tabelas nem colunas. Down recusa reversão quando existem entregas públicas. Valores e cobertura ficam na configuração por ambiente e não são ativados pela migration. Ver [public-delivery.md](public-delivery.md).

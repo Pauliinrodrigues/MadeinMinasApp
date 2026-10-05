@@ -21,6 +21,7 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
     target.pathname === apiPath + '/public-chat' ||
     target.pathname === apiPath + '/public-chat/messages';
   const isPublicCheckout =
+    target.pathname === apiPath + '/public-checkout/delivery-areas' ||
     target.pathname === apiPath + '/public-checkout/review' ||
     target.pathname === apiPath + '/public-checkout/orders';
   const token =

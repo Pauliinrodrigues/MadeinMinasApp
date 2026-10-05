@@ -1,6 +1,7 @@
 import { expect, Page, test } from '@playwright/test';
 import type {
   PublicCheckoutInput,
+  PublicDeliveryArea,
   PublicOrderInput,
   PublicOrderReceipt,
 } from '../src/app/core/services/public-checkout-api.service';
@@ -12,6 +13,16 @@ async function setup(page: Page) {
     reviews: [] as PublicCheckoutInput[],
     orders: [] as PublicOrderInput[],
     price: 29.9,
+    areas: [
+      {
+        id: 'test-center',
+        neighborhood: 'Centro de teste',
+        city: 'Cidade de teste',
+        state: 'MG',
+        fee: 5.5,
+      },
+    ] as PublicDeliveryArea[],
+    areasStatus: 200,
     reviewStatus: 200,
     orderStatus: 201,
     code: 'OrderReviewChanged',
@@ -29,6 +40,13 @@ async function setup(page: Page) {
   await page.route('**/api/**', async (route) => {
     const request = route.request();
     const path = new URL(request.url()).pathname;
+    if (path === '/api/public-checkout/delivery-areas') {
+      expect(request.headers()['authorization']).toBeUndefined();
+      return route.fulfill({
+        status: state.areasStatus,
+        json: state.areasStatus === 200 ? state.areas : {},
+      });
+    }
     if (path === '/api/menu') {
       expect(request.headers()['authorization']).toBeUndefined();
       return route.fulfill({
@@ -54,7 +72,11 @@ async function setup(page: Page) {
     if (path === '/api/public-checkout/review') {
       expect(request.headers()['authorization']).toBeUndefined();
       const input = request.postDataJSON() as PublicCheckoutInput;
-      expect(Object.keys(input).sort()).toEqual(['cart', 'name', 'phone']);
+      expect(Object.keys(input).sort()).toEqual(
+        input.fulfillment === 'Delivery'
+          ? ['address', 'cart', 'fulfillment', 'name', 'phone']
+          : ['cart', 'name', 'phone'],
+      );
       state.reviews.push(input);
       if (state.reviewStatus !== 200) {
         return route.fulfill({ status: state.reviewStatus, json: { code: state.code } });
@@ -66,16 +88,27 @@ async function setup(page: Page) {
         lineTotal: Math.round(state.price * item.quantity * 100) / 100,
       }));
       const total = items.reduce((sum, item) => sum + item.lineTotal, 0);
+      const area = input.address
+        ? state.areas.find((area) => area.id === input.address!.areaId)
+        : null;
       return route.fulfill({
         json: {
           name: input.name.trim(),
           phone: '+5531999991234',
-          fulfillment: 'Pickup',
+          fulfillment: input.fulfillment ?? 'Pickup',
+          address: area
+            ? {
+                ...input.address,
+                neighborhood: area.neighborhood,
+                city: area.city,
+                state: area.state,
+              }
+            : null,
           items,
           notes: input.cart.notes,
           subtotal: total,
-          deliveryFee: 0,
-          total,
+          deliveryFee: area?.fee ?? 0,
+          total: total + (area?.fee ?? 0),
           reviewToken: 'A'.repeat(64),
           calculatedAt: new Date().toISOString(),
         },
@@ -100,8 +133,10 @@ async function setup(page: Page) {
       const existing = state.receipts.get(input.requestId);
       const receipt = existing ?? {
         number: 1542,
-        fulfillment: 'Pickup' as const,
-        total: Math.round(state.price * input.checkout.cart.items[0].quantity * 100) / 100,
+        fulfillment: input.checkout.fulfillment ?? 'Pickup',
+        total:
+          Math.round(state.price * input.checkout.cart.items[0].quantity * 100) / 100 +
+          (input.checkout.fulfillment === 'Delivery' ? state.areas[0].fee : 0),
         createdAt: '2026-10-05T14:00:00Z',
         tracking: { token: 'private-order-access', expiresAt: '2026-10-12T14:00:00Z' },
       };
@@ -136,7 +171,7 @@ async function start(page: Page) {
   await page.getByRole('link', { name: 'Ver carrinho (1)', exact: true }).click();
   await page.getByLabel('Quantidade do item 1', { exact: true }).fill('2');
   await page.getByLabel('Observações do item 1', { exact: true }).fill('Sem cebola');
-  await page.getByRole('link', { name: 'Continuar para retirada', exact: true }).click();
+  await page.getByRole('link', { name: 'Continuar pedido', exact: true }).click();
   await expect(page).toHaveURL(/\/pedido\/finalizar$/);
 }
 
@@ -385,7 +420,7 @@ test('consulta pública não envia JWT e falha não encerra a sessão da equipe'
   });
   await page.getByRole('button', { name: 'Adicionar Uai Sô', exact: true }).click();
   await page.getByRole('link', { name: 'Ver carrinho (1)' }).click();
-  await page.getByRole('link', { name: 'Continuar para retirada' }).click();
+  await page.getByRole('link', { name: 'Continuar pedido' }).click();
   await review(page);
   state.orderStatus = 401;
   await page.getByRole('button', { name: 'Enviar pedido para retirada' }).click();
@@ -408,3 +443,141 @@ test('contato e observações são escapados e a revisão cabe no celular', asyn
     .evaluate((main) => ({ content: main.scrollWidth, visible: main.clientWidth }));
   expect(width.content).toBeLessThanOrEqual(width.visible + 1);
 });
+
+async function delivery(page: Page) {
+  await page.getByLabel('Seu nome', { exact: true }).fill('Maria');
+  await page.getByLabel('Telefone com DDD', { exact: true }).fill('31999991234');
+  await page.getByLabel('Retirada ou entrega').selectOption('Delivery');
+  await page.getByLabel('Bairro e cidade atendidos').selectOption('test-center');
+  await page.getByLabel('Rua ou avenida').fill('Rua informada');
+  await page.getByLabel('Número (ou s/n)').fill('s/n');
+  await page.getByLabel('Complemento (opcional)').fill('Casa 2');
+  await page.getByLabel('CEP (opcional)').fill('30100-000');
+  await page.getByLabel('Ponto de referência (opcional)').fill('Portão azul');
+  await page.getByRole('button', { name: 'Revisar pedido para entrega' }).click();
+  await expect(page.getByRole('region', { name: 'Pedido revisado' })).toBeVisible();
+}
+
+test('entrega revisa endereço e taxa do servidor, e remove dados pessoais após envio', async ({
+  page,
+}) => {
+  const state = await setup(page);
+  await start(page);
+  await delivery(page);
+  const review = page.getByRole('region', { name: 'Pedido revisado' });
+  await expect(review).toContainText('Rua informada, s/n');
+  await expect(review).toContainText('Centro de teste');
+  await expect(review).toContainText('Casa 2');
+  await expect(review).toContainText('Portão azul');
+  await expect(review).toContainText('Taxa de entrega: R$ 5,50');
+  await expect(review).toContainText('R$ 65,30');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.getByRole('button', { name: 'Enviar pedido para entrega' }).click();
+  await expect(page.getByRole('region', { name: 'Pedido recebido' })).toContainText(
+    'Entrega no endereço informado',
+  );
+  expect(state.orders[0].checkout.address?.street).toBe('Rua informada');
+  expect(state.orders[0].checkout).not.toHaveProperty('deliveryFee');
+  const stored = await page.evaluate((key) => sessionStorage.getItem(key), recoveryKey);
+  expect(stored).not.toContain('Rua informada');
+  expect(stored).not.toContain('Portão azul');
+  await page.reload();
+  await expect(page.getByRole('region', { name: 'Pedido recebido' })).toContainText(
+    'Entrega no endereço informado',
+  );
+});
+
+test('entrega exige endereço e CEP válido; edição exige nova revisão e retirada omite endereço', async ({
+  page,
+}) => {
+  const state = await setup(page);
+  await start(page);
+  await page.getByLabel('Seu nome').fill('Maria');
+  await page.getByLabel('Telefone com DDD').fill('31999991234');
+  await page.getByLabel('Retirada ou entrega').selectOption('Delivery');
+  await page.getByRole('button', { name: 'Revisar pedido para entrega' }).click();
+  await expect(page.getByRole('alert')).toContainText('Selecione uma região');
+  expect(state.reviews).toHaveLength(0);
+  await delivery(page);
+  await page.getByLabel('Número (ou s/n)').fill('22');
+  await expect(page.getByRole('region', { name: 'Pedido revisado' })).toHaveCount(0);
+  await page.getByLabel('CEP (opcional)').fill('123');
+  await page.getByRole('button', { name: 'Revisar pedido para entrega' }).click();
+  await expect(page.getByRole('alert')).toContainText('CEP');
+  expect(state.reviews).toHaveLength(1);
+  await page.getByLabel('Retirada ou entrega').selectOption('Pickup');
+  await page.getByRole('button', { name: 'Revisar pedido para retirada' }).click();
+  await expect(page.getByRole('region', { name: 'Pedido revisado' })).toContainText(
+    'Sem taxa de entrega',
+  );
+  expect(state.reviews[1]).not.toHaveProperty('address');
+});
+
+test('sem cobertura configurada não cria entrega nem assume taxa gratuita', async ({ page }) => {
+  const state = await setup(page);
+  state.areas = [];
+  await start(page);
+  await page.getByLabel('Retirada ou entrega').selectOption('Delivery');
+  await expect(
+    page.getByText('Entrega pelo site ainda indisponível.', { exact: false }),
+  ).toBeVisible();
+  await page.getByLabel('Seu nome').fill('Maria');
+  await page.getByLabel('Telefone com DDD').fill('31999991234');
+  await page.getByRole('button', { name: 'Revisar pedido para entrega' }).click();
+  expect(state.reviews).toHaveLength(0);
+  expect(state.orders).toHaveLength(0);
+  await page.getByLabel('Retirada ou entrega').selectOption('Pickup');
+  await review(page);
+});
+
+test('consulta de regiões falha e pode ser repetida', async ({ page }) => {
+  const state = await setup(page);
+  state.areasStatus = 503;
+  await start(page);
+  await page.getByLabel('Retirada ou entrega').selectOption('Delivery');
+  await expect(page.getByRole('alert')).toContainText('Não foi possível consultar');
+  state.areasStatus = 200;
+  await page.getByRole('button', { name: 'Atualizar regiões' }).click();
+  await delivery(page);
+});
+
+test('entrega recupera resposta perdida com o mesmo endereço e identificador', async ({ page }) => {
+  const state = await setup(page);
+  await start(page);
+  await delivery(page);
+  state.loseResponse = true;
+  await page.getByRole('button', { name: 'Enviar pedido para entrega' }).click();
+  await expect(page.getByRole('alert')).toContainText('confirmar o resultado');
+  await page.reload();
+  state.loseResponse = false;
+  await page.getByRole('button', { name: 'Conferir envio', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Pedido recebido' })).toBeVisible();
+  expect(state.orders[1]).toEqual(state.orders[0]);
+  expect(state.receipts.size).toBe(1);
+});
+
+for (const code of ['OrderReviewChanged', 'PublicDeliveryUnavailable']) {
+  test(`entrega restaura endereço após rejeição ${code} e exige nova revisão`, async ({ page }) => {
+    const state = await setup(page);
+    await start(page);
+    await delivery(page);
+    state.orderStatus = 500;
+    await page.getByRole('button', { name: 'Enviar pedido para entrega' }).click();
+    await expect(page.getByRole('alert')).toBeVisible();
+    await page.reload();
+    state.orderStatus = 409;
+    state.code = code;
+    await page.getByRole('button', { name: 'Conferir envio', exact: true }).click();
+    await expect(page.getByLabel('Rua ou avenida')).toHaveValue('Rua informada');
+    await expect(page.getByLabel('Retirada ou entrega')).toHaveValue('Delivery');
+    await expect(page.getByRole('button', { name: 'Enviar pedido para entrega' })).toHaveCount(0);
+    state.areas[0].fee = 8;
+    state.orderStatus = 201;
+    await page.getByRole('button', { name: 'Atualizar regiões' }).click();
+    await page.getByRole('button', { name: 'Revisar pedido para entrega' }).click();
+    await expect(page.getByRole('region', { name: 'Pedido revisado' })).toContainText('R$ 67,80');
+    await page.getByRole('button', { name: 'Enviar pedido para entrega' }).click();
+    await expect(page.getByRole('region', { name: 'Pedido recebido' })).toBeVisible();
+    expect(state.orders[2].requestId).not.toBe(state.orders[0].requestId);
+  });
+}

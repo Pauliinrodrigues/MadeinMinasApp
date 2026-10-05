@@ -73,3 +73,12 @@ A Fase 8C adiciona POST /api/public-checkout/review e POST /api/public-checkout/
 A Fase 8D adiciona GET /api/public-orders/tracking, com credencial no cabeçalho X-Order-Access, sem JWT ou seleção por número/telefone. Checkout passa a retornar tracking { token, expiresAt }, ou null após sete dias da criação. Consulta retorna apenas número, modalidade, total, status e horários/histórico; 200/404 usam no-store. Acesso ausente, inválido, expirado ou para pedido inexistente/manual retorna o mesmo 404 genérico. Limite independente de 60 consultas/minuto por endereço remoto (429). Repetir checkout recupera acesso ao mesmo pedido sem estender o prazo. Contrato completo: [public-order-tracking.md](public-order-tracking.md).
 
 A Fase 8E adiciona POST/GET /api/public-chat e POST /api/public-chat/messages, com X-Chat-Access para ler/enviar após a solicitação inicial. A equipe usa GET /api/chat, GET /api/chat/{id}, POST /api/chat/{id}/messages e PUT /api/chat/{id}/claim ou /close, com chat.manage. Criação/envio retornam 201 ou 200 em repetição; conflitos 409; acesso público inválido 404 genérico. Textos até 2.000 caracteres, transcript por cursor de 50 mensagens e fila de 20 conversas por página. Limites públicos separados de 5/20/120 chamadas por minuto por endereço remoto (iniciar/enviar/ler). Contratos e erros: [human-chat.md](human-chat.md).
+
+## Entrega pública — 8F
+
+- `GET /api/public-checkout/delivery-areas`: anônimo, no-store, lista somente regiões e taxas configuradas no backend; compartilha limite do checkout.
+- Revisão/envio aceitam `fulfillment: Delivery` com `address: { areaId, street, number, complement?, postalCode?, reference? }`. Omitir modalidade mantém Pickup. Taxa/cidade/bairro informados pelo cliente são rejeitados; backend resolve pela região.
+- Revisão inclui endereço normalizado, região, taxa e total; mudança exige nova revisão. `409 PublicDeliveryUnavailable` indica região indisponível e permite corrigir a tentativa ainda não gravada.
+- Detalhe e expedição retornam endereço da compra com `id=null` para entrega pública. Comprovante/acompanhamento não expõem endereço.
+
+Contrato completo, limites e compatibilidade com retirada em [public-delivery.md](public-delivery.md).

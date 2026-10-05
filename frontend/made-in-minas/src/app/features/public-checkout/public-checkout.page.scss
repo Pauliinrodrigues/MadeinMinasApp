@@ -91,7 +91,8 @@ label {
   font-size: 13px;
   margin: 20px 0 8px;
 }
-input {
+input,
+select {
   width: 100%;
   font: inherit;
   color: #35281e;
@@ -121,7 +122,8 @@ button:disabled {
 }
 button:focus-visible,
 a:focus-visible,
-input:focus-visible {
+input:focus-visible,
+select:focus-visible {
   outline: 3px solid #722f27;
   outline-offset: 3px;
 }
