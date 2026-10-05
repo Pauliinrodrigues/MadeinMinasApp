@@ -175,3 +175,11 @@ Continuidade autorizada em 05/10/2026, preservando a 8B no commit local 15d8107 
 Reutilizar o pedido central com origem DirectLink e autor nulo na criação, sem inventar funcionário ou tabela intermediária de solicitações. O contato é autodeclarado, sem login público: resolver o cliente por telefone somente no envio, preservar cadastro existente e registrar a cópia informada no pedido. Nenhuma consulta anônima a clientes/endereços/históricos. A equipe confere o contato e confirma o preparo pelas regras existentes.
 
 Usar revalidação transacional, índice único/advisory lock por tentativa e hash do conteúdo. Resposta mínima como comprovante; acompanhamento público exige contrato próprio. A tentativa completa é guardada em sessionStorage antes do HTTP para recuperar reload/resposta perdida; sucesso a substitui por comprovante sem dados pessoais. Chaves diferentes continuam sendo compras diferentes. Sem cobrança automática, promessa de prazo ou reserva. Ver [public-checkout.md](public-checkout.md).
+
+## 028 — Acompanhamento restrito ao comprovante público
+
+Continuidade autorizada em 05/10/2026. Preservar checkout local em c8de7ee e iniciar feat/public-order-tracking, sem publicar a cadeia. O incremento independe da definição de frete e completa a visibilidade da retirada para o cliente.
+
+Usar Data Protection do ASP.NET Core com finalidade/aplicação próprias e prazo fixo de sete dias desde a criação. Não reutilizar JWT administrativo, telefone, número do pedido, requestId ou reviewToken como autenticação de acompanhamento. Credencial permite apenas leitura do pedido DirectLink indicado; dados privados e motivos internos ficam fora do contrato. Reemitir no checkout idempotente mantém ID e vencimento, sem exigir guardar token em texto no banco ou criar tabela. Compartilhamento/revogação individual e recuperação de identidade ficam fora desta etapa.
+
+Preservar a sessão da aba e consultar a cada 15 segundos após cada resposta, pausando quando oculta, cancelando na saída e encerrando em Finalizado/Cancelado. Remover status antigo em falhas. Chaves persistentes/compartilhadas e proteção em repouso são requisito de hospedagem; Windows local usa o padrão do perfil e DPAPI. Sem migration, IA, previsão de tempo ou efeito financeiro. Ver [public-order-tracking.md](public-order-tracking.md).

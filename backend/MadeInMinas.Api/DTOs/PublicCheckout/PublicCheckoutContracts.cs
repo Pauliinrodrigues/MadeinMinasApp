@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using MadeInMinas.Api.DTOs.Cart;
 using MadeInMinas.Api.DTOs.PublicCart;
+using MadeInMinas.Api.DTOs.PublicOrders;
 using MadeInMinas.Api.Validation;
 
 namespace MadeInMinas.Api.DTOs.PublicCheckout;
@@ -37,5 +38,8 @@ public sealed record PublicCheckoutReviewResponse(string Name, string Phone, str
     string ReviewToken, DateTimeOffset CalculatedAt);
 
 // Comprovante de recebimento, sem identificadores internos ou dados pessoais do cadastro.
-public sealed record PublicOrderReceipt(int Number, string Fulfillment, decimal Total, DateTimeOffset CreatedAt);
+public sealed record PublicOrderReceipt(int Number, string Fulfillment, decimal Total, DateTimeOffset CreatedAt)
+{
+    public PublicOrderAccessResponse? Tracking { get; init; }
+}
 public sealed record PublicOrderCreationResult(PublicOrderReceipt Receipt, bool Created);

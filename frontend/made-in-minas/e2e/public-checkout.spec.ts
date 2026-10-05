@@ -103,6 +103,7 @@ async function setup(page: Page) {
         fulfillment: 'Pickup' as const,
         total: Math.round(state.price * input.checkout.cart.items[0].quantity * 100) / 100,
         createdAt: '2026-10-05T14:00:00Z',
+        tracking: { token: 'private-order-access', expiresAt: '2026-10-12T14:00:00Z' },
       };
       state.receipts.set(input.requestId, receipt);
       if (state.loseResponse) {
@@ -167,6 +168,8 @@ test('visitante revisa dados e envia retirada com preços atuais da API', async 
   expect(stored).not.toContain('Maria');
   expect(stored).not.toContain('phone');
   expect(stored).toContain('1542');
+  expect(stored).toContain('private-order-access');
+  await expect(page.getByRole('link', { name: 'Acompanhar meu pedido' })).toBeVisible();
 });
 
 test('dados inválidos não são revisados e editar contato invalida a revisão', async ({ page }) => {

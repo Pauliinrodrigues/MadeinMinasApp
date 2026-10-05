@@ -15,6 +15,13 @@ import {
 
 export const routes: Routes = [
   {
+    path: 'pedido/acompanhar',
+    loadComponent: () =>
+      import('./features/public-order-tracking/public-order-tracking.page').then(
+        (page) => page.PublicOrderTrackingPage,
+      ),
+  },
+  {
     path: 'pedido/finalizar',
     loadComponent: () =>
       import('./features/public-checkout/public-checkout.page').then(

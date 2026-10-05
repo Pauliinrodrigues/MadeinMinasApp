@@ -16,7 +16,15 @@
       </p>
       <p>Retirada no balcão · Total registrado: <strong>{{ price(receipt.total) }}</strong></p>
       <p>Pagamento na retirada. Nenhuma cobrança foi realizada pelo site.</p>
-      <p>Anote o número do pedido. Este comprovante não acompanha mudanças de status.</p>
+      @if (receipt.tracking?.token) {
+      <p><a routerLink="/pedido/acompanhar">Acompanhar meu pedido</a></p>
+      <p>
+        O acompanhamento fica nesta aba. Montar outro pedido remove este acesso. Fechar a aba também
+        pode perdê-lo.
+      </p>
+      } @else {
+      <p>Anote o número do pedido. Para acompanhar este comprovante, procure o atendimento.</p>
+      }
       <button type="button" (click)="newOrder()">Montar outro pedido</button>
     </section>
     } @else if (state.recoveryError()) {

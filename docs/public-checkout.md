@@ -112,4 +112,6 @@ npm.cmd run test:e2e -- public-checkout.spec.ts public-cart.spec.ts menu.spec.ts
 - Frontend alterados: estado do carrinho, cardápio, página do carrinho, detalhe de pedidos, contrato Order, interceptor, rotas e testes menu/orders.
 - Documentação: README, roteiro, arquitetura, API, banco, regras, decisões, validação, continuidade de public-cart e este documento.
 
-Próximo incremento proposto: entrega pública após definir área atendida e taxa; acompanhamento público deverá ter acesso próprio, sem abrir pedidos por telefone ou número. Conversa/transferência e IA continuam em incrementos separados.
+## Continuidade — 8D
+
+Em 05/10/2026, a 8C foi preservada no commit local `c8de7ee`; a branch `feat/public-order-tracking` parte dele. O novo incremento adiciona credencial de acompanhamento ao comprovante e a rota `/pedido/acompanhar`, sem consulta por telefone/número. A recuperação mantém os mesmos dados comerciais e prazo, mas pode emitir outra credencial equivalente. O roteiro acima descreve a entrega original da 8C; o contrato atual e sua validação estão em [acompanhamento público](public-order-tracking.md). Entrega pública ainda depende de área atendida e taxa; conversa/transferência e IA continuam em incrementos separados.
