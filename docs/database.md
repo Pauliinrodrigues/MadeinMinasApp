@@ -75,3 +75,7 @@ Utiliza Categories e Products existentes, com projeções de campos comerciais, 
 ## Fase 8B — revisão do carrinho público
 
 PublicCartService consulta Products e o estado de Categories com AsNoTracking/RepeatableRead, projetando apenas ID, nome e preço. Calcula subtotal em decimal no backend. A seleção existe somente em memória no frontend; não há tabela de carrinho, reserva, cliente anônimo ou escrita em pedidos/estoque/pagamentos. Nenhuma migration; o esquema permanece o da 6B. Ver [public-cart.md](public-cart.md).
+
+## Fase 8C — criação pública para retirada
+
+Migration 20261005145517_AddPublicOrders: Orders.CreatedById e OrderStatusHistory.ActorId tornam-se opcionais; constraints preservam autoria obrigatória em pedidos manuais e transições operacionais. Origem DirectLink exige retirada e ausência de funcionário criador. RequestId tem índice único parcial para pedidos públicos; a chave manual por funcionário permanece. Sem novas tabelas. Criação revalida catálogo e grava eventual cliente, pedido, itens e histórico atomicamente. Telefone é contato autodeclarado, sem autenticação ou atualização pública de cadastros. Down recusa reversão quando há pedidos públicos, preservando autoria. Ver [public-checkout.md](public-checkout.md).

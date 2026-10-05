@@ -1,0 +1,124 @@
+<ion-content>
+  <main class="checkout-shell">
+    <header>
+      <a class="brand" routerLink="/pedido">MADE IN MINAS<span>HAMBURGUERIA</span></a
+      ><a routerLink="/pedido/carrinho">Voltar ao carrinho</a>
+    </header>
+    <section class="intro">
+      <span class="eyebrow">FALTA POUCO.</span>
+      <h1>Seu pedido, <em>com cuidado.</em></h1>
+    </section>
+    @if (state.receipt(); as receipt) {
+    <section class="panel" aria-label="Pedido recebido">
+      <h2>Recebemos o pedido #{{ receipt.number }}</h2>
+      <p>
+        Pedido enviado para análise da equipe. Aguarde a confirmação do atendimento antes de buscar.
+      </p>
+      <p>Retirada no balcão · Total registrado: <strong>{{ price(receipt.total) }}</strong></p>
+      <p>Pagamento na retirada. Nenhuma cobrança foi realizada pelo site.</p>
+      <p>Anote o número do pedido. Este comprovante não acompanha mudanças de status.</p>
+      <button type="button" (click)="newOrder()">Montar outro pedido</button>
+    </section>
+    } @else if (state.recoveryError()) {
+    <section class="panel">
+      <h2>Precisamos conferir seu envio</h2>
+      <p>
+        Não foi possível recuperar os dados desta aba. Antes de montar outro pedido, confira com o
+        atendimento se o anterior foi recebido.
+      </p>
+      <label class="acknowledgement"
+        ><input type="checkbox" [(ngModel)]="recoveryAcknowledged" /> Já conferi com o
+        atendimento.</label
+      >
+      <button type="button" (click)="newOrder()" [disabled]="!recoveryAcknowledged">
+        Limpar recuperação e voltar
+      </button>
+    </section>
+    } @else if (state.pending()) {
+    <section class="panel" aria-label="Conferir envio">
+      <h2>{{ busy() ? 'Enviando seu pedido…' : 'Vamos conferir seu envio' }}</h2>
+      <p>
+        Se a conexão falhou, o pedido pode já ter sido recebido. A conferência repete a mesma
+        tentativa e recupera o comprovante.
+      </p>
+      <p>
+        Mantenha esta aba aberta. Atualizá-la permite retomar a conferência; fechá-la pode perder a
+        recuperação.
+      </p>
+      <button type="button" (click)="send()" [disabled]="busy()">
+        {{ busy() ? 'Conferindo…' : 'Conferir envio' }}
+      </button>
+    </section>
+    } @else if (!cart.lines().length) {
+    <section class="panel">
+      <h2>Seu carrinho está vazio</h2>
+      <a routerLink="/pedido">Escolher produtos</a>
+    </section>
+    } @else {
+    <div class="checkout-layout">
+      <section class="panel">
+        <h2>Quem vai retirar?</h2>
+        <p>Informe seu nome e telefone para a equipe entrar em contato sobre este pedido.</p>
+        <fieldset [disabled]="busy()">
+          <label for="checkout-name">Seu nome</label
+          ><input
+            id="checkout-name"
+            autocomplete="name"
+            maxlength="120"
+            [(ngModel)]="name"
+            (ngModelChange)="change()"
+          />
+          <label for="checkout-phone">Telefone com DDD</label
+          ><input
+            id="checkout-phone"
+            type="tel"
+            autocomplete="tel"
+            maxlength="30"
+            [(ngModel)]="phone"
+            (ngModelChange)="change()"
+            placeholder="(31) 99999-9999"
+          />
+        </fieldset>
+        <p class="notice">
+          Nesta etapa, os pedidos pelo site são para retirada no balcão, com pagamento na retirada.
+          Para entrega, procure o atendimento.
+        </p>
+        <a routerLink="/pedido/carrinho">Alterar produtos e observações</a>
+      </section>
+      <section class="panel" aria-label="Revisão para retirada">
+        <h2>Confira antes de enviar</h2>
+        <button type="button" (click)="revise()" [disabled]="busy()">
+          {{ busy() ? 'Revisando…' : 'Revisar pedido para retirada' }}
+        </button>
+        @if (review(); as result) {
+        <div role="region" aria-label="Pedido revisado">
+          <p>{{ result.name }} · {{ result.phone }}</p>
+          @for (item of result.items; track $index) {
+          <div class="line">
+            <strong>{{ item.quantity }} × {{ item.name }}</strong
+            ><span>{{ price(item.unitPrice) }} por unidade · {{ price(item.lineTotal) }}</span>@if
+            (item.notes) { <span class="notes">{{ item.notes }}</span> }
+          </div>
+          } @if (result.notes) {
+          <p class="notes">Observações: {{ result.notes }}</p>
+          }
+          <p>Retirada no balcão · Sem taxa de entrega</p>
+          <p class="total">Total <strong>{{ price(result.total) }}</strong></p>
+          <p>
+            O atendimento confirmará a disponibilidade e o preparo. Pague ao retirar; este envio não
+            realiza cobrança.
+          </p>
+          <button type="button" (click)="send()" [disabled]="busy()">
+            Enviar pedido para retirada
+          </button>
+        </div>
+        }
+      </section>
+    </div>
+    } @if (error()) {
+    <p class="error" role="alert">{{ error() }}</p>
+    }
+    <div role="status" aria-live="polite">{{ busy() ? 'Aguarde a resposta…' : '' }}</div>
+    <footer>Made in Minas · Feito com cuidado.</footer>
+  </main>
+</ion-content>

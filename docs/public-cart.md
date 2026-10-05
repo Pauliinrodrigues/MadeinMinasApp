@@ -4,6 +4,8 @@ Continuação autorizada em 05/10/2026. A branch `feat/public-cart` parte do com
 
 O visitante adiciona produtos em `/pedido` e abre **Ver carrinho** em `/pedido/carrinho`, sem login. Pode ajustar quantidades, escrever observações, remover itens, limpar a seleção com confirmação e revisar o subtotal calculado pela API. Este incremento não registra pedidos nem identifica clientes. Endereço, entrega, pagamento, acompanhamento, conversa, adicionais e combos continuam para etapas próprias.
 
+Continuidade: a 8B foi preservada no commit local `15d8107`. A [Fase 8C](public-checkout.md) acrescenta o link Continuar para retirada e a finalização em página própria. As regras abaixo descrevem a montagem/revisão da 8B; somente a tentativa de envio da 8C usa recuperação em sessionStorage. Enquanto houver envio pendente ou comprovante, o carrinho encaminha à conferência anterior.
+
 ## Comportamento e limites
 
 - Seleção mantida somente em memória, durante a navegação interna. Atualizar ou fechar a página apaga o carrinho; não há localStorage, sessionStorage ou persistência no servidor.
@@ -76,4 +78,4 @@ Testes backend usam PostgreSQL real isolado; testes de navegador simulam respost
 - Frontend alterado: rotas, interceptor, página do cardápio e testes do cardápio.
 - Documentação: README, roteiro, arquitetura, API, banco, regras, decisões, validação, cardápio e este documento.
 
-Próximo incremento proposto: definir a identificação pública do cliente e o envio do pedido, incluindo privacidade de telefone/endereços, entrega/taxa, revisão final e prevenção de duplicidade. Isso exige contrato próprio antes de implementar a compra.
+A continuidade foi definida na [Fase 8C — checkout público para retirada](public-checkout.md). Entrega pública aguarda regra de cobertura/taxa; acompanhamento terá controle de acesso próprio.

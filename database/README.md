@@ -155,3 +155,14 @@ dotnet ef database update 20261002181034_AddOrderStock --project backend/MadeInM
 ```
 
 Reinicie a API com o código desta branch. Pedidos antigos não Novos ficam Legacy e não alteram estoque retroativamente; Novos exigirão ficha e saldo ao confirmar. A migration não insere movimentos, modifica quantidades nem confirma pedidos. O Down apaga a composição e o vínculo dos movimentos sem devolver saldos, perdendo informação de processamento: não executar após operação sem plano de recuperação. Veja [consumo por pedidos](../docs/order-stock.md).
+
+## Migration de pedidos públicos — Fase 8C
+
+`20261005145517_AddPublicOrders` permite autoria pública na criação e adiciona a chave única de tentativa para DirectLink, preservando os pedidos manuais. Sem tabelas novas ou gravação de pedidos pela migration. Antes de aplicar em outra instalação, confirmar exclusivamente **made_in_minas**, fazer backup e revisar:
+
+```powershell
+dotnet ef migrations script 20261002181034_AddOrderStock 20261005145517_AddPublicOrders --project backend/MadeInMinas.Api
+dotnet ef database update 20261005145517_AddPublicOrders --project backend/MadeInMinas.Api
+```
+
+Reinicie a API atualizada. Não reaplique migrations ao trocar de branch quando já estiverem registradas. Down recusa reversão se houver pedidos públicos, pois o esquema antigo exige autoria de funcionário; não apagar histórico nem criar autores fictícios para forçar retorno. Contrato e roteiro: [checkout público para retirada](../docs/public-checkout.md). Resultado da aplicação local: [validação](../docs/validation.md).

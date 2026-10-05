@@ -12,13 +12,17 @@
       <h1 id="menu-title">Nosso <em>cardápio.</em></h1>
       <p>Conheça os sabores da Made in Minas e encontre o seu favorito.</p>
       <p class="notice">
-        Monte seu carrinho e revise os valores. A confirmação do pedido pelo site estará disponível
-        em breve.
+        Monte seu carrinho e envie seu pedido para retirada no balcão. A equipe confirmará o
+        preparo.
       </p>
     </section>
 
     <div class="cart-summary">
+      @if (cart.checkout.locked()) {
+      <a routerLink="/pedido/finalizar">Ver envio do pedido</a>
+      } @else {
       <a routerLink="/pedido/carrinho">Ver carrinho ({{ cart.itemCount() }})</a>
+      }
       <span role="status" aria-live="polite" class="cart-notice">{{ cartNotice() }}</span>
     </div>
 
