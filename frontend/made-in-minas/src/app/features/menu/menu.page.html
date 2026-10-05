@@ -1,0 +1,120 @@
+<ion-content>
+  <main class="menu-shell">
+    <header class="site-header">
+      <a routerLink="/" class="brand" aria-label="Made in Minas, início"
+        >MADE IN MINAS<span>HAMBURGUERIA</span></a
+      >
+      <a routerLink="/entrar" class="staff-link">Área da equipe</a>
+    </header>
+
+    <section class="intro" aria-labelledby="menu-title">
+      <span class="eyebrow">TEM SABOR DE MINAS.</span>
+      <h1 id="menu-title">Nosso <em>cardápio.</em></h1>
+      <p>Conheça os sabores da Made in Minas e encontre o seu favorito.</p>
+      <p class="notice">
+        Por enquanto, este cardápio é para consulta. Os pedidos pelo site estarão disponíveis em
+        breve.
+      </p>
+    </section>
+
+    <div class="filters">
+      <div class="category-filter">
+        <label for="menu-category">Categoria</label>
+        <select
+          id="menu-category"
+          [(ngModel)]="categoryId"
+          (ngModelChange)="selectCategory()"
+          [disabled]="loading()"
+        >
+          <option value="">Todas as categorias</option>
+          @if (categoryMissing()) {
+          <option [value]="categoryId">Categoria indisponível</option>
+          } @for (category of categories(); track category.id) {
+          <option [value]="category.id">{{ category.name }}</option>
+          }
+        </select>
+      </div>
+      <button type="button" class="secondary" (click)="load()" [disabled]="loading()">
+        Atualizar cardápio
+      </button>
+    </div>
+
+    <div role="status" aria-live="polite" class="result-status">
+      @if (loading()) { Carregando cardápio… } @else if (data(); as menu) { {{ menu.totalCount }} {{
+      menu.totalCount === 1 ? 'produto' : 'produtos' }} @if (menu.totalCount > 0) { · Página {{
+      menu.page }} } }
+    </div>
+
+    @if (error()) {
+    <section class="message" aria-label="Falha ao carregar cardápio">
+      <p role="alert">
+        Não foi possível carregar o cardápio. Confira sua conexão e tente novamente.
+      </p>
+      <button type="button" (click)="load()">Tentar novamente</button>
+    </section>
+    } @if (data(); as menu) { @if (menu.items.length === 0) {
+    <section class="message" aria-label="Cardápio vazio">
+      <h2>Nenhum produto por aqui</h2>
+      <p>
+        {{ page > 1 ? 'Os produtos desta página mudaram. Consulte o cardápio desde o início.' :
+        categoryId ? 'Esta categoria não tem produtos para exibir agora.' : 'Estamos preparando
+        nosso cardápio. Volte em breve.' }}
+      </p>
+      @if (categoryId || page > 1) {
+      <button type="button" (click)="allCategories()">Ver todas as categorias</button>
+      }
+    </section>
+    } @else {
+    <section class="product-grid" aria-label="Produtos do cardápio">
+      @for (product of menu.items; track product.id) {
+      <article class="product-card" [attr.aria-labelledby]="'product-' + product.id">
+        <div class="product-image">
+          @if (product.imageUrl && !failedImages().has(product.id)) {
+          <img
+            [src]="product.imageUrl"
+            [alt]="product.name"
+            loading="lazy"
+            referrerpolicy="no-referrer"
+            [class.image-ready]="loadedImages().has(product.id)"
+            (load)="imageLoaded(product.id)"
+            (error)="imageFailed(product.id)"
+          />
+          } @if (!loadedImages().has(product.id) || failedImages().has(product.id)) {
+          <div class="image-placeholder" aria-hidden="true"><span>M</span>MADE IN MINAS</div>
+          }
+        </div>
+        <div class="product-info">
+          <span class="category-name">{{ categoryName(product.categoryId) }}</span>
+          <h2 [id]="'product-' + product.id">{{ product.name }}</h2>
+          @if (product.description) {
+          <p class="description">{{ product.description }}</p>
+          }
+          <div class="product-bottom">
+            <strong class="price">{{ price(product.price) }}</strong>
+            <span class="availability" [class.unavailable]="!product.isAvailable"
+              >{{ product.isAvailable ? 'Disponível' : 'Indisponível' }}</span
+            >
+          </div>
+        </div>
+      </article>
+      }
+    </section>
+    } @if (menu.totalCount > menu.pageSize || page > 1) {
+    <nav class="pagination" aria-label="Páginas do cardápio">
+      <button type="button" class="secondary" (click)="changePage(page - 1)" [disabled]="page <= 1">
+        Anterior
+      </button>
+      <span>Página {{ menu.page }}</span>
+      <button
+        type="button"
+        class="secondary"
+        (click)="changePage(page + 1)"
+        [disabled]="page * menu.pageSize >= menu.totalCount"
+      >
+        Próxima
+      </button>
+    </nav>
+    } }
+    <footer>Made in Minas <span>Feito com cuidado. Do início ao último pedaço.</span></footer>
+  </main>
+</ion-content>

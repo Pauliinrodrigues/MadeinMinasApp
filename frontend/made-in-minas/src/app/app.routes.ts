@@ -15,6 +15,10 @@ import {
 
 export const routes: Routes = [
   {
+    path: 'pedido',
+    loadComponent: () => import('./features/menu/menu.page').then((page) => page.MenuPage),
+  },
+  {
     path: 'comanda/:id/:mode',
     canActivate: [printGuard],
     loadComponent: () => import('./features/printing/print.page').then((page) => page.PrintPage),

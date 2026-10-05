@@ -75,6 +75,19 @@ p {
   font-size: 13px;
   color: #695b4c;
 }
+.menu-link {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 14px 22px;
+  background: #722f27;
+  color: white;
+  text-decoration: none;
+  border-radius: 10px;
+}
+.menu-link:focus-visible {
+  outline: 3px solid #722f27;
+  outline-offset: 3px;
+}
 .status-dot {
   width: 8px;
   height: 8px;
