@@ -4,6 +4,7 @@ using MadeInMinas.Api.Security;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args.Where(arg => arg != "--create-admin").ToArray());
 builder.Services.AddControllers(options => options.Filters.Add(new AuthorizeFilter()));
@@ -34,6 +35,16 @@ builder.Services.AddScoped<MadeInMinas.Api.Services.DashboardService>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.SalesReportService>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.PublicMenuService>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.PublicCartService>();
+builder.Services.AddScoped<MadeInMinas.Api.Services.PublicCheckoutService>();
+builder.Services.AddRateLimiter(options => options.AddPolicy("public-checkout", context =>
+    RateLimitPartition.GetFixedWindowLimiter(context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 20,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0,
+            AutoReplenishment = true
+        })));
 builder.Services.AddScoped<MadeInMinas.Api.Services.IngredientService>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.ProductService>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.CategoryService>();

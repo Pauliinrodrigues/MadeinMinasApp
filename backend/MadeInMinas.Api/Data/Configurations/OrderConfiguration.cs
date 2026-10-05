@@ -13,7 +13,7 @@ public sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
             table.HasCheckConstraint("CK_Orders_Number", "\"Number\" > 0");
             table.HasCheckConstraint("CK_Orders_StockStatus", "\"StockStatus\" IN ('Pending','Consumed','Returned','Retained','Legacy','NotRequired')");
             table.HasCheckConstraint("CK_Orders_Status", "\"Status\" IN ('New','Confirmed','InPreparation','Ready','AwaitingDelivery','OutForDelivery','Delivered','Finalized','Cancelled') AND \"Version\" >= 1");
-            table.HasCheckConstraint("CK_Orders_Origin", "\"Origin\" = 'Manual'");
+            table.HasCheckConstraint("CK_Orders_Origin", "(\"Origin\" = 'Manual' AND \"CreatedById\" IS NOT NULL) OR (\"Origin\" = 'DirectLink' AND \"CreatedById\" IS NULL AND \"Fulfillment\" = 'Pickup')");
             table.HasCheckConstraint("CK_Orders_Amounts", "\"Subtotal\" > 0 AND \"DeliveryFee\" BETWEEN 0 AND 9999.99 AND \"Total\" = \"Subtotal\" + \"DeliveryFee\"");
             table.HasCheckConstraint("CK_Orders_Fulfillment", "(\"Fulfillment\" = 'Pickup' AND \"AddressId\" IS NULL AND \"AddressStreet\" IS NULL AND \"AddressNumber\" IS NULL AND \"AddressNeighborhood\" IS NULL AND \"AddressCity\" IS NULL AND \"AddressState\" IS NULL AND \"AddressComplement\" IS NULL AND \"AddressPostalCode\" IS NULL AND \"AddressReference\" IS NULL AND \"DeliveryFee\" = 0) OR (\"Fulfillment\" = 'Delivery' AND \"AddressId\" IS NOT NULL AND \"AddressStreet\" IS NOT NULL AND \"AddressNumber\" IS NOT NULL AND \"AddressNeighborhood\" IS NOT NULL AND \"AddressCity\" IS NOT NULL AND \"AddressState\" IS NOT NULL)");
         });
@@ -21,6 +21,7 @@ public sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(order => order.Number).UseIdentityByDefaultColumn();
         builder.HasIndex(order => order.Number).IsUnique();
         builder.HasIndex(order => new { order.CreatedById, order.RequestId }).IsUnique();
+        builder.HasIndex(order => order.RequestId).IsUnique().HasFilter("\"Origin\" = 'DirectLink'");
         builder.HasIndex(order => new { order.CreatedAt, order.Number });
         builder.HasIndex(order => new { order.Status, order.CreatedAt, order.Number });
         builder.HasIndex(order => new { order.CustomerId, order.CreatedAt, order.Number });

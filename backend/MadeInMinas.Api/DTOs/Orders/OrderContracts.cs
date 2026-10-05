@@ -44,8 +44,14 @@ public sealed class OrderListQuery
 public sealed record OrderSummaryResponse(Guid Id, int Number, string CustomerName, string Fulfillment,
     string Status, decimal Total, DateTimeOffset CreatedAt);
 public sealed record OrderPageResponse(OrderSummaryResponse[] Items, int Page, int PageSize, int TotalCount);
-public sealed record OrderHistoryResponse(int Version, string? FromStatus, string ToStatus,
-    Guid ActorId, string ActorName, string? Reason, DateTimeOffset OccurredAt);
+public sealed record OrderHistoryResponse(
+    int Version,
+    string? FromStatus,
+    string ToStatus,
+    Guid? ActorId,
+    string ActorName,
+    string? Reason,
+    DateTimeOffset OccurredAt);
 public sealed record OrderResponse(Guid Id, int Number, string Origin, string Status, int Version,
     CartCustomerResponse Customer, string Fulfillment, CartAddressResponse? Address, CartItemResponse[] Items,
     string? Notes, decimal Subtotal, decimal DeliveryFee, decimal Total, DateTimeOffset CreatedAt,

@@ -1,0 +1,43 @@
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { timeout } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { PublicCartInput, PublicCartQuote } from './public-cart-api.service';
+
+export interface PublicCheckoutInput {
+  name: string;
+  phone: string;
+  cart: PublicCartInput;
+}
+export interface PublicCheckoutReview extends PublicCartQuote {
+  name: string;
+  phone: string;
+  fulfillment: 'Pickup';
+  deliveryFee: number;
+  total: number;
+  reviewToken: string;
+}
+export interface PublicOrderInput {
+  requestId: string;
+  reviewToken: string;
+  checkout: PublicCheckoutInput;
+}
+export interface PublicOrderReceipt {
+  number: number;
+  fulfillment: 'Pickup';
+  total: number;
+  createdAt: string;
+}
+
+@Injectable({ providedIn: 'root' })
+export class PublicCheckoutApi {
+  private readonly http = inject(HttpClient);
+  private readonly url = environment.apiBaseUrl + '/public-checkout';
+
+  review(input: PublicCheckoutInput) {
+    return this.http.post<PublicCheckoutReview>(this.url + '/review', input).pipe(timeout(15000));
+  }
+  send(input: PublicOrderInput) {
+    return this.http.post<PublicOrderReceipt>(this.url + '/orders', input).pipe(timeout(15000));
+  }
+}

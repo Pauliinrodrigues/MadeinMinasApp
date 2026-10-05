@@ -6,7 +6,7 @@ public sealed class Order
     public int Number { get; set; }
     public Guid RequestId { get; set; }
     public string RequestHash { get; set; } = string.Empty;
-    public Guid CreatedById { get; set; }
+    public Guid? CreatedById { get; set; }
     public Guid CustomerId { get; set; }
     public string CustomerName { get; set; } = string.Empty;
     public string CustomerPhone { get; set; } = string.Empty;

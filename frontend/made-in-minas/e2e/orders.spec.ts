@@ -542,6 +542,22 @@ test('pedidos: lista pagina, filtra e recupera falha de consulta', async ({ page
   await expect(page.getByText('Nenhum pedido nesta página.', { exact: false })).toBeVisible();
 });
 
+test('pedidos: origem pública e autoria do visitante aparecem sem funcionário fictício', async ({
+  page,
+}) => {
+  const state = await setup(page);
+  state.orders[0].origin = 'DirectLink';
+  state.orders[0].history[0].actorId = null;
+  state.orders[0].history[0].actorName = 'Cliente pelo site';
+  await detail(page);
+  await expect(page.getByText('LINK DIRETO · PEDIDO PELO SITE', { exact: true })).toBeVisible();
+  await expect(page.getByText('sem verificação de titularidade', { exact: false })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Histórico do pedido' })).toContainText(
+    'Cliente pelo site',
+  );
+  await expect(page.getByRole('button', { name: 'Confirmar pedido', exact: true })).toBeVisible();
+});
+
 for (const role of ['Kitchen', 'Dispatch']) {
   test('pedidos: ' + role + ' não acessa lista ou detalhes', async ({ page }) => {
     const state = await setup(page, role);

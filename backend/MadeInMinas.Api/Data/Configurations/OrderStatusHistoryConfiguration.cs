@@ -12,6 +12,7 @@ public sealed class OrderStatusHistoryConfiguration : IEntityTypeConfiguration<O
         {
             table.HasCheckConstraint("CK_OrderStatusHistory_Transition", "(\"Version\" = 1 AND \"FromStatus\" IS NULL AND \"ToStatus\" = 'New') OR (\"Version\" > 1 AND \"FromStatus\" IS NOT NULL AND ((\"FromStatus\" = 'New' AND \"ToStatus\" IN ('Confirmed','Cancelled')) OR (\"FromStatus\" = 'Confirmed' AND \"ToStatus\" IN ('InPreparation','Cancelled')) OR (\"FromStatus\" = 'InPreparation' AND \"ToStatus\" IN ('Ready','Cancelled')) OR (\"FromStatus\" = 'Ready' AND \"ToStatus\" IN ('AwaitingDelivery','Delivered','Cancelled')) OR (\"FromStatus\" = 'AwaitingDelivery' AND \"ToStatus\" IN ('OutForDelivery','Cancelled')) OR (\"FromStatus\" = 'OutForDelivery' AND \"ToStatus\" IN ('Delivered','Cancelled')) OR (\"FromStatus\" = 'Delivered' AND \"ToStatus\" = 'Finalized')))");
             table.HasCheckConstraint("CK_OrderStatusHistory_Reason", "\"ToStatus\" <> 'Cancelled' OR (\"Reason\" IS NOT NULL AND length(btrim(\"Reason\")) > 0)");
+            table.HasCheckConstraint("CK_OrderStatusHistory_Actor", "\"ActorId\" IS NOT NULL OR (\"Version\" = 1 AND \"FromStatus\" IS NULL AND \"ToStatus\" = 'New')");
         });
         builder.HasKey(history => history.Id);
         builder.HasIndex(history => new { history.OrderId, history.Version }).IsUnique();

@@ -12,7 +12,13 @@
         Seu carrinho é temporário e será perdido se você atualizar ou fechar a página.
       </p>
     </section>
-    @if (cart.lines().length === 0) {
+    @if (cart.checkout.locked()) {
+    <section class="empty">
+      <h2>Confira o envio do pedido</h2>
+      <p>Conclua a conferência do envio anterior antes de montar outro pedido.</p>
+      <a class="button" routerLink="/pedido/finalizar">Ver envio do pedido</a>
+    </section>
+    } @else if (cart.lines().length === 0) {
     <section class="empty">
       <h2>Seu carrinho está vazio</h2>
       <p>Escolha seus favoritos para começar.</p>
@@ -119,9 +125,10 @@
         </div>
         }
         <p class="notice">
-          Endereço, entrega e pagamento serão definidos em uma próxima etapa. Nenhum pedido é
-          enviado por esta tela.
+          Para retirada no balcão, continue e informe seu contato. Você revisará o pedido antes de
+          enviar. Pagamento na retirada.
         </p>
+        <a class="button" routerLink="/pedido/finalizar">Continuar para retirada</a>
       </section>
     </div>
     }

@@ -11,7 +11,8 @@ public sealed class PublicCartService(AppDbContext database, TimeProvider clock)
 {
     public async Task<PublicCartQuoteResponse> QuoteAsync(PublicCartQuoteRequest request, CancellationToken cancellationToken)
     {
-        await using var transaction = await database.Database.BeginTransactionAsync(IsolationLevel.RepeatableRead, cancellationToken);
+        await using var transaction = database.Database.CurrentTransaction is null
+            ? await database.Database.BeginTransactionAsync(IsolationLevel.RepeatableRead, cancellationToken) : null;
         var ids = request.Items.Select(item => item.ProductId!.Value).Distinct().ToArray();
         var products = await database.Products.AsNoTracking()
             .Where(product => ids.Contains(product.Id) && product.IsActive && product.IsAvailable && product.Category.IsActive)
@@ -26,7 +27,8 @@ public sealed class PublicCartService(AppDbContext database, TimeProvider clock)
                 product.Price * item.Quantity.Value, CleanOptional(item.Notes));
         }).ToArray();
         var response = new PublicCartQuoteResponse(items, CleanOptional(request.Notes), items.Sum(item => item.LineTotal), clock.GetUtcNow());
-        await transaction.CommitAsync(cancellationToken);
+        if (transaction is not null)
+            await transaction.CommitAsync(cancellationToken);
         return response;
     }
 

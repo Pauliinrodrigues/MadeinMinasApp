@@ -15,6 +15,7 @@ public enum OrderError
     OrderInsufficientStock,
     OrderStockQuantityExceeded,
     OrderStockReturnOverflow,
+    PublicCheckoutUnavailable,
     InvalidSession,
     PermissionDenied
 }

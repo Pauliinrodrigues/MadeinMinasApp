@@ -32,7 +32,7 @@ export interface OrderPage {
 export interface Order extends Omit<CartQuote, 'calculatedAt' | 'reviewToken'> {
   id: string;
   number: number;
-  origin: 'Manual';
+  origin: 'Manual' | 'DirectLink';
   status: OrderStatus;
   version: number;
   stockStatus: 'Pending' | 'Consumed' | 'Returned' | 'Retained' | 'Legacy' | 'NotRequired';
@@ -53,7 +53,7 @@ export interface Order extends Omit<CartQuote, 'calculatedAt' | 'reviewToken'> {
     version: number;
     fromStatus: OrderStatus | null;
     toStatus: OrderStatus;
-    actorId: string;
+    actorId: string | null;
     actorName: string;
     reason: string | null;
     occurredAt: string;

@@ -167,3 +167,11 @@ Em 05/10/2026, a continuidade foi autorizada. Preservar a 8A no commit local 4bc
 A 8B limita-se à seleção anônima e revisão de produtos, quantidades e observações. Não adaptar o endpoint administrativo para receber dados públicos de clientes nem inventar entrega gratuita, pagamento ou token de compra. O endpoint público reutiliza os contratos/validações de itens existentes; um teste verifica consistência de preços/subtotal com o carrinho da equipe. A consulta decimal é simples e específica, sem nova abstração genérica de preços.
 
 A seleção fica em memória, compartilhada entre cardápio e carrinho. A revisão pertence à página e é descartada quando ela muda ou é destruída. Essa escolha é explícita na interface e mantém persistência, identidade pública e recuperação de compra para um incremento com regras próprias. O próximo contrato deverá tratar privacidade de telefone/endereços, taxa, revalidação e duplicidade antes de criar pedidos. Ver [public-cart.md](public-cart.md).
+
+## 027 — Envio público para retirada e recuperação por tentativa
+
+Continuidade autorizada em 05/10/2026, preservando a 8B no commit local 15d8107 e iniciando feat/public-checkout. Como ainda não há regra pública de cobertura/frete, o incremento começa por retirada e solicita ao responsável a definição da entrega. Não assumir entrega gratuita ou preço informado pelo visitante.
+
+Reutilizar o pedido central com origem DirectLink e autor nulo na criação, sem inventar funcionário ou tabela intermediária de solicitações. O contato é autodeclarado, sem login público: resolver o cliente por telefone somente no envio, preservar cadastro existente e registrar a cópia informada no pedido. Nenhuma consulta anônima a clientes/endereços/históricos. A equipe confere o contato e confirma o preparo pelas regras existentes.
+
+Usar revalidação transacional, índice único/advisory lock por tentativa e hash do conteúdo. Resposta mínima como comprovante; acompanhamento público exige contrato próprio. A tentativa completa é guardada em sessionStorage antes do HTTP para recuperar reload/resposta perdida; sucesso a substitui por comprovante sem dados pessoais. Chaves diferentes continuam sendo compras diferentes. Sem cobrança automática, promessa de prazo ou reserva. Ver [public-checkout.md](public-checkout.md).

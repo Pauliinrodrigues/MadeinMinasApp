@@ -13,7 +13,15 @@
   <p class="notice" role="status">{{ notice() }}</p>
   } @if (order(); as data) {
   <section class="panel" aria-labelledby="order-title">
-    <p class="eyebrow">ATENDIMENTO MANUAL</p>
+    <p class="eyebrow">
+      {{ data.origin === 'DirectLink' ? 'LINK DIRETO · PEDIDO PELO SITE' : 'ATENDIMENTO MANUAL' }}
+    </p>
+    @if (data.origin === 'DirectLink') {
+    <p class="notice">
+      Nome e telefone informados pelo visitante, sem verificação de titularidade. Confira o contato
+      antes de confirmar o preparo. Pagamento na retirada, registrado pela equipe.
+    </p>
+    }
     <div class="actions">
       <a class="button" [routerLink]="['/comanda', data.id, 'kitchen']">Comanda de produção</a>
       <a class="button" [routerLink]="['/comanda', data.id, 'dispatch']">Comanda de expedição</a>

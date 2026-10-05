@@ -1,6 +1,7 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import type { MenuProduct } from './menu-api.service';
 import type { PublicCartInput, PublicCartQuote } from './public-cart-api.service';
+import { PublicCheckoutState } from './public-checkout-state.service';
 
 interface PublicCartLine {
   key: number;
@@ -12,6 +13,7 @@ interface PublicCartLine {
 
 @Injectable({ providedIn: 'root' })
 export class PublicCartState {
+  readonly checkout = inject(PublicCheckoutState);
   private nextKey = 1;
   private readonly entries = signal<PublicCartLine[]>([]);
   private readonly generalNotes = signal('');
@@ -26,6 +28,9 @@ export class PublicCartState {
   );
 
   add(product: MenuProduct): string | null {
+    if (this.checkout.locked()) {
+      return 'Confira o envio anterior antes de montar outro pedido.';
+    }
     if (!product.isAvailable) {
       return 'Este produto está indisponível.';
     }
@@ -56,22 +61,34 @@ export class PublicCartState {
   }
 
   setQuantity(key: number, quantity: number | null): void {
+    if (this.checkout.locked()) {
+      return;
+    }
     this.entries.update((lines) =>
       lines.map((line) => (line.key === key ? { ...line, quantity } : line)),
     );
   }
 
   setLineNotes(key: number, notes: string): void {
+    if (this.checkout.locked()) {
+      return;
+    }
     this.entries.update((lines) =>
       lines.map((line) => (line.key === key ? { ...line, notes } : line)),
     );
   }
 
   setNotes(notes: string): void {
+    if (this.checkout.locked()) {
+      return;
+    }
     this.generalNotes.set(notes);
   }
 
   remove(key: number): void {
+    if (this.checkout.locked()) {
+      return;
+    }
     this.entries.update((lines) => lines.filter((line) => line.key !== key));
     if (!this.lines().length) {
       this.generalNotes.set('');
@@ -79,6 +96,13 @@ export class PublicCartState {
   }
 
   clear(): void {
+    if (this.checkout.locked()) {
+      return;
+    }
+    this.resetAfterCheckout();
+  }
+
+  resetAfterCheckout(): void {
     this.entries.set([]);
     this.generalNotes.set('');
   }
@@ -90,6 +114,23 @@ export class PublicCartState {
         name: quote.items.find((item) => item.productId === line.productId)?.name ?? line.name,
       })),
     );
+  }
+
+  restoreRejectedCheckout(
+    input: PublicCartInput,
+    names: { productId: string; name: string }[],
+  ): void {
+    this.entries.set(
+      input.items.map((item) => ({
+        key: this.nextKey++,
+        productId: item.productId,
+        quantity: item.quantity,
+        notes: item.notes ?? '',
+        name:
+          names.find((entry) => entry.productId === item.productId)?.name ?? 'Produto selecionado',
+      })),
+    );
+    this.generalNotes.set(input.notes ?? '');
   }
 
   validationError(): string | null {
