@@ -83,3 +83,7 @@ Migration 20261005145517_AddPublicOrders: Orders.CreatedById e OrderStatusHistor
 ## Fase 8D — acompanhamento público
 
 Sem migration ou escrita no banco. PublicOrderTrackingService lê Orders/OrderStatusHistory por ID obtido de credencial protegida, sempre limitado à origem DirectLink. Projeção em uma instrução SQL mantém status e histórico no mesmo snapshot sem carregar campos privados. O token não é coluna de Orders; depende das chaves do ASP.NET Core Data Protection no ambiente de execução. O esquema continua em AddPublicOrders. Ver [public-order-tracking.md](public-order-tracking.md).
+
+## Fase 8E — conversas e mensagens
+
+Migration 20261005183152_AddHumanChat cria ChatConversations e ChatMessages, sem alterar tabelas comerciais. Conversa registra tentativa/hash, nome autodeclarado, status, responsável, versão e horários; mensagens registram sequência, tentativa, tipo/texto, autor/nome copiado e instante. Índices únicos por tentativa inicial, conversa/sequência e conversa/tentativa; constraints para estado/autoria e FKs para Users. Mensagens System registram assumir/encerrar. Down recusa apagar conversas existentes. Não há vínculo automático com Customers ou Orders. Transação/bloqueios preservam autoria e impedem respostas concorrentes por atendentes diferentes; leituras paginadas usam snapshot. Ver [human-chat.md](human-chat.md).

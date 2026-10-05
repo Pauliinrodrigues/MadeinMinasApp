@@ -95,4 +95,6 @@ Resultados efetivamente executados ficam em [validation.md](validation.md).
 - Alterados no frontend: rotas, interceptor, contrato do comprovante, página e testes do checkout.
 - Documentação: README, roteiro, arquitetura, API, banco, regras, decisões, validação e continuidade do checkout.
 
-Próximos incrementos da Fase 8: conversa e transferência para atendente; entrega pública após definir cobertura e frete. Integração com IA permanece na Fase 9.
+## Continuidade — 8E
+
+O acompanhamento foi preservado no commit local `687e10c`. A branch `feat/human-chat` acrescenta [atendimento humano](human-chat.md) por link no cardápio/comprovante/acompanhamento, com credencial separada e sem alterar pedidos por mensagem. Entrega pública ainda depende de cobertura/frete. Integração com IA permanece na Fase 9.

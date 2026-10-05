@@ -166,3 +166,14 @@ dotnet ef database update 20261005145517_AddPublicOrders --project backend/MadeI
 ```
 
 Reinicie a API atualizada. Não reaplique migrations ao trocar de branch quando já estiverem registradas. Down recusa reversão se houver pedidos públicos, pois o esquema antigo exige autoria de funcionário; não apagar histórico nem criar autores fictícios para forçar retorno. Contrato e roteiro: [checkout público para retirada](../docs/public-checkout.md). Resultado da aplicação local: [validação](../docs/validation.md).
+
+## Migration do atendimento humano — Fase 8E
+
+`20261005183152_AddHumanChat` cria `ChatConversations` e `ChatMessages`, com estados, sequência, autoria e chaves de idempotência. Não altera pedidos, pagamentos, clientes ou saldos. Antes de aplicar em outra instalação, confirme exclusivamente **made_in_minas**, faça backup e revise:
+
+```powershell
+dotnet ef migrations script 20261005145517_AddPublicOrders 20261005183152_AddHumanChat --project backend/MadeInMinas.Api
+dotnet ef database update 20261005183152_AddHumanChat --project backend/MadeInMinas.Api
+```
+
+Reinicie a API com o código atualizado e faça novo login na equipe para carregar `chat.manage`. O Down recusa apagar tabelas quando existem conversas; arquivamento e reversão exigem plano que preserve o histórico. Aplicação local e backup estão registrados em [validação](../docs/validation.md). Contratos e roteiro: [atendimento humano](../docs/human-chat.md).

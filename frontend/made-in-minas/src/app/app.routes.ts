@@ -11,9 +11,15 @@ import {
   dispatchGuard,
   printGuard,
   staffGuard,
+  chatGuard,
 } from './core/auth/auth.guards';
 
 export const routes: Routes = [
+  {
+    path: 'pedido/atendimento',
+    loadComponent: () =>
+      import('./features/chat/public-chat.page').then((page) => page.PublicChatPage),
+  },
   {
     path: 'pedido/acompanhar',
     loadComponent: () =>
@@ -58,6 +64,18 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/staff/staff-layout.page').then((page) => page.StaffLayoutPage),
     children: [
+      {
+        path: 'atendimentos',
+        canActivate: [chatGuard],
+        loadComponent: () =>
+          import('./features/chat/chat-list.page').then((page) => page.ChatListPage),
+      },
+      {
+        path: 'atendimentos/:id',
+        canActivate: [chatGuard],
+        loadComponent: () =>
+          import('./features/chat/staff-chat.page').then((page) => page.StaffChatPage),
+      },
       {
         path: 'relatorios',
         canActivate: [reportsGuard],

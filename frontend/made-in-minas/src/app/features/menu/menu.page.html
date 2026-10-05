@@ -18,6 +18,7 @@
     </section>
 
     <div class="cart-summary">
+      <a routerLink="/pedido/atendimento">Falar com atendente</a>
       @if (cart.checkout.locked()) {
       <a routerLink="/pedido/finalizar">Ver envio do pedido</a>
       } @else {

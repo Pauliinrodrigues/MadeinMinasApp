@@ -1,0 +1,71 @@
+<section class="panel">
+  <a routerLink="/equipe/atendimentos">Voltar à fila</a>
+  <h1>Conversa do site</h1>
+  @if (data(); as current) {
+  <h2>{{ current.conversation.visitorName }}</h2>
+  <p>
+    {{ statusLabel(current.conversation.status) }} · Responsável: {{
+    current.conversation.assignedToName ?? 'Ninguém' }}
+  </p>
+  <p class="hint">
+    Nome informado pelo visitante, sem identidade verificada. Mensagens não alteram pedidos;
+    confirme a identidade antes de compartilhar dados pessoais.
+  </p>
+  @if (loadError()) {
+  <p role="alert">{{ loadError() }}</p>
+  }
+  <app-chat-messages [messages]="messages()" />
+  @if (recoveryError()) {
+  <p role="alert">
+    Não foi possível recuperar a mensagem pendente. Confira o histórico antes de liberar outro
+    envio.
+  </p>
+  <label><input type="checkbox" [(ngModel)]="recoveryAcknowledged" /> Já conferi o histórico.</label
+  ><button (click)="clearRecovery()" [disabled]="!recoveryAcknowledged || !fresh()">
+    Limpar recuperação
+  </button>
+  } @else if (pending(); as message) {
+  <p>Envio pendente:</p>
+  <p class="pending">{{ message.text }}</p>
+  <button (click)="send()" [disabled]="busy()">
+    {{ busy() ? 'Conferindo…' : 'Conferir mensagem' }}
+  </button>
+  } @else { @if (canClaim()) {
+  <button (click)="act('claim')" [disabled]="busy() || loading() || !fresh()">
+    Assumir atendimento
+  </button>
+  } @if (owner() && current.conversation.status === 'InService') {
+  <label for="staff-chat-message"
+    >Resposta ao cliente<textarea
+      id="staff-chat-message"
+      [(ngModel)]="text"
+      maxlength="2000"
+      rows="4"
+      [disabled]="busy()"
+    ></textarea>
+  </label>
+  <div class="actions">
+    <button class="primary" (click)="send()" [disabled]="busy() || !fresh() || !text.trim()">
+      {{ busy() ? 'Enviando…' : 'Enviar resposta' }}</button
+    ><button (click)="closeRequested = true" [disabled]="busy() || !fresh()">
+      Encerrar atendimento
+    </button>
+  </div>
+  @if (closeRequested) {
+  <p>Encerrar impede novas mensagens nesta conversa.</p>
+  <div class="actions">
+    <button (click)="act('close')" [disabled]="busy() || loading() || !fresh()">
+      Confirmar encerramento</button
+    ><button (click)="closeRequested = false" [disabled]="busy()">Continuar atendimento</button>
+  </div>
+  } } } } @else if (loadError()) {
+  <p role="alert">{{ loadError() }}</p>
+  } @if (error()) {
+  <p role="alert">{{ error() }}</p>
+  }
+  <div class="actions">
+    <button (click)="fresh.set(false); load()" [disabled]="loading() || busy()">
+      {{ loading() ? 'Atualizando…' : 'Atualizar conversa' }}
+    </button>
+  </div>
+</section>
