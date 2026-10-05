@@ -498,3 +498,19 @@ Continuidade autorizada. A 8D foi preservada no commit local `687e10c`; `feat/hu
 - API atualizada em 5080, identificando e reiniciando somente o executável deste projeto; logs `.local/human-chat-api.log` e `.local/human-chat-api-error.log`. Frontend em 8101. **Nove checks de Test-Foundation.ps1 -ExpectDatabaseReady aprovados**. Verificações HTTP adicionais, somente leitura: chat público sem credencial retorna 404 genérico/no-store; chat da equipe sem JWT retorna 401; preflight CORS aceita a origem local e X-Chat-Access.
 - Conferência visual com frontend real e API totalmente interceptada por dados simulados: cliente, fila e conversa da equipe em desktop/celular, sem erros JavaScript nem transbordamento horizontal. Capturas inspecionadas `.local/human-chat-desktop-customer.png`, `.local/human-chat-mobile-customer-reply.png`, `.local/human-chat-desktop-queue.png` e `.local/human-chat-mobile-staff-reply.png`; helper `.local/Preview-HumanChat.cjs`. O fluxo com gravações foi exercitado no banco isolado dos testes.
 - README, banco, roteiro, arquitetura, API, regras, decisões e guia do chat atualizados. A 8E permanece local e não commitada; 8A–8D estão preservadas em commits locais. Sem push, PR ou integração à master nesta continuidade. Aceite manual e publicação pendentes. A Fase 8 ainda terá a integração visual mais ampla entre conversa/cardápio; entrega pública depende de cobertura/frete. IA pertence à Fase 9.
+
+## Publicação dos incrementos 8A a 8E — 05/10/2026
+
+O responsável solicitou commitar e publicar todo o trabalho seguindo o fluxo habitual de branches, PRs, checks e squash na master. As menções a publicação pendente nas seções anteriores registram o estado ao concluir cada implementação. A autorização atual não comprova execução manual integral dos roteiros.
+
+| Incremento | Commit original da implementação | Pull request |
+| --- | --- | --- |
+| 8A — cardápio público | `4bcd978` | [#13](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/13) |
+| 8B — carrinho público | `15d8107` | [#14](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/14) |
+| 8C — checkout para retirada | `c8de7ee` | [#15](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/15) |
+| 8D — acompanhamento do pedido | `687e10c` | [#16](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/16) |
+| 8E — atendimento humano | `720f586` | [#17](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/17) |
+
+- As cinco branches foram publicadas no repositório **Pauliinrodrigues/MadeinMinasApp**, com autoria Pauliinrodrigues. O PR #13 tem base master; os demais foram abertos sobre a branch do incremento anterior para manter o diff restrito à respectiva etapa. Após integrar cada antecessor, atualizar a base do próximo PR para master, preservando o conteúdo e conferindo os checks do commit final antes do squash.
+- Os workflows Quality executam a regressão completa de backend e frontend. Resultados, commits verificados e estado de integração estão nos PRs acima; aprovação local não substitui esses checks. Não integrar um PR com check pendente ou com falha.
+- Nenhuma migration é reaplicada pela publicação; não há movimentação comercial, alteração de saldo ou operação no PostgreSQL compartilhado. Segredos, backups, logs e artefatos locais permaneceram fora do Git. As instruções para outra máquina continuam no README e em database/README.md.
