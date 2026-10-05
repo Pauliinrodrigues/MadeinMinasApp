@@ -67,3 +67,7 @@ Sem migration, atualização de dados ou tabela de indicadores. DashboardService
 ## Relatórios por período — 7B
 
 Sem mudanças no esquema ou nos dados. SalesReportService agrega Orders, OrderItems, OrderStatusHistory, Payments e PaymentStatusHistory em quatro consultas sob o mesmo snapshot. Datas civis de Brasília são convertidas em limites UTC e agrupadas explicitamente no PostgreSQL. Resultados não são persistidos; não há tabela de fechamento ou reconstrução fictícia de custos históricos. Ver [period-reports.md](period-reports.md).
+
+## Fase 8A — leitura pública do catálogo
+
+Utiliza Categories e Products existentes, com projeções de campos comerciais, ordenação e paginação. Categorias, total e itens são lidos em RepeatableRead. Sem migration, alteração de saldo ou persistência de dados públicos novos. Ver [public-menu.md](public-menu.md).

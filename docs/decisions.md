@@ -153,3 +153,9 @@ O dashboard foi preservado no commit local 15e4fa0, e feat/period-reports partiu
 Em 02/10/2026, o responsável autorizou publicar todas as alterações seguindo o fluxo do projeto. Os incrementos foram separados nos PRs #9 (estoque por pedido), #10 (CMV), #11 (dashboard) e #12 (relatórios), com integração por squash após checks backend/frontend. Cada branch ainda não publicada foi atualizada sobre a master resultante do incremento anterior, verificando a igualdade do conteúdo com o commit local original. Não houve force push nem reescrita da master.
 
 A autorização de publicação não é apresentada como evidência de execução manual dos roteiros. Os registros anteriores descrevem o estado na conclusão de cada implementação; os resultados da publicação estão em [validation.md](validation.md). Esta operação de Git não executa migrations nem transfere User Secrets, credenciais, cadastros ou backups.
+
+## 025 — Cardápio público como primeiro incremento da Fase 8
+
+A 8A começa por uma consulta anônima independente das APIs administrativas, com DTOs restritos aos campos comerciais. Reutilizar o catálogo e suas regras: ativo controla exposição, disponibilidade manual controla o aviso de venda pausada. Não inferir saldo, horários, carrinho ou identidade de cliente neste incremento. Categorias, contagem e itens usam o mesmo snapshot; produtos têm paginação limitada.
+
+O frontend omite o token da equipe para /api/menu e não encerra essa sessão em falhas da consulta pública. A página inclui estados de carregamento, falha, vazio e imagem indisponível; não oferece ações de compra ainda inexistentes. A continuidade foi autorizada em 05/10/2026, na branch feat/public-menu, criada da master 5adcd03. Regras e arquivos: [public-menu.md](public-menu.md).
