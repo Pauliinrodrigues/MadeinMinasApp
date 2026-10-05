@@ -159,3 +159,11 @@ A autorização de publicação não é apresentada como evidência de execuçã
 A 8A começa por uma consulta anônima independente das APIs administrativas, com DTOs restritos aos campos comerciais. Reutilizar o catálogo e suas regras: ativo controla exposição, disponibilidade manual controla o aviso de venda pausada. Não inferir saldo, horários, carrinho ou identidade de cliente neste incremento. Categorias, contagem e itens usam o mesmo snapshot; produtos têm paginação limitada.
 
 O frontend omite o token da equipe para /api/menu e não encerra essa sessão em falhas da consulta pública. A página inclui estados de carregamento, falha, vazio e imagem indisponível; não oferece ações de compra ainda inexistentes. A continuidade foi autorizada em 05/10/2026, na branch feat/public-menu, criada da master 5adcd03. Regras e arquivos: [public-menu.md](public-menu.md).
+
+## 026 — Carrinho público e revisão de subtotal antes do checkout
+
+Em 05/10/2026, a continuidade foi autorizada. Preservar a 8A no commit local 4bcd978 e criar feat/public-cart a partir dele mantém os incrementos revisáveis; publicação e aceite manual permanecem separados.
+
+A 8B limita-se à seleção anônima e revisão de produtos, quantidades e observações. Não adaptar o endpoint administrativo para receber dados públicos de clientes nem inventar entrega gratuita, pagamento ou token de compra. O endpoint público reutiliza os contratos/validações de itens existentes; um teste verifica consistência de preços/subtotal com o carrinho da equipe. A consulta decimal é simples e específica, sem nova abstração genérica de preços.
+
+A seleção fica em memória, compartilhada entre cardápio e carrinho. A revisão pertence à página e é descartada quando ela muda ou é destruída. Essa escolha é explícita na interface e mantém persistência, identidade pública e recuperação de compra para um incremento com regras próprias. O próximo contrato deverá tratar privacidade de telefone/endereços, taxa, revalidação e duplicidade antes de criar pedidos. Ver [public-cart.md](public-cart.md).

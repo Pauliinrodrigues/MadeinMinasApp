@@ -15,7 +15,8 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const session = inject(AuthSession);
   const isLogin = target.pathname === apiPath + '/auth/login';
   const isPublicMenu = target.pathname === apiPath + '/menu';
-  const token = isLogin || isPublicMenu ? null : session.token();
+  const isPublicCart = target.pathname === apiPath + '/public-cart/quote';
+  const token = isLogin || isPublicMenu || isPublicCart ? null : session.token();
   const authenticated = token
     ? request.clone({ setHeaders: { Authorization: 'Bearer ' + token } })
     : request;

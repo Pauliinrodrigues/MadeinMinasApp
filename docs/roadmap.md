@@ -11,14 +11,14 @@ Cada fase exige implementação, testes e validação antes da próxima.
 | 5 | Cozinha/KDS, expedição e impressão | 5A integrada pelo PR #6; 5B/5C aceitas e integradas pelo PR #7, com checks aprovados; impressão automática/validação física dependem do equipamento |
 | 6 | Estoque e CMV | Incrementos 6A–6C implementados, testados e integrados pelos PRs #8/#9/#10; migration de consumo aplicada localmente após backup. CMV é teórico por produto |
 | 7 | Dashboard e relatórios | Escopo inicial 7A/7B implementado, testado e integrado pelos PRs #11/#12, com checks aprovados; master 5adcd03 |
-| 8 | Chat próprio | 8A — cardápio público implementada e testada em feat/public-menu; aceite manual e publicação pendentes. Carrinho público, compra, acompanhamento, conversa e transferência terão incrementos próprios |
+| 8 | Chat próprio | 8A — cardápio público preservado no commit local 4bcd978. 8B — carrinho público implementado e testado em feat/public-cart; aceite manual e publicação pendentes. Compra, acompanhamento, conversa e transferência terão incrementos próprios |
 | 9 | Integração com IA | Planejada |
 | 10 | Integração com WhatsApp | Planejada |
 | 11 | Melhorias e automações | Planejada |
 
 Combos e adicionais terão incrementos próprios associados ao catálogo e à montagem do pedido.
 
-Incremento atual: [8A — cardápio público](public-menu.md), autorizado em 05/10/2026, em branch criada da master `5adcd03`. Entrega consulta em `/pedido` e `GET /api/menu`, sem novas tabelas. Validação técnica em [validation.md](validation.md); aceite manual e publicação desta etapa ainda pendentes.
+Incremento atual: [8B — carrinho público](public-cart.md), com continuidade autorizada em 05/10/2026, na branch `feat/public-cart` criada do commit local `4bcd978` da 8A. Entrega seleção em `/pedido/carrinho` e revisão anônima em `POST /api/public-cart/quote`, sem novas tabelas ou criação de pedidos. A 8A partiu da master `5adcd03`; as branches dependem da integração sequencial 8A → 8B. Validação técnica em [validation.md](validation.md); autorização para continuar não equivale a aceite manual ou publicação.
 
 A Fase 5 foi integrada pelos PRs #6 (`06d73a5`) e #7 (`7f32729`), com checks backend/frontend aprovados. A Fase 6A foi integrada pelo PR #8. A publicação autorizada em 02/10/2026 mantém a sequência [6B — consumo de estoque](order-stock.md) → [6C — CMV teórico](cmv.md) → [7A — dashboard diário](daily-dashboard.md) → [7B — relatórios por período](period-reports.md), nos PRs [#9](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/9), [#10](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/10), [#11](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/11) e [#12](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/12). A Fase 8 foi iniciada pelo cardápio público (8A). Automação da impressora, validação física, CMV realizado e fechamento financeiro continuam fora dessas entregas.
 

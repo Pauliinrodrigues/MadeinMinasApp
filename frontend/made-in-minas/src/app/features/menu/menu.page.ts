@@ -4,7 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { IonContent } from '@ionic/angular/ion-content';
 import { finalize } from 'rxjs';
-import { MenuApi, PublicMenu } from '../../core/services/menu-api.service';
+import { MenuApi, MenuProduct, PublicMenu } from '../../core/services/menu-api.service';
+import { PublicCartState } from '../../core/services/public-cart-state.service';
 import { formatProductPrice } from '../../core/services/product-api.service';
 
 @Component({
@@ -16,6 +17,8 @@ import { formatProductPrice } from '../../core/services/product-api.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MenuPage {
+  readonly cart = inject(PublicCartState);
+  readonly cartNotice = signal('');
   private readonly api = inject(MenuApi);
   private readonly destroyRef = inject(DestroyRef);
   readonly data = signal<PublicMenu | null>(null);
@@ -30,6 +33,10 @@ export class MenuPage {
 
   constructor() {
     this.load();
+  }
+
+  addToCart(product: MenuProduct): void {
+    this.cartNotice.set(this.cart.add(product) ?? `${product.name} adicionado ao carrinho.`);
   }
 
   categoryMissing(): boolean {
