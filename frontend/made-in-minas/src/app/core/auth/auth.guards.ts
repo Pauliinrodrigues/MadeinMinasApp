@@ -7,6 +7,15 @@ export const staffGuard: CanActivateFn = () => {
   return session.token() ? true : inject(Router).createUrlTree(['/entrar']);
 };
 
+export const chatGuard: CanActivateFn = () => {
+  const session = inject(AuthSession);
+  const router = inject(Router);
+  if (!session.token()) {
+    return router.createUrlTree(['/entrar']);
+  }
+  return session.canManageChat() ? true : router.createUrlTree(['/equipe']);
+};
+
 export const administratorGuard: CanActivateFn = () => {
   const session = inject(AuthSession);
   const router = inject(Router);

@@ -185,7 +185,7 @@ public sealed class AuthenticationTests(AuthenticationFactory factory) : IClassF
         using var client = factory.CreateStaffClient();
         var login = await SignInAsync(client, user);
         string[] expectedPermissions = roleId == 2
-            ? [AccessPolicies.ManageCustomers, permission, AccessPolicies.ManagePayments, AccessPolicies.PrintKitchen, AccessPolicies.PrintDispatch]
+            ? [AccessPolicies.ManageChat, AccessPolicies.ManageCustomers, permission, AccessPolicies.ManagePayments, AccessPolicies.PrintKitchen, AccessPolicies.PrintDispatch]
             : [permission, roleId == 3 ? AccessPolicies.PrintKitchen : AccessPolicies.PrintDispatch];
         Assert.Equal(expectedPermissions, login.User.Permissions);
         Authenticate(client, login.AccessToken);

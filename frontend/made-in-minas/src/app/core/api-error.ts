@@ -81,6 +81,14 @@ export function apiError(error: unknown, login = false): string {
     UseOwnPasswordEndpoint: 'Use Minha senha para alterar sua própria senha.',
     UserNotFound: 'Funcionário não encontrado.',
     InvalidSession: 'Sua sessão foi encerrada. Entre novamente.',
+    ChatUnavailable: 'Conversa indisponível ou acesso expirado.',
+    ChatRequestConflict: 'Esta tentativa já foi usada. Confira o histórico antes de repetir.',
+    ChatVersionConflict: 'A conversa mudou. Atualize antes de continuar.',
+    ChatAssignmentRequired:
+      'Assuma a conversa para responder ou encerrar. Somente o administrador pode assumir a conversa de outro atendente.',
+    ChatClosed: 'Este atendimento foi encerrado.',
+    ChatExpired: 'O acesso do visitante expirou. Encerre esta conversa.',
+    ChatLimitReached: 'Esta conversa atingiu o limite de mensagens. Encerre o atendimento.',
     PermissionDenied: 'Você não tem permissão para esta operação.',
   };
   const code: unknown = error.error?.code;

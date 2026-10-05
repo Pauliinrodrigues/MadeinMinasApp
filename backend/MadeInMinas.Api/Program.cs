@@ -22,6 +22,15 @@ builder.Services.AddExceptionHandler<RecipeExceptionHandler>();
 builder.Services.AddExceptionHandler<CustomerExceptionHandler>();
 builder.Services.AddExceptionHandler<CartExceptionHandler>();
 builder.Services.AddExceptionHandler<OrderExceptionHandler>();
+builder.Services.AddExceptionHandler<ChatExceptionHandler>();
+builder.Services.AddScoped<MadeInMinas.Api.Services.HumanChatService>();
+builder.Services.AddSingleton<PublicChatAccess>();
+builder.Services.AddRateLimiter(options =>
+{
+    foreach (var (policy, limit) in new[] { ("chat-start", 5), ("chat-send", 20), ("chat-read", 120) })
+        options.AddPolicy(policy, context => RateLimitPartition.GetFixedWindowLimiter(context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions { PermitLimit = limit, Window = TimeSpan.FromMinutes(1), QueueLimit = 0, AutoReplenishment = true }));
+});
 builder.Services.AddExceptionHandler<PaymentExceptionHandler>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.PaymentService>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.KitchenService>();

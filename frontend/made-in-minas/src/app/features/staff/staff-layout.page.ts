@@ -21,6 +21,9 @@ import { StaffApi } from '../../core/services/staff-api.service';
         </div>
       </header>
       <nav class="staff-nav" aria-label="Área da equipe">
+        @if (session.canManageChat()) {
+          <a routerLink="/equipe/atendimentos" routerLinkActive="selected">Atendimentos</a>
+        }
         @if (session.canViewDashboard()) {
           <a routerLink="/equipe/dashboard" routerLinkActive="selected">Dashboard</a>
         }

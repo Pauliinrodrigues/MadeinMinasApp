@@ -1,0 +1,81 @@
+<ion-content
+  ><main class="chat-shell">
+    <header>
+      <a class="brand" routerLink="/pedido">MADE IN MINAS<span>HAMBURGUERIA</span></a
+      ><a routerLink="/pedido">Voltar ao cardápio</a>
+    </header>
+    <section class="intro">
+      <span class="eyebrow">PODE CHEGAR.</span>
+      <h1>Fale com <em>a gente.</em></h1>
+      <p>Peça ajuda a um atendente. A resposta depende da disponibilidade da equipe.</p>
+    </section>
+    <section class="panel">
+      @if (state.recoveryError()) {
+      <h2>Não conseguimos recuperar a conversa</h2>
+      <p>Ao recomeçar, você perde o acesso anterior desta aba.</p>
+      <button (click)="reset()">Recomeçar atendimento</button>
+      } @else if (unavailable()) {
+      <p role="alert">A conversa não está disponível ou o acesso expirou.</p>
+      <p>Ao recomeçar, você perde o acesso anterior desta aba.</p>
+      <button (click)="reset()" [disabled]="busy()">Recomeçar atendimento</button>
+      } @else if (state.value().access) {
+      <h2>{{ transcript() ? statusLabel(transcript()!.status) : 'Carregando conversa…' }}</h2>
+      @if (transcript()?.status === 'Waiting') {
+      <p>
+        Sua solicitação está na fila. Você pode continuar escolhendo no cardápio e voltar por esta
+        aba.
+      </p>
+      } @if (loadError()) {
+      <p role="alert">{{ loadError() }}</p>
+      }
+      <app-chat-messages [messages]="messages()" />
+      @if (state.value().pendingMessage; as pending) {
+      <p>Mensagem aguardando confirmação:</p>
+      <p class="pending">{{ pending.text }}</p>
+      <button (click)="send()" [disabled]="busy()">
+        {{ busy() ? 'Conferindo…' : 'Conferir mensagem' }}
+      </button>
+      } @else if (transcript()?.status === 'Closed') {
+      <p>Atendimento encerrado. Iniciar outro remove o acesso anterior desta aba.</p>
+      <button (click)="reset()">Iniciar outro atendimento</button>
+      } @else {
+      <label for="chat-reply">Sua mensagem</label
+      ><textarea
+        id="chat-reply"
+        [(ngModel)]="text"
+        maxlength="2000"
+        rows="4"
+        [disabled]="busy()"
+      ></textarea>
+      <button (click)="send()" [disabled]="busy() || !fresh() || !text.trim()">
+        {{ busy() ? 'Enviando…' : 'Enviar mensagem' }}
+      </button>
+      }
+      <p class="hint">
+        Mantenha esta aba para voltar à conversa. O acesso dura sete dias desde a solicitação;
+        fechar a aba pode perdê-lo.
+      </p>
+      } @else if (state.value().pendingStart) {
+      <h2>Vamos conferir sua solicitação</h2>
+      <p>A conferência recupera a mesma conversa quando a conexão falha.</p>
+      <button (click)="start()" [disabled]="busy()">
+        {{ busy() ? 'Conferindo…' : 'Conferir solicitação' }}
+      </button>
+      } @else {
+      <h2>Como podemos ajudar?</h2>
+      <label for="chat-name">Seu nome</label
+      ><input id="chat-name" [(ngModel)]="name" maxlength="120" autocomplete="name" />
+      <label for="chat-first-message">Sua mensagem</label
+      ><textarea id="chat-first-message" [(ngModel)]="text" maxlength="2000" rows="4"></textarea>
+      <button (click)="start()" [disabled]="busy()">Solicitar atendimento</button>
+      } @if (error()) {
+      <p class="error" role="alert">{{ error() }}</p>
+      }
+      <p class="hint">
+        Não envie senhas ou dados de cartão. Para comprar, use o
+        <a routerLink="/pedido">cardápio e o carrinho</a>; uma mensagem não confirma um pedido.
+      </p>
+    </section>
+    <footer>Made in Minas · Feito com cuidado.</footer>
+  </main></ion-content
+>

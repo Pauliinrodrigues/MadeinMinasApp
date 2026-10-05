@@ -17,11 +17,14 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const isPublicMenu = target.pathname === apiPath + '/menu';
   const isPublicCart = target.pathname === apiPath + '/public-cart/quote';
   const isPublicTracking = target.pathname === apiPath + '/public-orders/tracking';
+  const isPublicChat =
+    target.pathname === apiPath + '/public-chat' ||
+    target.pathname === apiPath + '/public-chat/messages';
   const isPublicCheckout =
     target.pathname === apiPath + '/public-checkout/review' ||
     target.pathname === apiPath + '/public-checkout/orders';
   const token =
-    isLogin || isPublicMenu || isPublicCart || isPublicCheckout || isPublicTracking
+    isLogin || isPublicMenu || isPublicCart || isPublicCheckout || isPublicTracking || isPublicChat
       ? null
       : session.token();
   const authenticated = token
