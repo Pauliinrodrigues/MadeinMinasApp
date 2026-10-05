@@ -2,6 +2,8 @@
 
 Primeiro incremento da Fase 8, na branch `feat/public-menu`, criada da master `5adcd03`. O cliente acessa `/pedido` sem cadastro ou sessão de funcionário. O link **Ver cardápio** está na página inicial. Esta entrega é de consulta; carrinho público, registro/acompanhamento de pedidos, conversa, transferência para atendente e IA terão incrementos próprios.
 
+Continuidade em 05/10/2026: a 8A foi preservada no commit local `4bcd978`. A [Fase 8B](public-cart.md), em `feat/public-cart`, acrescenta botões para adicionar produtos e acessar o carrinho. As regras de consulta abaixo continuam válidas; a ausência de carrinho descreve somente o escopo original da 8A.
+
 ## Regras
 
 - Somente produtos ativos em categorias ativas aparecem. Categorias vazias ou que contenham apenas produtos inativos ficam ocultas.
@@ -41,7 +43,7 @@ Categorias, contagem e itens são consultados no mesmo snapshot RepeatableRead. 
 4. Selecionar categoria, navegar entre páginas se houver mais de 24 produtos e retornar a todas as categorias. Não inserir produtos fictícios na operação apenas para esta conferência.
 5. Conferir a apresentação sem imagem ou com URL que não carrega. Nomes/descrições são texto, sem execução de HTML.
 6. Parar apenas a API de desenvolvimento e atualizar: os cards anteriores desaparecem, há mensagem de falha e opção de tentar novamente. Reiniciar a API e repetir.
-7. O menu não deve oferecer ações de carrinho/pagamento; atualizar a página não exige login. APIs de produtos, custos e categorias administrativos continuam protegidas.
+7. Atualizar a página não exige login. APIs de produtos, custos e categorias administrativos continuam protegidas. Na versão com 8B, validar as ações de carrinho pelo [roteiro próprio](public-cart.md); confirmação de pedido e pagamento continuam fora do fluxo público.
 
 ## Testes e arquivos
 
@@ -64,4 +66,4 @@ Backend testa com PostgreSQL real isolado; navegador usa API simulada. A valida�
 - Frontend alterado: `app.routes.ts`, `core/auth/auth.interceptor.ts`, `features/home/home.page.html` e `.scss`.
 - Documentação: README, roteiro, arquitetura, API, banco, regras, decisões, validação e este documento.
 
-Não cria entidades, migrations, dependências, cadastros ou configurações sensíveis. A etapa não publica a aplicação na internet. Hospedagem, HTTPS/proxy, limites de requisições adequados ao ambiente e operação em produção exigem preparação própria. A próxima proposta é a Fase 8B: carrinho público, com definição das regras necessárias para a compra.
+Não cria entidades, migrations, dependências, cadastros ou configurações sensíveis. A etapa não publica a aplicação na internet. Hospedagem, HTTPS/proxy, limites de requisições adequados ao ambiente e operação em produção exigem preparação própria. A continuidade está na [Fase 8B — carrinho público](public-cart.md); o envio da compra terá contrato e incremento próprios.

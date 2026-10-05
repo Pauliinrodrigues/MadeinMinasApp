@@ -15,6 +15,11 @@ import {
 
 export const routes: Routes = [
   {
+    path: 'pedido/carrinho',
+    loadComponent: () =>
+      import('./features/public-cart/public-cart.page').then((page) => page.PublicCartPage),
+  },
+  {
     path: 'pedido',
     loadComponent: () => import('./features/menu/menu.page').then((page) => page.MenuPage),
   },

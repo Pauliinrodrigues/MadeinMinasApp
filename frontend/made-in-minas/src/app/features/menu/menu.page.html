@@ -12,10 +12,15 @@
       <h1 id="menu-title">Nosso <em>cardápio.</em></h1>
       <p>Conheça os sabores da Made in Minas e encontre o seu favorito.</p>
       <p class="notice">
-        Por enquanto, este cardápio é para consulta. Os pedidos pelo site estarão disponíveis em
-        breve.
+        Monte seu carrinho e revise os valores. A confirmação do pedido pelo site estará disponível
+        em breve.
       </p>
     </section>
+
+    <div class="cart-summary">
+      <a routerLink="/pedido/carrinho">Ver carrinho ({{ cart.itemCount() }})</a>
+      <span role="status" aria-live="polite" class="cart-notice">{{ cartNotice() }}</span>
+    </div>
 
     <div class="filters">
       <div class="category-filter">
@@ -39,7 +44,7 @@
       </button>
     </div>
 
-    <div role="status" aria-live="polite" class="result-status">
+    <div role="status" aria-label="Estado do cardápio" aria-live="polite" class="result-status">
       @if (loading()) { Carregando cardápio… } @else if (data(); as menu) { {{ menu.totalCount }} {{
       menu.totalCount === 1 ? 'produto' : 'produtos' }} @if (menu.totalCount > 0) { · Página {{
       menu.page }} } }
@@ -95,6 +100,15 @@
               >{{ product.isAvailable ? 'Disponível' : 'Indisponível' }}</span
             >
           </div>
+          <button
+            type="button"
+            class="add-product"
+            (click)="addToCart(product)"
+            [disabled]="!product.isAvailable"
+            [attr.aria-label]="'Adicionar ' + product.name"
+          >
+            Adicionar ao carrinho
+          </button>
         </div>
       </article>
       }

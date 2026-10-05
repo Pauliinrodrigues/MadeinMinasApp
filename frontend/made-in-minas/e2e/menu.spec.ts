@@ -110,11 +110,12 @@ test('visitante abre o cardápio pelo início, sem login nem gravações', async
   await expect(page.getByRole('article', { name: 'Uai Sô' })).toContainText('R$ 29,90');
   await expect(page.getByRole('article', { name: 'Especial' })).toContainText('Indisponível');
   await expect(
-    page.getByText('Por enquanto, este cardápio é para consulta.', { exact: false }),
+    page.getByText('Monte seu carrinho e revise os valores.', { exact: false }),
   ).toBeVisible();
+  await expect(page.getByRole('button', { name: /comprar|confirmar pedido/i })).toHaveCount(0);
   await expect(
-    page.getByRole('button', { name: /comprar|adicionar|confirmar pedido/i }),
-  ).toHaveCount(0);
+    page.getByRole('button', { name: 'Adicionar Especial', exact: true }),
+  ).toBeDisabled();
   expect(state.writes).toEqual([]);
   await page.reload();
   await expect(page.getByRole('article', { name: 'Uai Sô' })).toBeVisible();
@@ -149,7 +150,9 @@ test('carregamento remove valores antigos e bloqueia novas consultas', async ({ 
   });
   try {
     await page.getByRole('button', { name: 'Atualizar cardápio' }).click();
-    await expect(page.getByRole('status')).toHaveText('Carregando cardápio…');
+    await expect(page.getByRole('status', { name: 'Estado do cardápio' })).toHaveText(
+      'Carregando cardápio…',
+    );
     await expect(page.getByRole('article')).toHaveCount(0);
     await expect(page.getByRole('combobox', { name: 'Categoria', exact: true })).toBeDisabled();
     await expect(page.getByRole('button', { name: 'Atualizar cardápio' })).toBeDisabled();
@@ -269,7 +272,9 @@ test('consulta demorada termina com mensagem e permite tentar novamente', async 
     release = resolve;
   });
   await page.goto('/pedido');
-  await expect(page.getByRole('status')).toHaveText('Carregando cardápio…');
+  await expect(page.getByRole('status', { name: 'Estado do cardápio' })).toHaveText(
+    'Carregando cardápio…',
+  );
   try {
     await page.clock.fastForward(16000);
     await expect(page.getByRole('alert')).toBeVisible();

@@ -71,3 +71,7 @@ Sem mudanças no esquema ou nos dados. SalesReportService agrega Orders, OrderIt
 ## Fase 8A — leitura pública do catálogo
 
 Utiliza Categories e Products existentes, com projeções de campos comerciais, ordenação e paginação. Categorias, total e itens são lidos em RepeatableRead. Sem migration, alteração de saldo ou persistência de dados públicos novos. Ver [public-menu.md](public-menu.md).
+
+## Fase 8B — revisão do carrinho público
+
+PublicCartService consulta Products e o estado de Categories com AsNoTracking/RepeatableRead, projetando apenas ID, nome e preço. Calcula subtotal em decimal no backend. A seleção existe somente em memória no frontend; não há tabela de carrinho, reserva, cliente anônimo ou escrita em pedidos/estoque/pagamentos. Nenhuma migration; o esquema permanece o da 6B. Ver [public-cart.md](public-cart.md).

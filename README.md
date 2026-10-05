@@ -4,7 +4,7 @@ Sistema de gestão e pedidos da hamburgueria Made in Minas, desenvolvido por fas
 
 **Fases 1 a 7 implementadas no escopo inicial descrito no roteiro.** Expedição e impressão pelo navegador foram integradas pelo [PR #7](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/7); impressão automática e validação física dependem do equipamento. O estoque manual (6A) foi integrado pelo [PR #8](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/8). Consumo de estoque (6B), CMV teórico (6C) e dashboard diário (7A) foram integrados pelos PRs [#9](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/9), [#10](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/10) e [#11](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/11), após os checks de backend e frontend.
 
-[Relatórios por período — 7B](docs/period-reports.md) completa as consultas iniciais de vendas e recebimentos, integrado pelo [PR #12](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/12), commit `5adcd03`. O incremento atual é [8A — cardápio público](docs/public-menu.md), em `feat/public-menu`, primeiro passo do atendimento pelo link. Resultados e limites estão em [validação](docs/validation.md).
+[Relatórios por período — 7B](docs/period-reports.md) completa as consultas iniciais de vendas e recebimentos, integrado pelo [PR #12](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/12), commit `5adcd03`. O incremento atual é [8B — carrinho público](docs/public-cart.md), em `feat/public-cart`, sobre o cardápio público preservado no commit local `4bcd978`. Resultados e limites estão em [validação](docs/validation.md).
 
 ## Estrutura
 
@@ -58,7 +58,7 @@ npm.cmd start
 
 Abra http://localhost:8101. A página consulta `http://localhost:5080/api/system/status`. Com a API desligada, mostra a falha de conexão e permite tentar novamente. A porta 8101 evita conflito com outro projeto local que já utiliza 8100.
 
-**Cardápio público (8A):** clique em **Ver cardápio** ou abra http://localhost:8101/pedido, sem login. Consulte categorias, produtos, preços e disponibilidade; use o filtro e **Atualizar cardápio**. Essa etapa permite consultar o catálogo; pedidos pelo cliente serão acrescentados depois. Regras, API e roteiro: [cardápio público](docs/public-menu.md).
+**Cardápio e carrinho públicos (8A/8B):** clique em **Ver cardápio** ou abra http://localhost:8101/pedido, sem login. Adicione produtos disponíveis e abra **Ver carrinho**. Ajuste quantidades/observações e use **Revisar carrinho** para consultar preços atuais e subtotal calculados pela API. A seleção permanece durante a navegação interna, mas é perdida ao atualizar/fechar a página. Ainda não há envio de pedido, endereço ou pagamento neste fluxo. Regras, API e roteiro: [cardápio](docs/public-menu.md) e [carrinho público](docs/public-cart.md).
 
 Para entrar, acesse http://localhost:8101/entrar ou clique em **Área da equipe**. Use o administrador criado pelo [comando interativo](docs/authentication.md#administrador-inicial); não existe senha padrão. A sessão dura até 15 minutos e atualizar a página exige novo login. Administradores acessam cadastro, edição e ativação/inativação de funcionários. Todos os perfis podem alterar a própria senha.
 
@@ -115,7 +115,7 @@ O fluxo local completo está em `scripts/Test-Quality.ps1`: formatação, testes
 powershell -NoProfile -File scripts/Test-Quality.ps1
 ```
 
-O GitHub Actions executa as verificações em pushes para `master` e pull requests. Cada integração exige os checks de backend e frontend aprovados para o commit final do PR. Detalhes e limites: [manutenção técnica](docs/maintenance.md). O incremento atual está em [cardápio público](docs/public-menu.md), com os resultados registrados em [validation.md](docs/validation.md).
+O GitHub Actions executa as verificações em pushes para `master` e pull requests. Cada integração exige os checks de backend e frontend aprovados para o commit final do PR. Detalhes e limites: [manutenção técnica](docs/maintenance.md). O incremento atual está em [carrinho público](docs/public-cart.md), com os resultados registrados em [validation.md](docs/validation.md).
 
 ## Configuração e segurança
 
@@ -143,6 +143,7 @@ O GitHub Actions executa as verificações em pushes para `master` e pull reques
 - [Dashboard do dia](docs/daily-dashboard.md)
 - [Relatórios por período](docs/period-reports.md)
 - [Cardápio público](docs/public-menu.md)
+- [Carrinho público](docs/public-cart.md)
 - [Arquitetura](docs/architecture.md)
 - [Autenticação, administrador inicial e testes](docs/authentication.md)
 - [Gestão de funcionários e permissões](docs/users.md)

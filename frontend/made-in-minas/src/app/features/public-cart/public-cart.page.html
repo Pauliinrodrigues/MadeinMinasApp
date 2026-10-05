@@ -1,0 +1,130 @@
+<ion-content>
+  <main class="cart-shell">
+    <header>
+      <a routerLink="/pedido" class="brand">MADE IN MINAS<span>HAMBURGUERIA</span></a
+      ><a routerLink="/pedido">Voltar ao cardápio</a>
+    </header>
+    <section class="intro">
+      <span class="eyebrow">SEUS FAVORITOS, DO SEU JEITO.</span>
+      <h1>Seu <em>carrinho.</em></h1>
+      <p>Ajuste os itens e revise os preços atuais. A revisão ainda não envia um pedido.</p>
+      <p class="notice">
+        Seu carrinho é temporário e será perdido se você atualizar ou fechar a página.
+      </p>
+    </section>
+    @if (cart.lines().length === 0) {
+    <section class="empty">
+      <h2>Seu carrinho está vazio</h2>
+      <p>Escolha seus favoritos para começar.</p>
+      <a class="button" routerLink="/pedido">Ver cardápio</a>
+    </section>
+    } @else {
+    <div class="cart-layout">
+      <section aria-label="Itens selecionados">
+        <fieldset [disabled]="busy()">
+          <legend>Itens selecionados</legend>
+          @for (line of cart.lines(); track line.key; let i = $index) {
+          <article class="cart-line" [attr.aria-labelledby]="'line-' + line.key">
+            <div class="line-header">
+              <h2 [id]="'line-' + line.key">{{ line.name }}</h2>
+              <button
+                type="button"
+                class="secondary"
+                (click)="remove(line.key)"
+                [attr.aria-label]="'Remover item ' + (i + 1)"
+              >
+                Remover
+              </button>
+            </div>
+            <label [for]="'quantity-' + line.key">Quantidade do item {{ i + 1 }}</label>
+            <input
+              [id]="'quantity-' + line.key"
+              type="number"
+              min="1"
+              max="99"
+              step="1"
+              inputmode="numeric"
+              [ngModel]="line.quantity"
+              (ngModelChange)="changeQuantity(line.key, $event)"
+            />
+            <label [for]="'notes-' + line.key">Observações do item {{ i + 1 }}</label>
+            <textarea
+              [id]="'notes-' + line.key"
+              rows="2"
+              maxlength="250"
+              [ngModel]="line.notes"
+              (ngModelChange)="changeLineNotes(line.key, $event)"
+              placeholder="Ex.: sem cebola"
+            ></textarea>
+          </article>
+          }
+          <label for="cart-notes">Observações gerais</label>
+          <textarea
+            id="cart-notes"
+            rows="2"
+            maxlength="500"
+            [ngModel]="cart.notes()"
+            (ngModelChange)="changeNotes($event)"
+          ></textarea>
+          <p class="notice">
+            Observações não alteram o preço nem substituem a escolha de adicionais.
+          </p>
+          <div class="actions">
+            <a routerLink="/pedido">Adicionar outros produtos</a
+            ><button type="button" class="secondary" (click)="confirmClear.set(true)">
+              Limpar carrinho
+            </button>
+          </div>
+          @if (confirmClear()) {
+          <div class="confirmation" role="group" aria-label="Confirmar limpeza">
+            <p>Remover todos os itens e observações?</p>
+            <button type="button" (click)="clear()">Sim, limpar</button
+            ><button type="button" class="secondary" (click)="confirmClear.set(false)">
+              Manter itens
+            </button>
+          </div>
+          }
+        </fieldset>
+      </section>
+      <section class="review" aria-labelledby="review-title">
+        <h2 id="review-title">Revisão do carrinho</h2>
+        <p>Confira os valores antes de continuar montando sua seleção.</p>
+        <button type="button" (click)="review()" [disabled]="busy()">
+          {{ busy() ? 'Revisando…' : 'Revisar carrinho' }}
+        </button>
+        <div role="status" aria-live="polite">
+          @if (busy()) { Consultando preços e disponibilidade… }
+        </div>
+        @if (error()) {
+        <p role="alert" class="error">{{ error() }}</p>
+        } @if (quote(); as result) {
+        <div class="quote" role="region" aria-label="Valores revisados">
+          @for (item of result.items; track $index) {
+          <div class="quote-line">
+            <strong>{{ item.quantity }} × {{ item.name }}</strong
+            ><span>{{ price(item.unitPrice) }} por unidade</span>@if (item.notes) {
+            <span class="notes">{{ item.notes }}</span> }<strong
+              >{{ price(item.lineTotal) }}</strong
+            >
+          </div>
+          } @if (result.notes) {
+          <p class="notes">Observações: {{ result.notes }}</p>
+          }
+          <p class="subtotal">
+            <span>Subtotal dos produtos</span><strong>{{ price(result.subtotal) }}</strong>
+          </p>
+          <p class="notice">
+            Valores consultados agora, sujeitos a nova revisão. Não há reserva de preço ou estoque.
+          </p>
+        </div>
+        }
+        <p class="notice">
+          Endereço, entrega e pagamento serão definidos em uma próxima etapa. Nenhum pedido é
+          enviado por esta tela.
+        </p>
+      </section>
+    </div>
+    }
+    <footer>Made in Minas · Feito com cuidado.</footer>
+  </main>
+</ion-content>
