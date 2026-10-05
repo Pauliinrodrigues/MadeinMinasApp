@@ -503,14 +503,16 @@ Continuidade autorizada. A 8D foi preservada no commit local `687e10c`; `feat/hu
 
 O responsável solicitou commitar e publicar todo o trabalho seguindo o fluxo habitual de branches, PRs, checks e squash na master. As menções a publicação pendente nas seções anteriores registram o estado ao concluir cada implementação. A autorização atual não comprova execução manual integral dos roteiros.
 
-| Incremento | Commit original da implementação | Pull request |
-| --- | --- | --- |
-| 8A — cardápio público | `4bcd978` | [#13](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/13) |
-| 8B — carrinho público | `15d8107` | [#14](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/14) |
-| 8C — checkout para retirada | `c8de7ee` | [#15](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/15) |
-| 8D — acompanhamento do pedido | `687e10c` | [#16](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/16) |
-| 8E — atendimento humano | `720f586` | [#17](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/17) |
+| Incremento | Commit original da implementação | Pull request | Squash na master |
+| --- | --- | --- | --- |
+| 8A — cardápio público | `4bcd978` | [#13](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/13) | `50dda01` |
+| 8B — carrinho público | `15d8107` | [#14](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/14) | `9c3074d` |
+| 8C — checkout para retirada | `c8de7ee` | [#15](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/15) | `e9183cc` |
+| 8D — acompanhamento do pedido | `687e10c` | [#16](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/16) | `735d63a` |
+| 8E — atendimento humano | `720f586` | [#17](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/17) | Commit final de merge registrado no PR |
 
-- As cinco branches foram publicadas no repositório **Pauliinrodrigues/MadeinMinasApp**, com autoria Pauliinrodrigues. O PR #13 tem base master; os demais foram abertos sobre a branch do incremento anterior para manter o diff restrito à respectiva etapa. Após integrar cada antecessor, atualizar a base do próximo PR para master, preservando o conteúdo e conferindo os checks do commit final antes do squash.
-- Os workflows Quality executam a regressão completa de backend e frontend. Resultados, commits verificados e estado de integração estão nos PRs acima; aprovação local não substitui esses checks. Não integrar um PR com check pendente ou com falha.
+- As cinco branches foram publicadas no repositório **Pauliinrodrigues/MadeinMinasApp**, com autoria Pauliinrodrigues. Os PRs foram direcionados à master em sequência. Antes de atualizar cada base, foi conferido que a árvore da master era idêntica à do antecessor original; a reconciliação de ancestralidade preservou os arquivos da funcionalidade, sem force push. O resultado de cada squash foi comparado ao conteúdo esperado.
+- **Exceção autorizada para esta publicação:** em 05/10/2026, o responsável confirmou expressamente integrar tudo à master usando os testes locais aprovados, mesmo com checks remotos pendentes/cancelados durante o [incidente do GitHub Actions](https://stspg.io/c11dc9nb1zdq). A política geral de aguardar os checks permanece; esta autorização é específica para os PRs #13–#17. Não se declara sucesso de um check pendente ou cancelado.
+- Antes das atualizações de base, backend e frontend haviam passado nos commits originais dos PRs #14 e #16. Backend também aprovado nos PRs #13 e #17; frontend aprovado no PR #15. Os três jobs restantes ficaram sem runner ou foram cancelados durante a espera, e foram retomados individualmente. As atualizações de base/documentação disparam novos workflows, cujo resultado deve ser consultado nos PRs e na master. Nenhuma falha de teste foi reportada na conferência anterior aos merges.
+- O código final corresponde ao incremento 8E validado localmente: **473 testes backend e 136 cenários distintos de navegador aprovados**, além de builds, lint, formatação e verificações HTTP. As mudanças desta publicação ajustam ancestralidade e documentação; não mudam regras de negócio ou testes. A autorização para integrar não comprova execução manual integral dos roteiros.
 - Nenhuma migration é reaplicada pela publicação; não há movimentação comercial, alteração de saldo ou operação no PostgreSQL compartilhado. Segredos, backups, logs e artefatos locais permaneceram fora do Git. As instruções para outra máquina continuam no README e em database/README.md.

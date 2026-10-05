@@ -1,6 +1,6 @@
 # Fase 8E — atendimento humano no chat próprio
 
-Continuidade autorizada em 05/10/2026. O acompanhamento (8D) foi preservado no commit `687e10c`; a implementação 8E foi registrada em `720f586`, na branch `feat/human-chat`. O responsável autorizou depois a publicação e integração da sequência, pelo [PR #17](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/17) após os antecessores e os checks de qualidade. Isso não comprova execução manual integral do roteiro. Registro da publicação em [validation.md](validation.md).
+Continuidade autorizada em 05/10/2026. O acompanhamento (8D) foi preservado no commit `687e10c`; a implementação 8E foi registrada em `720f586`, na branch `feat/human-chat`, e integrada na master pelo [PR #17](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/17). O responsável autorizou expressamente a integração após os antecessores usando os testes locais aprovados, com checks remotos pendentes/cancelados durante o incidente do GitHub Actions. Isso não comprova execução manual integral do roteiro nem aprovação remota dos checks pendentes. Registro da publicação em [validation.md](validation.md).
 
 ## Escopo
 
