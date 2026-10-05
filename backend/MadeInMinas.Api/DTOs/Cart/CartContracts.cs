@@ -60,8 +60,16 @@ public sealed record CartProductResponse(Guid Id, Guid CategoryId, string Catego
     string Name, string? Description, decimal Price);
 public sealed record CartProductPageResponse(CartProductResponse[] Items, int Page, int PageSize, int TotalCount);
 public sealed record CartCustomerResponse(Guid Id, string Name, string Phone);
-public sealed record CartAddressResponse(Guid Id, string Street, string Number, string Neighborhood,
-    string City, string State, string? Complement, string? PostalCode, string? Reference);
+public sealed record CartAddressResponse(
+    Guid? Id,
+    string Street,
+    string Number,
+    string Neighborhood,
+    string City,
+    string State,
+    string? Complement,
+    string? PostalCode,
+    string? Reference);
 public sealed record CartItemResponse(Guid ProductId, string Name, int Quantity, decimal UnitPrice,
     decimal LineTotal, string? Notes);
 public sealed record CartQuoteResponse(CartCustomerResponse Customer, string Fulfillment, CartAddressResponse? Address,

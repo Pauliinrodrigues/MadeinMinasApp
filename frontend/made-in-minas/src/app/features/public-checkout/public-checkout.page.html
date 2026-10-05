@@ -12,10 +12,18 @@
     <section class="panel" aria-label="Pedido recebido">
       <h2>Recebemos o pedido #{{ receipt.number }}</h2>
       <p>
-        Pedido enviado para análise da equipe. Aguarde a confirmação do atendimento antes de buscar.
+        Pedido enviado para análise da equipe. {{ receipt.fulfillment === 'Delivery' ? 'Acompanhe a
+        confirmação e a entrega por esta aba.' : 'Aguarde a confirmação do atendimento antes de
+        buscar.' }}
       </p>
-      <p>Retirada no balcão · Total registrado: <strong>{{ price(receipt.total) }}</strong></p>
-      <p>Pagamento na retirada. Nenhuma cobrança foi realizada pelo site.</p>
+      <p>
+        {{ receipt.fulfillment === 'Delivery' ? 'Entrega no endereço informado' : 'Retirada no
+        balcão' }} · Total registrado: <strong>{{ price(receipt.total) }}</strong>
+      </p>
+      <p>
+        {{ receipt.fulfillment === 'Delivery' ? 'Combine a forma de pagamento com o atendimento.' :
+        'Pagamento na retirada.' }} Nenhuma cobrança foi realizada pelo site.
+      </p>
       @if (receipt.tracking?.token) {
       <p><a routerLink="/pedido/acompanhar">Acompanhar meu pedido</a></p>
       <p>
@@ -65,9 +73,14 @@
     } @else {
     <div class="checkout-layout">
       <section class="panel">
-        <h2>Quem vai retirar?</h2>
+        <h2>Como quer receber?</h2>
         <p>Informe seu nome e telefone para a equipe entrar em contato sobre este pedido.</p>
         <fieldset [disabled]="busy()">
+          <label for="checkout-fulfillment">Retirada ou entrega</label>
+          <select id="checkout-fulfillment" [(ngModel)]="fulfillment" (ngModelChange)="change()">
+            <option value="Pickup">Retirada no balcão</option>
+            <option value="Delivery">Entrega</option>
+          </select>
           <label for="checkout-name">Seu nome</label
           ><input
             id="checkout-name"
@@ -86,17 +99,80 @@
             (ngModelChange)="change()"
             placeholder="(31) 99999-9999"
           />
+          @if (fulfillment === 'Delivery') {
+          <h3>Endereço de entrega</h3>
+          @if (loadingAreas()) {
+          <p role="status">Consultando regiões atendidas…</p>
+          } @else if (areasError()) {
+          <p role="alert">{{ areasError() }}</p>
+          } @else if (!areas().length) {
+          <p>Entrega pelo site ainda indisponível. Fale com o atendimento ou escolha retirada.</p>
+          }
+          <label for="checkout-area">Bairro e cidade atendidos</label>
+          <select id="checkout-area" [(ngModel)]="address.areaId" (ngModelChange)="change()">
+            <option value="">Selecione a região</option>
+            @for (area of areas(); track area.id) {
+            <option [value]="area.id">
+              {{ area.neighborhood }} · {{ area.city }}/{{ area.state }} · {{ price(area.fee) }}
+            </option>
+            }
+          </select>
+          <button type="button" (click)="loadAreas(); change()" [disabled]="loadingAreas()">
+            Atualizar regiões
+          </button>
+          <p class="notice">Seu bairro não aparece? Fale com o atendimento antes de enviar.</p>
+          <label for="checkout-street">Rua ou avenida</label>
+          <input
+            id="checkout-street"
+            autocomplete="address-line1"
+            maxlength="120"
+            [(ngModel)]="address.street"
+            (ngModelChange)="change()"
+          />
+          <label for="checkout-number">Número (ou s/n)</label>
+          <input
+            id="checkout-number"
+            maxlength="20"
+            [(ngModel)]="address.number"
+            (ngModelChange)="change()"
+          />
+          <label for="checkout-complement">Complemento (opcional)</label>
+          <input
+            id="checkout-complement"
+            autocomplete="address-line2"
+            maxlength="120"
+            [(ngModel)]="address.complement"
+            (ngModelChange)="change()"
+          />
+          <label for="checkout-postal">CEP (opcional)</label>
+          <input
+            id="checkout-postal"
+            autocomplete="postal-code"
+            inputmode="numeric"
+            maxlength="10"
+            [(ngModel)]="address.postalCode"
+            (ngModelChange)="change()"
+          />
+          <label for="checkout-reference">Ponto de referência (opcional)</label>
+          <input
+            id="checkout-reference"
+            maxlength="250"
+            [(ngModel)]="address.reference"
+            (ngModelChange)="change()"
+          />
+          }
         </fieldset>
         <p class="notice">
-          Nesta etapa, os pedidos pelo site são para retirada no balcão, com pagamento na retirada.
-          Para entrega, procure o atendimento.
+          {{ fulfillment === 'Delivery' ? 'A taxa será incluída na revisão. Combine a forma de
+          pagamento com o atendimento.' : 'Retirada no balcão, com pagamento na retirada.' }}
         </p>
         <a routerLink="/pedido/carrinho">Alterar produtos e observações</a>
       </section>
-      <section class="panel" aria-label="Revisão para retirada">
+      <section class="panel" aria-label="Revisão do pedido">
         <h2>Confira antes de enviar</h2>
         <button type="button" (click)="revise()" [disabled]="busy()">
-          {{ busy() ? 'Revisando…' : 'Revisar pedido para retirada' }}
+          {{ busy() ? 'Revisando…' : fulfillment === 'Delivery' ? 'Revisar pedido para entrega' :
+          'Revisar pedido para retirada' }}
         </button>
         @if (review(); as result) {
         <div role="region" aria-label="Pedido revisado">
@@ -109,15 +185,34 @@
           </div>
           } @if (result.notes) {
           <p class="notes">Observações: {{ result.notes }}</p>
+          } @if (result.address; as address) {
+          <p>
+            Entrega em {{ address.street }}, {{ address.number }} · {{ address.neighborhood }} · {{
+            address.city }}/{{ address.state }}
+          </p>
+          @if (address.complement) {
+          <p>Complemento: {{ address.complement }}</p>
+          } @if (address.postalCode) {
+          <p>CEP: {{ address.postalCode }}</p>
+          } @if (address.reference) {
+          <p>Referência: {{ address.reference }}</p>
           }
+          <p>
+            Produtos: {{ price(result.subtotal) }} · Taxa de entrega: {{ price(result.deliveryFee)
+            }}
+          </p>
+          } @else {
           <p>Retirada no balcão · Sem taxa de entrega</p>
+          }
           <p class="total">Total <strong>{{ price(result.total) }}</strong></p>
           <p>
-            O atendimento confirmará a disponibilidade e o preparo. Pague ao retirar; este envio não
+            O atendimento confirmará a disponibilidade e o preparo. {{ result.fulfillment ===
+            'Delivery' ? 'Combine o pagamento com a equipe.' : 'Pague ao retirar.' }} Este envio não
             realiza cobrança.
           </p>
           <button type="button" (click)="send()" [disabled]="busy()">
-            Enviar pedido para retirada
+            {{ result.fulfillment === 'Delivery' ? 'Enviar pedido para entrega' : 'Enviar pedido
+            para retirada' }}
           </button>
         </div>
         }

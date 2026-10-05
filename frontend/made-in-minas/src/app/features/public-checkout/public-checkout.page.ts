@@ -12,6 +12,8 @@ import {
   PublicCheckoutApi,
   PublicCheckoutInput,
   PublicCheckoutReview,
+  PublicDeliveryAddress,
+  PublicDeliveryArea,
 } from '../../core/services/public-checkout-api.service';
 import { PublicCheckoutState } from '../../core/services/public-checkout-state.service';
 
@@ -36,7 +38,48 @@ export class PublicCheckoutPage {
   private reviewedInput: PublicCheckoutInput | null = null;
   name = '';
   phone = '';
+  fulfillment: 'Pickup' | 'Delivery' = 'Pickup';
+  address: PublicDeliveryAddress = this.emptyAddress();
+  readonly areas = signal<PublicDeliveryArea[]>([]);
+  readonly loadingAreas = signal(false);
+  readonly areasError = signal('');
   recoveryAcknowledged = false;
+
+  constructor() {
+    this.loadAreas();
+  }
+
+  private emptyAddress(): PublicDeliveryAddress {
+    return {
+      areaId: '',
+      street: '',
+      number: '',
+      complement: null,
+      postalCode: null,
+      reference: null,
+    };
+  }
+
+  loadAreas(): void {
+    if (this.loadingAreas()) {
+      return;
+    }
+    this.loadingAreas.set(true);
+    this.areasError.set('');
+    this.api
+      .deliveryAreas()
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.loadingAreas.set(false)),
+      )
+      .subscribe({
+        next: (areas) => this.areas.set(areas),
+        error: () =>
+          this.areasError.set(
+            'Não foi possível consultar as regiões atendidas. Tente novamente ou fale com o atendimento.',
+          ),
+      });
+  }
 
   change(): void {
     this.review.set(null);
@@ -59,7 +102,28 @@ export class PublicCheckoutPage {
       this.error.set(validation ?? 'Informe seu nome e um telefone brasileiro válido com DDD.');
       return;
     }
-    const input = { name: this.name, phone: this.phone, cart: this.cart.input() };
+    if (
+      this.fulfillment === 'Delivery' &&
+      (!this.areas().some((area) => area.id === this.address.areaId) ||
+        !this.address.street.trim() ||
+        !this.address.number.trim() ||
+        (this.address.postalCode?.trim() &&
+          !/^[0-9]{5}-?[0-9]{3}$/.test(this.address.postalCode.trim())))
+    ) {
+      this.error.set(
+        'Selecione uma região atendida e informe rua e número (ou s/n). Se informar CEP, use oito dígitos.',
+      );
+      return;
+    }
+    const input: PublicCheckoutInput = {
+      name: this.name,
+      phone: this.phone,
+      cart: this.cart.input(),
+    };
+    if (this.fulfillment === 'Delivery') {
+      input.fulfillment = 'Delivery';
+      input.address = { ...this.address };
+    }
     this.busy.set(true);
     this.api
       .review(input)
@@ -76,7 +140,12 @@ export class PublicCheckoutPage {
           this.error.set(
             error instanceof HttpErrorResponse && error.error?.code === 'CartProductUnavailable'
               ? 'Um produto ficou indisponível. Volte ao carrinho e confira os itens.'
-              : 'Não foi possível revisar. Confira sua conexão e tente novamente.',
+              : error instanceof HttpErrorResponse &&
+                  error.error?.code === 'PublicDeliveryUnavailable'
+                ? 'Essa região não está mais disponível. Atualize as regiões ou escolha retirada.'
+                : error instanceof HttpErrorResponse && error.status === 400
+                  ? 'Confira os dados de contato e endereço antes de revisar.'
+                  : 'Não foi possível revisar. Confira sua conexão e tente novamente.',
           );
         },
       });
@@ -121,6 +190,7 @@ export class PublicCheckoutPage {
           this.cart.resetAfterCheckout();
           this.name = '';
           this.phone = '';
+          this.address = this.emptyAddress();
           this.review.set(null);
           this.reviewedInput = null;
         },
@@ -129,9 +199,12 @@ export class PublicCheckoutPage {
           if (
             error instanceof HttpErrorResponse &&
             error.status === 409 &&
-            ['OrderReviewChanged', 'CartProductUnavailable', 'PublicCheckoutUnavailable'].includes(
-              code,
-            )
+            [
+              'OrderReviewChanged',
+              'CartProductUnavailable',
+              'PublicCheckoutUnavailable',
+              'PublicDeliveryUnavailable',
+            ].includes(code)
           ) {
             const pending = this.state.pending()!;
             const names = this.state.names();
@@ -140,11 +213,17 @@ export class PublicCheckoutPage {
               this.cart.restoreRejectedCheckout(pending.checkout.cart, names);
               this.name = pending.checkout.name;
               this.phone = pending.checkout.phone;
+              this.fulfillment = pending.checkout.fulfillment ?? 'Pickup';
+              this.address = pending.checkout.address
+                ? { ...pending.checkout.address }
+                : this.emptyAddress();
               this.change();
               this.error.set(
                 code === 'PublicCheckoutUnavailable'
                   ? 'O pedido não foi enviado. Procure o atendimento para continuar.'
-                  : 'O pedido não foi enviado porque os dados mudaram. Confira o carrinho e faça uma nova revisão.',
+                  : code === 'PublicDeliveryUnavailable'
+                    ? 'O pedido não foi enviado. A região não está disponível; atualize as regiões ou escolha retirada.'
+                    : 'O pedido não foi enviado porque os dados mudaram. Confira o carrinho, endereço e taxa e faça uma nova revisão.',
               );
               return;
             } catch {

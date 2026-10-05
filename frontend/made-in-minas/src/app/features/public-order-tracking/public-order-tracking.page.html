@@ -5,7 +5,7 @@
       <a routerLink="/pedido/finalizar">Voltar ao comprovante</a>
     </header>
     <section class="intro">
-      <span class="eyebrow">DA CHAPA AO BALCÃO.</span>
+      <span class="eyebrow">FEITO COM CUIDADO.</span>
       <h1>Acompanhe <em>seu pedido.</em></h1>
     </section>
     @if (access()) {
@@ -17,7 +17,10 @@
         <strong class="status">{{ label(current.status) }}</strong>
         <p>{{ message(current.status) }}</p>
       </div>
-      <p>Retirada no balcão · Total registrado: <strong>{{ price(current.total) }}</strong></p>
+      <p>
+        {{ current.fulfillment === 'Delivery' ? 'Entrega no endereço informado' : 'Retirada no
+        balcão' }} · Total registrado: <strong>{{ price(current.total) }}</strong>
+      </p>
       <h3>Histórico do pedido</h3>
       <ol aria-label="Histórico do pedido">
         @for (entry of current.history; track $index) {

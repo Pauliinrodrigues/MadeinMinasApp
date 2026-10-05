@@ -8,11 +8,33 @@ export interface PublicCheckoutInput {
   name: string;
   phone: string;
   cart: PublicCartInput;
+  fulfillment?: 'Pickup' | 'Delivery';
+  address?: PublicDeliveryAddress;
+}
+export interface PublicDeliveryAddress {
+  areaId: string;
+  street: string;
+  number: string;
+  complement: string | null;
+  postalCode: string | null;
+  reference: string | null;
+}
+export interface PublicDeliveryArea {
+  id: string;
+  neighborhood: string;
+  city: string;
+  state: string;
+  fee: number;
 }
 export interface PublicCheckoutReview extends PublicCartQuote {
   name: string;
   phone: string;
-  fulfillment: 'Pickup';
+  fulfillment: 'Pickup' | 'Delivery';
+  address?: Omit<PublicDeliveryAddress, 'areaId'> & {
+    neighborhood: string;
+    city: string;
+    state: string;
+  };
   deliveryFee: number;
   total: number;
   reviewToken: string;
@@ -24,7 +46,7 @@ export interface PublicOrderInput {
 }
 export interface PublicOrderReceipt {
   number: number;
-  fulfillment: 'Pickup';
+  fulfillment: 'Pickup' | 'Delivery';
   total: number;
   createdAt: string;
   tracking?: { token: string; expiresAt: string } | null;
@@ -34,6 +56,10 @@ export interface PublicOrderReceipt {
 export class PublicCheckoutApi {
   private readonly http = inject(HttpClient);
   private readonly url = environment.apiBaseUrl + '/public-checkout';
+
+  deliveryAreas() {
+    return this.http.get<PublicDeliveryArea[]>(this.url + '/delivery-areas').pipe(timeout(15000));
+  }
 
   review(input: PublicCheckoutInput) {
     return this.http.post<PublicCheckoutReview>(this.url + '/review', input).pipe(timeout(15000));

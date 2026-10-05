@@ -115,3 +115,7 @@ npm.cmd run test:e2e -- public-checkout.spec.ts public-cart.spec.ts menu.spec.ts
 ## Continuidade — 8D
 
 Em 05/10/2026, a 8C foi preservada no commit local `c8de7ee`; a branch `feat/public-order-tracking` parte dele. O novo incremento adiciona credencial de acompanhamento ao comprovante e a rota `/pedido/acompanhar`, sem consulta por telefone/número. A recuperação mantém os mesmos dados comerciais e prazo, mas pode emitir outra credencial equivalente. O roteiro acima descreve a entrega original da 8C; o contrato atual e sua validação estão em [acompanhamento público](public-order-tracking.md). Entrega pública ainda depende de área atendida e taxa; conversa/transferência e IA continuam em incrementos separados.
+
+## Continuidade — 8F
+
+A [entrega pelo site](public-delivery.md) amplia este contrato com modalidade, endereço e taxa por região calculada pelo backend. Retirada e seus hashes de recuperação permanecem compatíveis. Os parágrafos anteriores descrevem o escopo original da 8C; o contrato atual de entrega está no novo documento. A cobertura real precisa ser configurada para ativar o envio.

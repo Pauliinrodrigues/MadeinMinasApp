@@ -28,7 +28,7 @@ export interface CartQuote {
   customer: { id: string; name: string; phone: string };
   fulfillment: 'Pickup' | 'Delivery';
   address: {
-    id: string;
+    id: string | null;
     street: string;
     number: string;
     neighborhood: string;

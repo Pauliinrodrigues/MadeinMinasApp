@@ -14,6 +14,9 @@ namespace MadeInMinas.Api.Controllers;
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public sealed class PublicCheckoutController(PublicCheckoutService checkout) : ControllerBase
 {
+    [HttpGet("delivery-areas")]
+    public PublicDeliveryAreaResponse[] DeliveryAreas() => checkout.DeliveryAreas();
+
     [HttpPost("review")]
     public Task<PublicCheckoutReviewResponse> Review(PublicCheckoutRequest request, CancellationToken cancellationToken) =>
         checkout.ReviewAsync(request, cancellationToken);

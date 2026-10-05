@@ -123,10 +123,23 @@ export class PublicOrderTrackingPage {
   }
 
   label(status: OrderStatus): string {
-    return status === 'Delivered' ? 'Retirado' : orderStatusLabel(status);
+    return status === 'Delivered' && this.order()?.fulfillment !== 'Delivery'
+      ? 'Retirado'
+      : orderStatusLabel(status);
   }
 
   message(status: OrderStatus): string {
+    if (this.order()?.fulfillment === 'Delivery') {
+      const messages: Partial<Record<OrderStatus, string>> = {
+        New: 'Recebemos seu pedido. Aguarde a confirmação da equipe.',
+        Confirmed: 'A equipe confirmou seu pedido para entrega.',
+        Ready: 'Seu pedido está pronto e será encaminhado para entrega.',
+        Delivered: 'A equipe registrou a entrega do seu pedido.',
+      };
+      if (messages[status]) {
+        return messages[status];
+      }
+    }
     return {
       New: 'Recebemos seu pedido. Aguarde a confirmação da equipe antes de buscar.',
       Confirmed: 'A equipe confirmou seu pedido. Aguarde ficar pronto para retirar.',

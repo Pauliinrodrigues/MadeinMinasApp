@@ -2,11 +2,13 @@ using System.Buffers.Binary;
 using System.Security.Cryptography;
 using System.Text;
 using MadeInMinas.Api.Data;
+using MadeInMinas.Api.DTOs.Cart;
 using MadeInMinas.Api.DTOs.PublicCheckout;
 using MadeInMinas.Api.Models;
 using MadeInMinas.Api.Security;
 using MadeInMinas.Api.Validation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace MadeInMinas.Api.Services;
 
@@ -15,16 +17,34 @@ public sealed class PublicCheckoutService(
     PublicCartService cart,
     TimeProvider clock,
     ILogger<PublicCheckoutService> logger,
-    PublicOrderAccess access)
+    PublicOrderAccess access,
+    IOptionsSnapshot<PublicDeliveryOptions> delivery)
 {
     public async Task<PublicCheckoutReviewResponse> ReviewAsync(PublicCheckoutRequest request, CancellationToken cancellationToken)
     {
+        var area = request.Fulfillment == "Delivery"
+            ? DeliveryAreas().SingleOrDefault(area => area.Id == request.Address!.AreaId)
+                ?? throw new OrderException(OrderError.PublicDeliveryUnavailable, "A região selecionada não está disponível para entrega. Confira as regiões atendidas ou escolha retirada.")
+            : null;
+        var address = area is null ? null : new CartAddressResponse(null,
+            request.Address!.Street.Trim().Normalize(), request.Address.Number.Trim().Normalize(),
+            area.Neighborhood, area.City, area.State, Clean(request.Address.Complement),
+            Clean(request.Address.PostalCode)?.Replace("-", "", StringComparison.Ordinal), Clean(request.Address.Reference));
         var quote = await cart.QuoteAsync(request.Cart, cancellationToken);
         BrazilianPhone.TryNormalize(request.Phone, out var phone);
-        var review = new PublicCheckoutReviewResponse(request.Name.Trim().Normalize(), phone, "Pickup", quote.Items,
-            quote.Notes, quote.Subtotal, 0, quote.Subtotal, "", quote.CalculatedAt);
+        var review = new PublicCheckoutReviewResponse(request.Name.Trim().Normalize(), phone, request.Fulfillment, quote.Items,
+            quote.Notes, quote.Subtotal, area?.Fee ?? 0, quote.Subtotal + (area?.Fee ?? 0), "", quote.CalculatedAt)
+        { Address = address, DeliveryAreaId = area?.Id };
         return review with { ReviewToken = PublicCheckoutFingerprint.ForReview(review) };
     }
+
+    public PublicDeliveryAreaResponse[] DeliveryAreas() => delivery.Value.Areas
+        .Select(area => new PublicDeliveryAreaResponse(area.Id, area.Neighborhood.Trim().Normalize(),
+            area.City.Trim().Normalize(), area.State, area.Fee!.Value))
+        .OrderBy(area => area.State, StringComparer.Ordinal).ThenBy(area => area.City, StringComparer.Ordinal)
+        .ThenBy(area => area.Neighborhood, StringComparer.Ordinal).ToArray();
+
+    private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim().Normalize();
 
     public async Task<PublicOrderCreationResult> CreateAsync(PublicOrderRequest request, CancellationToken cancellationToken)
     {
@@ -63,9 +83,18 @@ public sealed class PublicCheckoutService(
             CustomerId = customerId,
             CustomerName = review.Name,
             CustomerPhone = review.Phone,
-            Fulfillment = "Pickup",
+            Fulfillment = review.Fulfillment,
+            AddressStreet = review.Address?.Street,
+            AddressNumber = review.Address?.Number,
+            AddressNeighborhood = review.Address?.Neighborhood,
+            AddressCity = review.Address?.City,
+            AddressState = review.Address?.State,
+            AddressComplement = review.Address?.Complement,
+            AddressPostalCode = review.Address?.PostalCode,
+            AddressReference = review.Address?.Reference,
             Notes = review.Notes,
             Subtotal = review.Subtotal,
+            DeliveryFee = review.DeliveryFee,
             Total = review.Total,
             CreatedAt = now,
             UpdatedAt = now,

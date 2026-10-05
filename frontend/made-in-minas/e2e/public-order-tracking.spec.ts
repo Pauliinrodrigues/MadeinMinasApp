@@ -264,3 +264,19 @@ test('falha pública não envia JWT nem encerra sessão da equipe', async ({ pag
   await expect(page).toHaveURL(/\/equipe$/);
   await expect(page.getByRole('heading', { name: 'Olá, Ana.' })).toBeVisible();
 });
+
+for (const status of ['New', 'Ready', 'Delivered'] as const) {
+  test(`entrega mostra orientação correta em ${status}`, async ({ page }) => {
+    const state = await setup(page, { ...receipt, fulfillment: 'Delivery' });
+    state.order.fulfillment = 'Delivery';
+    state.order.status = status;
+    await page.goto('/pedido/acompanhar');
+    const region = page.getByRole('region', { name: 'Acompanhamento do pedido' });
+    await expect(region).toContainText('Entrega no endereço informado');
+    await expect(region).not.toContainText('retirada');
+    await expect(region).not.toContainText('antes de buscar');
+    if (status === 'Delivered') {
+      await expect(page.getByRole('status')).toContainText('Entregue');
+    }
+  });
+}

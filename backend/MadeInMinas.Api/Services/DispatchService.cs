@@ -97,7 +97,7 @@ public sealed class DispatchService(AppDbContext database, TimeProvider clock, I
     }
     private static DispatchOrderResponse ToResponse(Order order, Payment? payment) => new(order.Id, order.Number, order.Status,
         order.Version, order.Fulfillment, order.CustomerName, order.CustomerPhone,
-        order.AddressId is null ? null : new CartAddressResponse(order.AddressId.Value, order.AddressStreet!, order.AddressNumber!,
+        order.Fulfillment != "Delivery" ? null : new CartAddressResponse(order.AddressId, order.AddressStreet!, order.AddressNumber!,
             order.AddressNeighborhood!, order.AddressCity!, order.AddressState!, order.AddressComplement, order.AddressPostalCode, order.AddressReference),
         order.Items.OrderBy(item => item.Position).Select(item => new CartItemResponse(item.ProductId, item.ProductName, item.Quantity,
             item.UnitPrice, item.LineTotal, item.Notes)).ToArray(), order.Notes, order.Subtotal, order.DeliveryFee, order.Total,

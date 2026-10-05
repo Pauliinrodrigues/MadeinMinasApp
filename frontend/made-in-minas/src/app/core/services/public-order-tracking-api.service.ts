@@ -6,7 +6,7 @@ import { OrderStatus } from './order-api.service';
 
 export interface PublicOrderTracking {
   number: number;
-  fulfillment: 'Pickup';
+  fulfillment: 'Pickup' | 'Delivery';
   total: number;
   status: OrderStatus;
   createdAt: string;
