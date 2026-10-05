@@ -16,11 +16,14 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const isLogin = target.pathname === apiPath + '/auth/login';
   const isPublicMenu = target.pathname === apiPath + '/menu';
   const isPublicCart = target.pathname === apiPath + '/public-cart/quote';
+  const isPublicTracking = target.pathname === apiPath + '/public-orders/tracking';
   const isPublicCheckout =
     target.pathname === apiPath + '/public-checkout/review' ||
     target.pathname === apiPath + '/public-checkout/orders';
   const token =
-    isLogin || isPublicMenu || isPublicCart || isPublicCheckout ? null : session.token();
+    isLogin || isPublicMenu || isPublicCart || isPublicCheckout || isPublicTracking
+      ? null
+      : session.token();
   const authenticated = token
     ? request.clone({ setHeaders: { Authorization: 'Bearer ' + token } })
     : request;

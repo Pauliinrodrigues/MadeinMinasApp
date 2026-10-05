@@ -1,6 +1,7 @@
 using MadeInMinas.Api.Data;
 using MadeInMinas.Api.Infrastructure;
 using MadeInMinas.Api.Security;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
@@ -36,6 +37,18 @@ builder.Services.AddScoped<MadeInMinas.Api.Services.SalesReportService>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.PublicMenuService>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.PublicCartService>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.PublicCheckoutService>();
+builder.Services.AddDataProtection().SetApplicationName("MadeInMinas.Api");
+builder.Services.AddSingleton<PublicOrderAccess>();
+builder.Services.AddScoped<MadeInMinas.Api.Services.PublicOrderTrackingService>();
+builder.Services.AddRateLimiter(options => options.AddPolicy("public-tracking", context =>
+    RateLimitPartition.GetFixedWindowLimiter(context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 60,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0,
+            AutoReplenishment = true
+        })));
 builder.Services.AddRateLimiter(options => options.AddPolicy("public-checkout", context =>
     RateLimitPartition.GetFixedWindowLimiter(context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         _ => new FixedWindowRateLimiterOptions

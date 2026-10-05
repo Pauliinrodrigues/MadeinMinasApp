@@ -4,13 +4,18 @@ using System.Text;
 using MadeInMinas.Api.Data;
 using MadeInMinas.Api.DTOs.PublicCheckout;
 using MadeInMinas.Api.Models;
+using MadeInMinas.Api.Security;
 using MadeInMinas.Api.Validation;
 using Microsoft.EntityFrameworkCore;
 
 namespace MadeInMinas.Api.Services;
 
-public sealed class PublicCheckoutService(AppDbContext database, PublicCartService cart, TimeProvider clock,
-    ILogger<PublicCheckoutService> logger)
+public sealed class PublicCheckoutService(
+    AppDbContext database,
+    PublicCartService cart,
+    TimeProvider clock,
+    ILogger<PublicCheckoutService> logger,
+    PublicOrderAccess access)
 {
     public async Task<PublicCheckoutReviewResponse> ReviewAsync(PublicCheckoutRequest request, CancellationToken cancellationToken)
     {
@@ -102,5 +107,8 @@ public sealed class PublicCheckoutService(AppDbContext database, PublicCartServi
         return customer.Id;
     }
 
-    private static PublicOrderReceipt Receipt(Order order) => new(order.Number, order.Fulfillment, order.Total, order.CreatedAt);
+    private PublicOrderReceipt Receipt(Order order) => new(order.Number, order.Fulfillment, order.Total, order.CreatedAt)
+    {
+        Tracking = access.Issue(order.Id, order.CreatedAt)
+    };
 }

@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using MadeInMinas.Api.Data;
 using MadeInMinas.Api.Models;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -44,7 +45,11 @@ public sealed class AuthenticationFactory : WebApplicationFactory<Program>, IAsy
                 ["Jwt:AccessTokenMinutes"] = "15",
                 ["Logging:LogLevel:Default"] = "Warning"
             }));
-        builder.ConfigureTestServices(services => services.AddSingleton<IStartupFilter, TestIpStartupFilter>());
+        builder.ConfigureTestServices(services =>
+        {
+            services.AddSingleton<IStartupFilter, TestIpStartupFilter>();
+            services.AddSingleton<IDataProtectionProvider>(new EphemeralDataProtectionProvider());
+        });
     }
 
     public HttpClient CreateStaffClient()

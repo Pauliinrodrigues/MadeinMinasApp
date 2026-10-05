@@ -27,6 +27,7 @@ export interface PublicOrderReceipt {
   fulfillment: 'Pickup';
   total: number;
   createdAt: string;
+  tracking?: { token: string; expiresAt: string } | null;
 }
 
 @Injectable({ providedIn: 'root' })

@@ -1,0 +1,63 @@
+<ion-content>
+  <main class="tracking-shell">
+    <header>
+      <a class="brand" routerLink="/pedido">MADE IN MINAS<span>HAMBURGUERIA</span></a>
+      <a routerLink="/pedido/finalizar">Voltar ao comprovante</a>
+    </header>
+    <section class="intro">
+      <span class="eyebrow">DA CHAPA AO BALCÃO.</span>
+      <h1>Acompanhe <em>seu pedido.</em></h1>
+    </section>
+    @if (access()) {
+    <section class="panel" aria-label="Acompanhamento do pedido">
+      @if (state.receipt(); as receipt) {
+      <h2>Pedido #{{ order()?.number ?? receipt.number }}</h2>
+      } @if (order(); as current) {
+      <div role="status" aria-live="polite">
+        <strong class="status">{{ label(current.status) }}</strong>
+        <p>{{ message(current.status) }}</p>
+      </div>
+      <p>Retirada no balcão · Total registrado: <strong>{{ price(current.total) }}</strong></p>
+      <h3>Histórico do pedido</h3>
+      <ol aria-label="Histórico do pedido">
+        @for (entry of current.history; track $index) {
+        <li>
+          <strong>{{ label(entry.status) }}</strong
+          ><time [attr.datetime]="entry.occurredAt"
+            >{{ entry.occurredAt | date:'dd/MM HH:mm:ss':'-0300' }}</time
+          >
+        </li>
+        }
+      </ol>
+      <p class="notice">
+        Horários de Brasília. Última consulta: {{ checkedAt() | date:'dd/MM HH:mm:ss':'-0300' }}.
+      </p>
+      } @if (error()) {
+      <p class="error" role="alert">{{ error() }}</p>
+      } @if (!unavailable() && !terminal()) {
+      <button type="button" (click)="load()" [disabled]="loading()">
+        {{ loading() ? 'Consultando…' : 'Atualizar pedido' }}
+      </button>
+      <p class="notice">
+        Atualizamos enquanto esta página estiver visível. Em caso de falha, aguardamos antes de
+        tentar novamente.
+      </p>
+      }
+      <p class="notice">
+        Mantenha esta aba aberta para acompanhar. Acesso até {{ access()!.expiresAt |
+        date:'dd/MM/yyyy HH:mm':'-0300' }} (Brasília).
+      </p>
+    </section>
+    } @else {
+    <section class="panel">
+      <h2>Abra o comprovante do seu pedido</h2>
+      <p>
+        O acompanhamento está disponível na aba em que você enviou o pedido. Se perdeu o acesso ou
+        possui um comprovante antigo, procure o atendimento.
+      </p>
+      <a routerLink="/pedido/finalizar">Ver meu comprovante</a>
+    </section>
+    }
+    <footer>Made in Minas · Feito com cuidado.</footer>
+  </main>
+</ion-content>

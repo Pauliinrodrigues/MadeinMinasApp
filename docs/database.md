@@ -79,3 +79,7 @@ PublicCartService consulta Products e o estado de Categories com AsNoTracking/Re
 ## Fase 8C — criação pública para retirada
 
 Migration 20261005145517_AddPublicOrders: Orders.CreatedById e OrderStatusHistory.ActorId tornam-se opcionais; constraints preservam autoria obrigatória em pedidos manuais e transições operacionais. Origem DirectLink exige retirada e ausência de funcionário criador. RequestId tem índice único parcial para pedidos públicos; a chave manual por funcionário permanece. Sem novas tabelas. Criação revalida catálogo e grava eventual cliente, pedido, itens e histórico atomicamente. Telefone é contato autodeclarado, sem autenticação ou atualização pública de cadastros. Down recusa reversão quando há pedidos públicos, preservando autoria. Ver [public-checkout.md](public-checkout.md).
+
+## Fase 8D — acompanhamento público
+
+Sem migration ou escrita no banco. PublicOrderTrackingService lê Orders/OrderStatusHistory por ID obtido de credencial protegida, sempre limitado à origem DirectLink. Projeção em uma instrução SQL mantém status e histórico no mesmo snapshot sem carregar campos privados. O token não é coluna de Orders; depende das chaves do ASP.NET Core Data Protection no ambiente de execução. O esquema continua em AddPublicOrders. Ver [public-order-tracking.md](public-order-tracking.md).

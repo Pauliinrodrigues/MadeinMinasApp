@@ -116,7 +116,7 @@ public sealed class PublicCheckoutTests(AuthenticationFactory factory) : IClassF
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         Assert.True(response.Headers.CacheControl?.NoStore);
         using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-        Assert.Equal(["createdAt", "fulfillment", "number", "total"], json.RootElement.EnumerateObject().Select(field => field.Name).Order());
+        Assert.Equal(["createdAt", "fulfillment", "number", "total", "tracking"], json.RootElement.EnumerateObject().Select(field => field.Name).Order());
         var receipt = (await response.Content.ReadFromJsonAsync<PublicOrderReceipt>())!;
         Assert.True(receipt.Number > 0);
         Assert.Equal(59.80m, receipt.Total);
@@ -250,7 +250,12 @@ public sealed class PublicCheckoutTests(AuthenticationFactory factory) : IClassF
         Assert.Equal(7, responses.Count(response => response.StatusCode == HttpStatusCode.OK));
         var receipts = await Task.WhenAll(responses.Select(response => response.Content.ReadFromJsonAsync<PublicOrderReceipt>()));
         var receipt = receipts[0]!;
-        Assert.All(receipts, result => Assert.Equal(receipt, result));
+        Assert.All(receipts, result =>
+        {
+            Assert.NotNull(result!.Tracking);
+            Assert.Equal(receipt.Tracking!.ExpiresAt, result.Tracking.ExpiresAt);
+            Assert.Equal(receipt with { Tracking = result.Tracking }, result);
+        });
         await factory.WithDatabaseAsync(async database =>
         {
             Assert.Equal(1, await database.Orders.CountAsync());
@@ -260,7 +265,9 @@ public sealed class PublicCheckoutTests(AuthenticationFactory factory) : IClassF
         });
         var replay = await client.PostAsJsonAsync(OrdersPath, input);
         Assert.Equal(HttpStatusCode.OK, replay.StatusCode);
-        Assert.Equal(receipt, await replay.Content.ReadFromJsonAsync<PublicOrderReceipt>());
+        var recovered = (await replay.Content.ReadFromJsonAsync<PublicOrderReceipt>())!;
+        Assert.Equal(receipt.Tracking!.ExpiresAt, recovered.Tracking!.ExpiresAt);
+        Assert.Equal(receipt with { Tracking = recovered.Tracking }, recovered);
         await ProblemAsync(await client.PostAsJsonAsync(OrdersPath, input with { Checkout = input.Checkout with { Name = "Outra pessoa" } }), "OrderRequestConflict");
     }
 
