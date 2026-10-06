@@ -250,7 +250,7 @@ test('limpar exige confirmação e remove também as observações gerais', asyn
   await expect(page.getByLabel('Observações gerais', { exact: true })).toHaveValue('');
 });
 
-test('navegação mantém itens, voltar descarta revisão e recarregar esvazia o carrinho', async ({
+test('navegação e reload preservam itens, mas exigem nova revisão dos valores', async ({
   page,
 }) => {
   await setup(page);
@@ -263,10 +263,11 @@ test('navegação mantém itens, voltar descarta revisão e recarregar esvazia o
   await expect(page.getByRole('heading', { name: 'Uai Sô', exact: true })).toBeVisible();
   await expect(page.getByRole('region', { name: 'Valores revisados' })).toHaveCount(0);
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Seu carrinho está vazio' })).toBeVisible();
+  await expect(page.getByLabel('Quantidade do item 1', { exact: true })).toHaveValue('1');
+  await expect(page.getByRole('region', { name: 'Valores revisados' })).toHaveCount(0);
   expect(
     await page.evaluate(() => ({ local: localStorage.length, session: sessionStorage.length })),
-  ).toEqual({ local: 0, session: 0 });
+  ).toEqual({ local: 0, session: 1 });
 });
 
 test('falhas preservam itens e indisponibilidade nunca mostra subtotal antigo', async ({
@@ -317,7 +318,7 @@ test('durante revisão bloqueia edição e saída ignora resposta antiga', async
 
 test('consulta pública não envia token da equipe nem encerra sua sessão', async ({ page }) => {
   const state = await setup(page);
-  await page.goto('/entrar');
+  await page.goto('/entrar?returnUrl=%2Fequipe');
   await page.getByLabel('Login', { exact: true }).fill('ana');
   await page.getByLabel('Senha', { exact: true }).fill('Senha teste 123!');
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();

@@ -1,6 +1,36 @@
 :host {
   display: block;
 }
+.saved-orders {
+  margin-bottom: 20px;
+}
+.saved-orders select {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px;
+  margin: 8px 0 16px;
+  font: inherit;
+  color: #35281e;
+  background: #fffdf9;
+  border: 1px solid #dfd3c3;
+  border-radius: 8px;
+}
+.remember {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+}
+input[type='checkbox'] {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+summary {
+  cursor: pointer;
+  padding: 12px 0;
+}
 ion-content {
   --background: #faf5ec;
   --color: #35281e;

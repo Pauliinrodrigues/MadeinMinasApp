@@ -15,11 +15,14 @@ public sealed class OrderService(AppDbContext database, CartService cart, OrderS
 {
     public async Task<OrderPageResponse> ListAsync(OrderListQuery request, CancellationToken cancellationToken)
     {
+        await using var transaction = await database.Database.BeginTransactionAsync(System.Data.IsolationLevel.RepeatableRead, cancellationToken);
         var query = database.Orders.AsNoTracking();
         if (request.Status is not null)
             query = query.Where(order => order.Status == request.Status);
         if (request.CustomerId is not null)
             query = query.Where(order => order.CustomerId == request.CustomerId);
+        if (request.Origin is not null)
+            query = query.Where(order => order.Origin == request.Origin);
         if (!string.IsNullOrWhiteSpace(request.Search))
         {
             var search = request.Search.Trim().Normalize().ToUpperInvariant();
@@ -28,11 +31,26 @@ public sealed class OrderService(AppDbContext database, CartService cart, OrderS
             query = query.Where(order => order.Number == number || order.CustomerName.ToUpper().Contains(search)
                 || phone != "" && order.CustomerPhone.Contains(phone));
         }
-        var total = await query.CountAsync(cancellationToken);
-        var items = await query.OrderByDescending(order => order.CreatedAt).ThenByDescending(order => order.Number)
+        // Uma tentativa ativa prevalece sobre devoluções e intenções canceladas anteriores.
+        var summaries = query.Select(order => new
+        {
+            Order = order,
+            PaymentStatus = database.Payments.Any(payment => payment.OrderId == order.Id && payment.Status == "Received") ? "Received"
+                : database.Payments.Any(payment => payment.OrderId == order.Id && payment.Status == "Pending") ? "Pending"
+                : database.Payments.Any(payment => payment.OrderId == order.Id && payment.Status == "Refunded") ? "Refunded"
+                : order.Status == "Cancelled" || order.Status == "Finalized" ? "NotDue" : "NotRegistered"
+        });
+        if (request.PaymentStatus == "Unpaid")
+            summaries = summaries.Where(item => item.Order.Status != "Cancelled" && item.Order.Status != "Finalized" && item.PaymentStatus != "Received");
+        else if (request.PaymentStatus is not null)
+            summaries = summaries.Where(item => item.PaymentStatus == request.PaymentStatus);
+        var total = await summaries.CountAsync(cancellationToken);
+        var items = await summaries.OrderByDescending(item => item.Order.CreatedAt).ThenByDescending(item => item.Order.Number)
             .Skip((request.Page - 1) * request.PageSize).Take(request.PageSize)
-            .Select(order => new OrderSummaryResponse(order.Id, order.Number, order.CustomerName, order.Fulfillment,
-                order.Status, order.Total, order.CreatedAt)).ToArrayAsync(cancellationToken);
+            .Select(item => new OrderSummaryResponse(item.Order.Id, item.Order.Number, item.Order.CustomerName, item.Order.Fulfillment,
+                item.Order.Status, item.Order.Total, item.Order.CreatedAt)
+            { Origin = item.Order.Origin, PaymentStatus = item.PaymentStatus }).ToArrayAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
         return new OrderPageResponse(items, request.Page, request.PageSize, total);
     }
 

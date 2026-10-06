@@ -83,7 +83,7 @@ async function setup(page: Page, role = 'Administrator') {
 }
 
 async function login(page: Page) {
-  await page.goto('/entrar');
+  await page.goto('/entrar?returnUrl=%2Fequipe');
   await page.getByLabel('Login', { exact: true }).fill('staff');
   await page.getByLabel('Senha', { exact: true }).fill('Senha de teste');
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
@@ -112,6 +112,10 @@ test('Dashboard: valores distintos, horário de Brasília e links da operação'
   await expect(metric(page, 'Ticket médio confirmado')).toContainText(/R\$\s*45,05/);
   await expect(metric(page, 'Tempo médio de produção')).toContainText('18,75 min');
   await expect(metric(page, 'Em preparação')).toContainText('6');
+  await expect(page.getByRole('link', { name: 'Em preparação', exact: true })).toHaveAttribute(
+    'href',
+    '/equipe/pedidos?status=InPreparation',
+  );
   await expect(page.getByText(/Consultado em/)).toContainText('02/10/2026, 23:30:00');
   await expect(page.getByRole('region', { name: 'Filas da operação agora' })).toContainText(
     'dias anteriores',
@@ -212,7 +216,7 @@ test('Dashboard: sessão revogada remove os indicadores e retorna ao login', asy
   await expect(metric(page, 'Valor confirmado hoje')).toBeVisible();
   state.status = 401;
   await page.getByRole('button', { name: 'Atualizar painel', exact: true }).click();
-  await expect(page).toHaveURL(/\/entrar$/);
+  await expect(page).toHaveURL(/\/entrar(?:\?.*)?$/);
   await expect(page.getByRole('region', { name: 'Pedidos do dia' })).toHaveCount(0);
 });
 
@@ -233,6 +237,6 @@ for (const role of ['Attendant', 'Kitchen', 'Dispatch']) {
 test('Dashboard: visitante precisa entrar antes de consultar', async ({ page }) => {
   const state = await setup(page);
   await page.goto('/equipe/dashboard');
-  await expect(page).toHaveURL(/\/entrar$/);
+  await expect(page).toHaveURL(/\/entrar(?:\?.*)?$/);
   expect(state.reads).toBe(0);
 });

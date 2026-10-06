@@ -70,6 +70,28 @@ public sealed class ProductCostTests(AuthenticationFactory factory) : IClassFixt
         return (await response.Content.ReadFromJsonAsync<ProductCostResponse>())!;
     }
 
+    [Fact]
+    public async Task CatalogShowsRecipeAndCostGapsWithoutChangingCommercialData()
+    {
+        using var client = await SignInAsync();
+        async Task<DTOs.Products.ProductResponse> ReadProductAsync() =>
+            Assert.Single((await client.GetFromJsonAsync<DTOs.Products.ProductPageResponse>("/api/products"))!.Items);
+        var complete = await ReadProductAsync();
+        Assert.True(complete.HasRecipe);
+        Assert.False(complete.HasMissingCosts);
+        await factory.WithDatabaseAsync(database => database.Ingredients.Where(item => item.Id == meat.Id)
+            .ExecuteUpdateAsync(setters => setters.SetProperty(item => item.UnitCost, 0m)));
+        Assert.True((await ReadProductAsync()).HasMissingCosts);
+        await factory.WithDatabaseAsync(database => database.Recipes.ExecuteDeleteAsync());
+        var missing = await ReadProductAsync();
+        Assert.False(missing.HasRecipe);
+        Assert.False(missing.HasMissingCosts);
+        Assert.Equal(complete.Price, missing.Price);
+        Assert.Equal(complete.UpdatedAt, missing.UpdatedAt);
+        await factory.WithDatabaseAsync(async database => Assert.Equal(7m,
+            await database.Ingredients.Where(item => item.Id == meat.Id).Select(item => item.CurrentStock).SingleAsync()));
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(2)]

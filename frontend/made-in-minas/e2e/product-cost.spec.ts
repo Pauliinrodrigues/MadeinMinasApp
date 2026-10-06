@@ -114,7 +114,7 @@ async function setup(page: Page, role = 'Administrator') {
 }
 
 async function login(page: Page) {
-  await page.goto('/entrar');
+  await page.goto('/entrar?returnUrl=%2Fequipe');
   await page.getByLabel('Login', { exact: true }).fill('staff');
   await page.getByLabel('Senha', { exact: true }).fill('Senha de teste');
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
@@ -261,7 +261,7 @@ test('CMV: produto inexistente mostra erro e sessão revogada encerra consulta',
   await expect(page.getByRole('alert')).toContainText('Produto não encontrado');
   state.status = 401;
   await page.getByRole('button', { name: 'Tentar novamente', exact: true }).click();
-  await expect(page).toHaveURL(/\/entrar$/);
+  await expect(page).toHaveURL(/\/entrar(?:\?.*)?$/);
   await expect(page.getByRole('region', { name: 'Indicadores de CMV' })).toHaveCount(0);
 });
 

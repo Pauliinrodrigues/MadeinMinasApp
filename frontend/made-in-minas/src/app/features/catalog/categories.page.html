@@ -32,6 +32,12 @@
       O cadastro será preservado e poderá ser {{ category.isActive ? 'reativado' : 'inativado' }}
       depois.
     </p>
+    <p>
+      {{ category.isActive ? 'Inativar a categoria também retira seus produtos do cardápio e impede
+      novas compras desses itens.' : 'Ao reativar, produtos ativos e com venda liberada voltam ao
+      catálogo; o cardápio público também confere ficha e estoque.' }} Pedidos já registrados
+      preservam seu histórico.
+    </p>
     <div class="actions">
       <button type="button" class="primary" (click)="changeStatus()" [disabled]="saving()">
         {{ saving() ? 'Salvando…' : 'Confirmar' }}

@@ -38,11 +38,17 @@ public sealed class OrderListQuery
     [Range(1, 100)] public int PageSize { get; init; } = 20;
     [StringLength(120)] public string? Search { get; init; }
     [RegularExpression("^(New|Confirmed|InPreparation|Ready|AwaitingDelivery|OutForDelivery|Delivered|Finalized|Cancelled)$")] public string? Status { get; init; }
+    [RegularExpression("^(Manual|DirectLink)$")] public string? Origin { get; init; }
+    [RegularExpression("^(Unpaid|NotRegistered|Pending|Received|Refunded|NotDue)$")] public string? PaymentStatus { get; init; }
     public Guid? CustomerId { get; init; }
 }
 
 public sealed record OrderSummaryResponse(Guid Id, int Number, string CustomerName, string Fulfillment,
-    string Status, decimal Total, DateTimeOffset CreatedAt);
+    string Status, decimal Total, DateTimeOffset CreatedAt)
+{
+    public string Origin { get; init; } = string.Empty;
+    public string PaymentStatus { get; init; } = string.Empty;
+}
 public sealed record OrderPageResponse(OrderSummaryResponse[] Items, int Page, int PageSize, int TotalCount);
 public sealed record OrderHistoryResponse(
     int Version,

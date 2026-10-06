@@ -3,7 +3,7 @@
     <a routerLink="/" class="staff-brand">MADE IN MINAS <span>HAMBURGUERIA</span></a>
     <section class="panel login-panel">
       <p class="eyebrow">ÁREA DA EQUIPE</p>
-      <h1>Bom trabalho começa por aqui.</h1>
+      <h1>Acesso da equipe</h1>
       <p>Entre com sua conta de funcionário.</p>
       @if (session.notice()) {
       <p role="status" class="notice">{{ session.notice() }}</p>
@@ -40,17 +40,33 @@
           >Senha<input
             name="password"
             [(ngModel)]="password"
-            type="password"
+            [type]="showPassword ? 'text' : 'password'"
+            (keyup)="checkCapsLock($event)"
+            (keydown)="checkCapsLock($event)"
+            (blur)="capsLock = false"
             required
             maxlength="128"
             autocomplete="current-password"
             [disabled]="busy()"
         /></label>
+        <button
+          type="button"
+          (click)="showPassword = !showPassword"
+          [attr.aria-pressed]="showPassword"
+        >
+          {{ showPassword ? 'Ocultar senha' : 'Mostrar senha' }}
+        </button>
+        @if (capsLock) {
+        <p role="status" class="notice">Caps Lock está ativado.</p>
+        }
         <button class="primary" type="submit" [disabled]="form.invalid || busy()">
           {{ busy() ? 'Entrando…' : 'Entrar' }}
         </button>
       </form>
       <p class="hint">A sessão dura até 15 minutos. Atualizar a página exige novo login.</p>
+      <p class="hint">
+        Precisa de acesso ou esqueceu a senha? Procure o administrador da hamburgueria.
+      </p>
     </section>
     <a routerLink="/">Voltar ao início</a>
   </main>

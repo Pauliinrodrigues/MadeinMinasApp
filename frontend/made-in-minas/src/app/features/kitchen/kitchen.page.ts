@@ -43,6 +43,15 @@ export class KitchenPage {
   readonly needsRefresh = signal(true);
   readonly error = signal('');
   readonly notice = signal('');
+  readonly queueNotice = signal('');
+  readonly selectedStage = signal('');
+  readonly visibleColumns = computed(
+    () =>
+      this.board()?.columns.filter(
+        (column) => !this.selectedStage() || column.status === this.selectedStage(),
+      ) ?? [],
+  );
+  private confirmedCount: number | null = null;
   readonly pending = signal<{ order: KitchenOrder; input: KitchenStatusInput } | null>(null);
   readonly statusLabel = orderStatusLabel;
   readonly stale = computed(
@@ -85,6 +94,14 @@ export class KitchenPage {
       )
       .subscribe({
         next: (board) => {
+          const confirmed =
+            board.columns.find((column) => column.status === 'Confirmed')?.totalCount ?? 0;
+          if (this.confirmedCount !== null && confirmed > this.confirmedCount) {
+            this.queueNotice.set(
+              'A fila de confirmados aumentou. Confira os pedidos aguardando preparo.',
+            );
+          }
+          this.confirmedCount = confirmed;
           this.serverTime = Date.parse(board.serverTime);
           this.receivedAt.set(performance.now());
           this.tick.set(performance.now());

@@ -40,12 +40,57 @@ public sealed class PublicCartTests(AuthenticationFactory factory) : IClassFixtu
         burger = new Product { Name = "Uai Sô", NormalizedName = "UAI SÔ", Category = category, Price = 29.90m, IsActive = true, IsAvailable = true };
         drink = new Product { Name = "Suco", NormalizedName = "SUCO", Category = category, Price = 5.15m, IsActive = true, IsAvailable = true };
         database.Products.AddRange(burger, drink);
-        database.Ingredients.Add(new Ingredient { Name = "Custo privado", NormalizedName = "CUSTO PRIVADO", Unit = "un", UnitCost = 18.1234m, CurrentStock = 3m });
+        var ingredient = new Ingredient { Name = "Custo privado", NormalizedName = "CUSTO PRIVADO", Unit = "un", UnitCost = 18.1234m, CurrentStock = 3m };
+        database.Recipes.AddRange(
+            new Recipe { Product = burger, YieldQuantity = 1, Items = [new RecipeItem { Ingredient = ingredient, Quantity = 0.001m }] },
+            new Recipe { Product = drink, YieldQuantity = 1, Items = [new RecipeItem { Ingredient = ingredient, Quantity = 0.001m }] });
         await database.SaveChangesAsync();
     });
     public Task DisposeAsync() => factory.WithDatabaseAsync(ClearAsync);
 
     private PublicCartQuoteRequest Input() => new([new(burger.Id, 2, "  Sem cebola  "), new(drink.Id, 3)], "  Embalar separado  ");
+
+    [Theory]
+    [InlineData("missing")]
+    [InlineData("inactive")]
+    [InlineData("stock")]
+    public async Task ProductionConstraintsRejectQuoteWithoutConsumingStock(string condition)
+    {
+        await factory.WithDatabaseAsync(async database =>
+        {
+            if (condition == "missing")
+                await database.Recipes.Where(recipe => recipe.ProductId == burger.Id).ExecuteDeleteAsync();
+            if (condition == "inactive")
+                await database.Ingredients.ExecuteUpdateAsync(update => update.SetProperty(item => item.IsActive, false));
+            if (condition == "stock")
+                await database.Ingredients.ExecuteUpdateAsync(update => update.SetProperty(item => item.CurrentStock, 0.004m));
+        });
+        using var client = factory.CreateStaffClient();
+        var response = await client.PostAsJsonAsync(Path, Input());
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        await factory.WithDatabaseAsync(async database =>
+        {
+            Assert.Equal(condition == "stock" ? 0.004m : 3m, (await database.Ingredients.SingleAsync()).CurrentStock);
+            Assert.False(await database.StockMovements.AnyAsync());
+            Assert.False(await database.Orders.AnyAsync());
+        });
+    }
+
+    [Fact]
+    public async Task SharedIngredientsAndSeparateNotesUseTheSameRoundingAsConfirmation()
+    {
+        await factory.WithDatabaseAsync(async database =>
+        {
+            await database.Recipes.ExecuteUpdateAsync(update => update.SetProperty(recipe => recipe.YieldQuantity, 3));
+            await database.Ingredients.ExecuteUpdateAsync(update => update.SetProperty(item => item.CurrentStock, 0.002m));
+        });
+        using var client = factory.CreateStaffClient();
+        // Three burger lines together consume .001; the drink consumes another .001.
+        var input = new PublicCartQuoteRequest([new(burger.Id, 1, "A"), new(burger.Id, 2, "B"), new(drink.Id, 1)]);
+        await ReadAsync(await client.PostAsJsonAsync(Path, input));
+        input = input with { Items = [new(burger.Id, 2, "A"), new(burger.Id, 2, "B"), new(drink.Id, 1)] };
+        Assert.Equal(HttpStatusCode.Conflict, (await client.PostAsJsonAsync(Path, input)).StatusCode);
+    }
 
     private static async Task<PublicCartQuoteResponse> ReadAsync(HttpResponseMessage response)
     {

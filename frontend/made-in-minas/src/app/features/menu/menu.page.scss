@@ -38,7 +38,7 @@ a {
   padding: 12px 0;
 }
 .intro {
-  padding: 56px 0 30px;
+  padding: 24px 0 12px;
 }
 .eyebrow {
   font-size: 11px;
@@ -67,11 +67,22 @@ p {
   max-width: 600px;
 }
 .cart-summary {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #faf5ec;
+  padding-top: 12px;
   display: flex;
   gap: 16px;
   flex-wrap: wrap;
   align-items: center;
   padding-bottom: 20px;
+}
+ion-content::part(scroll) {
+  scroll-padding-top: 180px;
+}
+.cart-summary small {
+  font-weight: 400;
 }
 .cart-summary a {
   display: inline-block;
@@ -85,6 +96,14 @@ p {
   color: #695b4c;
   font-size: 13px;
   overflow-wrap: anywhere;
+}
+.cart-notice:not(:empty) {
+  padding-bottom: 12px;
+}
+.help-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
 }
 .add-product {
   margin-top: 18px;
@@ -110,6 +129,7 @@ label {
   font-weight: 700;
 }
 select,
+input,
 button {
   font: inherit;
   min-height: 44px;
@@ -121,6 +141,30 @@ select {
   width: 100%;
   background: white;
   color: #35281e;
+}
+input {
+  width: 100%;
+  background: white;
+  color: #35281e;
+}
+form.category-filter {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+form.category-filter label {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+.coverage-notice {
+  font-size: 14px;
+  padding: 12px 16px;
+  background: #eee3d5;
+  border-radius: 10px;
+}
+.coverage-notice summary {
+  cursor: pointer;
+  min-height: 24px;
 }
 button {
   cursor: pointer;
@@ -287,6 +331,6 @@ footer span {
     max-width: none;
   }
   .intro {
-    padding-top: 40px;
+    padding-top: 24px;
   }
 }

@@ -1,4 +1,4 @@
-<section class="panel">
+<section class="panel" aria-label="Conversa selecionada">
   <a routerLink="/equipe/atendimentos">Voltar à fila</a>
   <h1>Conversa do site</h1>
   @if (data(); as current) {
@@ -14,7 +14,17 @@
   @if (loadError()) {
   <p role="alert">{{ loadError() }}</p>
   }
-  <app-chat-messages [messages]="messages()" />
+  <div
+    #messageHistory
+    class="messages-scroll"
+    tabindex="0"
+    aria-label="Histórico de mensagens, role para ler"
+  >
+    <app-chat-messages [messages]="messages()" />
+  </div>
+  <button type="button" (click)="messageHistory.scrollTop = messageHistory.scrollHeight">
+    Ver últimas mensagens
+  </button>
   @if (recoveryError()) {
   <p role="alert">
     Não foi possível recuperar a mensagem pendente. Confira o histórico antes de liberar outro
@@ -39,6 +49,7 @@
     >Resposta ao cliente<textarea
       id="staff-chat-message"
       [(ngModel)]="text"
+      (ngModelChange)="saveDraft()"
       maxlength="2000"
       rows="4"
       [disabled]="busy()"

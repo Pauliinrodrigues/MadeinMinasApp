@@ -10,6 +10,9 @@ export class AuthSession {
   private expiration = 0;
   private timer?: ReturnType<typeof setTimeout>;
   readonly user = this.profile.asReadonly();
+  readonly canManageDelivery = computed(
+    () => this.profile()?.permissions.includes('delivery.manage') ?? false,
+  );
   readonly canManageChat = computed(
     () => this.profile()?.permissions.includes('chat.manage') ?? false,
   );
@@ -58,6 +61,29 @@ export class AuthSession {
     return this.accessToken;
   }
 
+  homeUrl(): string {
+    if (this.canViewDashboard()) {
+      return '/equipe/dashboard';
+    }
+    if (this.canManageOrders()) {
+      return '/equipe/pedidos';
+    }
+    if (this.canWorkKitchen()) {
+      return '/equipe/cozinha';
+    }
+    if (this.canWorkDispatch()) {
+      return '/equipe/expedicao';
+    }
+    return '/equipe';
+  }
+
+  returnUrl(value: string | null): string {
+    // Only internal staff routes. Permission guards still authorize the destination.
+    return value && /^\/(equipe(?:[/?]|$)|comanda\/)/.test(value) && !/[\\\r\n]/.test(value)
+      ? value
+      : this.homeUrl();
+  }
+
   start(response: LoginResponse): void {
     const expiration = Date.parse(response.expiresAt);
     if (!response.accessToken || !Number.isFinite(expiration) || expiration <= Date.now()) {
@@ -78,12 +104,19 @@ export class AuthSession {
     this.profile.set(profile);
   }
 
-  end(message: string): void {
+  end(message: string, preserveRoute = true): void {
+    const returnUrl = this.router.url;
     clearTimeout(this.timer);
     this.accessToken = null;
     this.expiration = 0;
     this.profile.set(null);
     this.notice.set(message);
-    void this.router.navigateByUrl('/entrar', { replaceUrl: true });
+    void this.router.navigate(['/entrar'], {
+      replaceUrl: true,
+      queryParams:
+        preserveRoute && (returnUrl.startsWith('/equipe') || returnUrl.startsWith('/comanda/'))
+          ? { returnUrl }
+          : {},
+    });
   }
 }

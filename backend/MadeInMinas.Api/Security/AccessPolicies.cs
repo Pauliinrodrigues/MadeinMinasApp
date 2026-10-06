@@ -3,6 +3,7 @@ namespace MadeInMinas.Api.Security;
 public static class AccessPolicies
 {
     public const string ManageUsers = "users.manage";
+    public const string ManageDelivery = "delivery.manage";
     public const string ManageChat = "chat.manage";
     public const string ViewDashboard = "dashboard.view";
     public const string ViewReports = "reports.view";
@@ -23,6 +24,7 @@ public static class AccessPolicies
         new Dictionary<string, string[]>
         {
             [ManageUsers] = ["Administrator"],
+            [ManageDelivery] = ["Administrator"],
             [ManageChat] = ["Administrator", "Attendant"],
             [ViewDashboard] = ["Administrator"],
             [ViewReports] = ["Administrator"],

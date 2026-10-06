@@ -19,7 +19,8 @@
     @if (data.origin === 'DirectLink') {
     <p class="notice">
       Nome e telefone informados pelo visitante, sem verificação de titularidade. Confira o contato
-      antes de confirmar o preparo. Pagamento na retirada, registrado pela equipe.
+      antes de confirmar o preparo. Pagamento {{ data.fulfillment === 'Delivery' ? 'na entrega' :
+      'na retirada' }}, registrado pela equipe.
     </p>
     }
     <div class="actions">
@@ -27,6 +28,7 @@
       <a class="button" [routerLink]="['/comanda', data.id, 'dispatch']">Comanda de expedição</a>
     </div>
     <h1 id="order-title">Pedido #{{ data.number }}</h1>
+    <p class="notice">{{ nextAction() }}</p>
     <p>
       Status: <strong>{{ statusLabel(data.status) }}</strong> · {{ data.fulfillment === 'Pickup' ?
       'Retirada' : 'Entrega' }}
@@ -40,22 +42,50 @@
       address.reference }}
     </p>
     }
-    <ul>
-      @for (item of data.items; track $index) {
-      <li>
-        <strong>{{ item.quantity }} × {{ item.name }}</strong> · {{ formatPrice(item.unitPrice) }}
-        por unidade · {{ formatPrice(item.lineTotal) }}@if (item.notes) {
-        <p>Observações: {{ item.notes }}</p>
+    <div class="order-content">
+      <section aria-label="Itens do pedido">
+        <h2>Itens</h2>
+        <ul>
+          @for (item of data.items; track $index) {
+          <li>
+            <strong>{{ item.quantity }} × {{ item.name }}</strong> · {{ formatPrice(item.unitPrice)
+            }} por unidade · {{ formatPrice(item.lineTotal) }}@if (item.notes) {
+            <p>Observações: {{ item.notes }}</p>
+            }
+          </li>
+          }
+        </ul>
+        @if (data.notes) {
+        <p>Observações gerais: {{ data.notes }}</p>
         }
-      </li>
-      }
-    </ul>
-    @if (data.notes) {
-    <p>Observações gerais: {{ data.notes }}</p>
-    }
-    <p>Subtotal: {{ formatPrice(data.subtotal) }}</p>
-    <p>Taxa de entrega: {{ formatPrice(data.deliveryFee) }}</p>
-    <p>Total: <strong>{{ formatPrice(data.total) }}</strong></p>
+      </section>
+      <aside class="order-summary" aria-label="Valores do pedido">
+        <p>Subtotal: {{ formatPrice(data.subtotal) }}</p>
+        <p>Taxa de entrega: {{ formatPrice(data.deliveryFee) }}</p>
+        <p>Total: <strong>{{ formatPrice(data.total) }}</strong></p>
+        @if (canManagePayments()) {
+        <section aria-label="Resumo do pagamento">
+          <h2>Pagamento</h2>
+          @if (payments(); as paymentData) {
+          <p>
+            Recebido: <strong>{{ formatPrice(paymentData.receivedAmount) }}</strong> · Saldo:
+            <strong>{{ formatPrice(paymentData.balance) }}</strong>
+          </p>
+          @if (paymentData.activePayment; as payment) {
+          <p>{{ paymentMethodLabel(payment.method) }} · {{ paymentStatusLabel(payment.status) }}</p>
+          @if (payment.changeAmount !== null) {
+          <p>Troco: {{ formatPrice(payment.changeAmount) }}</p>
+          } } @else {
+          <p>Nenhuma forma de pagamento ativa. Defina o pagamento na tela de pagamentos.</p>
+          } } @else if (paymentError()) {
+          <p>Não foi possível consultar o pagamento. Abra Pagamentos para conferir.</p>
+          } @else {
+          <p>Consultando pagamento…</p>
+          }
+        </section>
+        }
+      </aside>
+    </div>
     <section aria-label="Estoque do pedido">
       <h2>Estoque</h2>
       <p>{{ stockLabels[data.stockStatus] }}</p>
@@ -158,8 +188,8 @@
     </div>
   </section>
   }
-  <section class="panel" aria-labelledby="history-title">
-    <h2 id="history-title">Histórico do pedido</h2>
+  <details class="panel" role="region" aria-label="Histórico do pedido">
+    <summary>Histórico do pedido</summary>
     <ol>
       @for (event of data.history; track event.version) {
       <li>
@@ -173,6 +203,6 @@
       </li>
       }
     </ol>
-  </section>
+  </details>
   }
 </section>

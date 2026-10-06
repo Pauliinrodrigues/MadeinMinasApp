@@ -188,3 +188,14 @@ dotnet ef database update 20261005210534_AddPublicDelivery --project backend/Mad
 ```
 
 Apenas duas constraints de Orders mudam; não há criação de cadastros ou movimentações. Down recusa reversão se houver entregas públicas. Reiniciar a API atualizada e configurar regiões/taxas aprovadas conforme [public-delivery.md](../docs/public-delivery.md). Sem regiões, entrega fica indisponível e retirada continua funcionando. Não aplicar em parsmartmanager. Resultado local e backup em [validation.md](../docs/validation.md).
+
+## Migration da administração de regiões e taxas
+
+`20261006174915_AddDeliverySettings` cria apenas `DeliverySettings`: uma linha de configuração versionada, lista JSONB de até 500 regiões e autor/data da última alteração. Não insere cobertura, altera pedidos ou movimenta saldos. Antes de aplicar em outra instalação, confirme exclusivamente **made_in_minas**, faça backup e revise:
+
+```powershell
+dotnet ef migrations script 20261005210534_AddPublicDelivery 20261006174915_AddDeliverySettings --project backend/MadeInMinas.Api
+dotnet ef database update 20261006174915_AddDeliverySettings --project backend/MadeInMinas.Api
+```
+
+Reinicie a API atualizada e faça novo login como administrador para receber `delivery.manage`. Cadastros → Regiões de entrega passa a administrar cobertura/taxas sem novos reinícios. Até o primeiro salvamento, lê a configuração legada; depois, prevalece a lista do banco. Down recusa apagar configurações salvas; exportar e migrar antes de uma reversão planejada. Não apagar a linha para contornar a proteção. Regras: [delivery-settings.md](../docs/delivery-settings.md). Resultado local e backup: [validation.md](../docs/validation.md).

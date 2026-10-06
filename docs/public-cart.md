@@ -8,12 +8,12 @@ Continuidade: a 8B foi preservada no commit local `15d8107`. A [Fase 8C](public-
 
 ## Comportamento e limites
 
-- Seleção mantida somente em memória, durante a navegação interna. Atualizar ou fechar a página apaga o carrinho; não há localStorage, sessionStorage ou persistência no servidor.
+- Seleção recuperável em `sessionStorage` nesta aba por até 8 horas: produtos, quantidades e observações, sem tokens de funcionário nem preços persistidos. Navegação e recarga conservam a montagem. Fechar a aba pode removê-la; não há sincronização entre dispositivos. A tentativa pendente do checkout tem precedência sobre o rascunho.
 - Adicionar novamente um produto soma a quantidade de sua linha sem observações. Se todas as linhas desse produto têm observações, cria outra linha para permitir preparos diferentes.
 - De 1 a 50 linhas, com quantidades inteiras de 1 a 99. O limite de 99 também se aplica à soma das linhas do mesmo produto. Até 250 caracteres de observação por linha e 500 nas observações gerais.
 - A remoção do último item e a limpeza completa apagam também as observações gerais. Limpar todos os itens exige confirmação na própria tela.
 - O frontend guarda IDs, nomes para apresentação, quantidades e observações. Não guarda preços na seleção nem calcula valores comerciais.
-- A revisão busca nomes e preços atuais e exige produto ativo, disponível e em categoria ativa. Um produto inválido impede a revisão inteira. O usuário pode consultar o cardápio atualizado, remover itens e tentar novamente.
+- A revisão busca nomes e preços atuais e exige produto ativo, disponível e em categoria ativa, ficha não vazia, ingredientes ativos e saldo para toda a cesta. Agrupa linhas do mesmo produto antes de arredondar o consumo e soma ingredientes compartilhados, seguindo a regra de confirmação. Não reserva nem baixa estoque. Um produto inválido ou quantidade sem capacidade impede a revisão inteira.
 - Cada edição, remoção, nova revisão ou saída da página descarta os valores anteriores. A seleção permanece após falhas; uma consulta tem timeout de 15 segundos. Durante a consulta, edição e revisão ficam bloqueadas; navegar para fora cancela a assinatura e ignora a resposta antiga.
 - A resposta apresenta **subtotal dos produtos**, sem taxa de entrega, desconto ou total final fictício. Observações são texto, não alteram preços e não substituem a futura escolha de adicionais.
 - A revisão não reserva estoque/preço, não emite token de compra e não cria cliente, endereço, pagamento, pedido ou movimento de estoque. A futura confirmação deverá revalidar todos os dados.

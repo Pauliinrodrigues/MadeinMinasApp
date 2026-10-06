@@ -57,6 +57,10 @@
       <label class="checkbox"
         ><input name="isActive" [(ngModel)]="isActive" type="checkbox" />Categoria ativa</label
       >
+      <p class="hint">
+        Categoria inativa retira os produtos vinculados do cardápio e impede novas compras,
+        preservando os pedidos já registrados.
+      </p>
       <button class="primary" [disabled]="form.invalid || !name.trim() || !validOrder()">
         {{ busy() ? 'Salvando…' : 'Salvar categoria' }}
       </button>

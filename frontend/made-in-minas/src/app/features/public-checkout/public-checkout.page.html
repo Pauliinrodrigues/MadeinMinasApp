@@ -34,6 +34,7 @@
       <p>Anote o número do pedido. Para acompanhar este comprovante, procure o atendimento.</p>
       }
       <button type="button" (click)="newOrder()">Montar outro pedido</button>
+      <p class="notice">Os acompanhamentos anteriores continuam em “Meus pedidos” no cardápio.</p>
     </section>
     } @else if (state.recoveryError()) {
     <section class="panel">
@@ -71,6 +72,11 @@
       <a routerLink="/pedido">Escolher produtos</a>
     </section>
     } @else {
+    <ol class="checkout-steps" aria-label="Etapas do pedido">
+      <li>1 · Recebimento</li>
+      <li>2 · Contato e endereço</li>
+      <li>3 · Conferência</li>
+    </ol>
     <div class="checkout-layout">
       <section class="panel">
         <h2>Como quer receber?</h2>
@@ -81,17 +87,26 @@
             <option value="Pickup">Retirada no balcão</option>
             <option value="Delivery">Entrega</option>
           </select>
+          @if (!loadingAreas() && !areasError() && !areas().length) {
+          <p class="notice">No momento, somente retirada está disponível pelo site.</p>
+          }
+          <h3>Contato para este pedido</h3>
           <label for="checkout-name">Seu nome</label
           ><input
             id="checkout-name"
+            [attr.aria-invalid]="fieldError('name') ? 'true' : null"
+            aria-describedby="checkout-name-error"
             autocomplete="name"
             maxlength="120"
             [(ngModel)]="name"
             (ngModelChange)="change()"
           />
+          <span id="checkout-name-error" class="field-error">{{ fieldError('name') }}</span>
           <label for="checkout-phone">Telefone com DDD</label
           ><input
             id="checkout-phone"
+            [attr.aria-invalid]="fieldError('phone') ? 'true' : null"
+            aria-describedby="checkout-phone-error"
             type="tel"
             autocomplete="tel"
             maxlength="30"
@@ -99,6 +114,7 @@
             (ngModelChange)="change()"
             placeholder="(31) 99999-9999"
           />
+          <span id="checkout-phone-error" class="field-error">{{ fieldError('phone') }}</span>
           @if (fulfillment === 'Delivery') {
           <h3>Endereço de entrega</h3>
           @if (loadingAreas()) {
@@ -109,7 +125,13 @@
           <p>Entrega pelo site ainda indisponível. Fale com o atendimento ou escolha retirada.</p>
           }
           <label for="checkout-area">Bairro e cidade atendidos</label>
-          <select id="checkout-area" [(ngModel)]="address.areaId" (ngModelChange)="change()">
+          <select
+            id="checkout-area"
+            [(ngModel)]="address.areaId"
+            (ngModelChange)="change()"
+            [attr.aria-invalid]="fieldError('area') ? 'true' : null"
+            aria-describedby="checkout-area-error"
+          >
             <option value="">Selecione a região</option>
             @for (area of areas(); track area.id) {
             <option [value]="area.id">
@@ -117,6 +139,7 @@
             </option>
             }
           </select>
+          <span id="checkout-area-error" class="field-error">{{ fieldError('area') }}</span>
           <button type="button" (click)="loadAreas(); change()" [disabled]="loadingAreas()">
             Atualizar regiões
           </button>
@@ -124,42 +147,53 @@
           <label for="checkout-street">Rua ou avenida</label>
           <input
             id="checkout-street"
+            [attr.aria-invalid]="fieldError('street') ? 'true' : null"
+            aria-describedby="checkout-street-error"
             autocomplete="address-line1"
             maxlength="120"
             [(ngModel)]="address.street"
             (ngModelChange)="change()"
           />
+          <span id="checkout-street-error" class="field-error">{{ fieldError('street') }}</span>
           <label for="checkout-number">Número (ou s/n)</label>
           <input
             id="checkout-number"
+            [attr.aria-invalid]="fieldError('number') ? 'true' : null"
+            aria-describedby="checkout-number-error"
             maxlength="20"
             [(ngModel)]="address.number"
             (ngModelChange)="change()"
           />
-          <label for="checkout-complement">Complemento (opcional)</label>
-          <input
-            id="checkout-complement"
-            autocomplete="address-line2"
-            maxlength="120"
-            [(ngModel)]="address.complement"
-            (ngModelChange)="change()"
-          />
-          <label for="checkout-postal">CEP (opcional)</label>
-          <input
-            id="checkout-postal"
-            autocomplete="postal-code"
-            inputmode="numeric"
-            maxlength="10"
-            [(ngModel)]="address.postalCode"
-            (ngModelChange)="change()"
-          />
-          <label for="checkout-reference">Ponto de referência (opcional)</label>
-          <input
-            id="checkout-reference"
-            maxlength="250"
-            [(ngModel)]="address.reference"
-            (ngModelChange)="change()"
-          />
+          <span id="checkout-number-error" class="field-error">{{ fieldError('number') }}</span>
+          <div class="optional-fields">
+            <label for="checkout-complement">Complemento (opcional)</label>
+            <input
+              id="checkout-complement"
+              autocomplete="address-line2"
+              maxlength="120"
+              [(ngModel)]="address.complement"
+              (ngModelChange)="change()"
+            />
+            <label for="checkout-postal">CEP (opcional)</label>
+            <input
+              id="checkout-postal"
+              [attr.aria-invalid]="fieldError('postal') ? 'true' : null"
+              aria-describedby="checkout-postal-error"
+              autocomplete="postal-code"
+              inputmode="numeric"
+              maxlength="10"
+              [(ngModel)]="address.postalCode"
+              (ngModelChange)="change()"
+            />
+            <span id="checkout-postal-error" class="field-error">{{ fieldError('postal') }}</span>
+            <label for="checkout-reference">Ponto de referência (opcional)</label>
+            <input
+              id="checkout-reference"
+              maxlength="250"
+              [(ngModel)]="address.reference"
+              (ngModelChange)="change()"
+            />
+          </div>
           }
         </fieldset>
         <p class="notice">

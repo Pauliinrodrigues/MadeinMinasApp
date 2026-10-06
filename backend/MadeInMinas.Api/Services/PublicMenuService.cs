@@ -17,6 +17,11 @@ public sealed class PublicMenuService(AppDbContext database)
             .Select(category => new MenuCategoryResponse(category.Id, category.Name)).ToArrayAsync(cancellationToken);
         if (request.CategoryId is not null)
             products = products.Where(product => product.CategoryId == request.CategoryId);
+        if (!string.IsNullOrWhiteSpace(request.Search))
+        {
+            var search = request.Search.Trim().Normalize().ToUpperInvariant();
+            products = products.Where(product => product.NormalizedName.Contains(search));
+        }
         var total = await products.CountAsync(cancellationToken);
         // A pausa de venda continua visível. Inativos e dados administrativos não fazem parte do contrato público.
         var items = await products.OrderBy(product => product.Category.DisplayOrder)
@@ -25,6 +30,8 @@ public sealed class PublicMenuService(AppDbContext database)
             .Skip((request.Page - 1) * request.PageSize).Take(request.PageSize)
             .Select(product => new MenuProductResponse(product.Id, product.CategoryId, product.Name,
                 product.Description, product.Price, product.ImageUrl, product.IsAvailable)).ToArrayAsync(cancellationToken);
+        var availability = await ProductionAvailability.ReadAsync(database, items.Select(item => item.Id).ToArray(), cancellationToken);
+        items = items.Select(item => item with { IsAvailable = item.IsAvailable && availability.CanProduce([(item.Id, 1)]) }).ToArray();
         await transaction.CommitAsync(cancellationToken);
         return new PublicMenuResponse(categories, items, request.Page, request.PageSize, total);
     }

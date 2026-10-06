@@ -36,7 +36,32 @@ header > a:last-child {
   padding: 12px 0;
 }
 .intro {
-  padding: 48px 0 28px;
+  padding: 24px 0 12px;
+}
+.checkout-steps {
+  display: flex;
+  gap: 12px 24px;
+  flex-wrap: wrap;
+  list-style: none;
+  padding: 14px 0;
+  border-block: 1px solid #dfd3c3;
+  font-size: 14px;
+}
+.optional-fields {
+  padding: 14px;
+  border: 1px solid #dfd3c3;
+  border-radius: 10px;
+  font-size: 14px;
+}
+.field-error {
+  color: #9b231b;
+  font-size: 14px;
+}
+.field-error:empty {
+  display: none;
+}
+[aria-invalid='true'] {
+  border-color: #9b231b;
 }
 .eyebrow {
   color: #722f27;

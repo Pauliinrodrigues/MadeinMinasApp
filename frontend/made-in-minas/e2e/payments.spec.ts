@@ -216,7 +216,7 @@ async function setup(page: Page, role = 'Attendant') {
 }
 
 async function login(page: Page) {
-  await page.goto('/entrar');
+  await page.goto('/entrar?returnUrl=%2Fequipe');
   await page.getByLabel('Login', { exact: true }).fill('staff');
   await page.getByLabel('Senha', { exact: true }).fill('Senha apenas para testes');
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
@@ -256,6 +256,8 @@ test('pagamentos: dinheiro com troco vindo da API, histórico e devolução admi
     ).toBeDisabled();
   }
   await page.getByLabel('Dinheiro entregue pelo cliente (R$)', { exact: true }).fill('100');
+  await expect(page.getByText('Troco previsto:', { exact: false })).toContainText('40,20');
+  expect(state.commands).toHaveLength(1);
   await page.getByRole('button', { name: 'Confirmar registro', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Pagamento atual', exact: true })).toContainText(
     'Troco: R$ 40,20',
@@ -472,7 +474,7 @@ test('pagamentos: sessão revogada encerra tela sem novas operações', async ({
   await page.getByRole('button', { name: 'Registrar recebimento', exact: true }).click();
   await page.getByLabel('Confirmei o recebimento e conferi o valor.', { exact: true }).check();
   await page.getByRole('button', { name: 'Confirmar registro', exact: true }).click();
-  await expect(page).toHaveURL(/\/entrar$/);
+  await expect(page).toHaveURL(/\/entrar(?:\?.*)?$/);
   await expect(page.getByRole('heading', { name: 'Pagamentos', exact: true })).toHaveCount(0);
   expect(state.commands).toHaveLength(1);
 });

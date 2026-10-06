@@ -7,8 +7,8 @@
     <a routerLink="novo" class="button primary">Novo produto</a>
   </div>
   <p>
-    Gerencie os produtos e a disponibilidade. O cardápio público será disponibilizado em uma próxima
-    etapa.
+    Gerencie os produtos e a liberação de venda. No cardápio público, a disponibilidade também exige
+    ficha técnica e saldo dos ingredientes.
   </p>
   @if (notice()) {
   <p role="status" class="notice">{{ notice() }}</p>
@@ -89,12 +89,15 @@
         <tr>
           <td>
             <strong>{{ product.name }}</strong
-            ><span class="cell-detail">{{ product.categoryName }}</span>
+            ><span class="cell-detail">{{ product.categoryName }}</span> @if (!product.imageUrl) {
+            <span class="cell-detail">Sem foto</span> } @if (product.hasRecipe === false) {
+            <span class="cell-detail">Sem ficha técnica</span> } @if (product.hasMissingCosts) {
+            <span class="cell-detail">Custo incompleto</span> }
           </td>
           <td class="price-cell">{{ formatPrice(product.price) }}</td>
           <td>
             <span class="badge" [class.inactive]="!product.isAvailableForSale"
-              >{{ product.isAvailableForSale ? 'Disponível' : 'Indisponível' }}</span
+              >{{ product.isAvailableForSale ? 'Venda liberada' : 'Indisponível' }}</span
             >
             @if (!product.isActive) { <span class="cell-detail">Produto inativo</span> } @if
             (!product.categoryIsActive) { <span class="cell-detail">Categoria inativa</span> } @if

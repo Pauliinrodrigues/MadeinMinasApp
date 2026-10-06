@@ -22,12 +22,12 @@ Aceite manual concluído pelo usuário em 01/10/2026, com autorização para com
 
 Três tabelas novas: `Orders`, `OrderItems` e `OrderStatusHistory`. Endereço e identificação do cliente ficam como colunas de cópia em Orders, sem tabelas extras. Relações com cadastros e funcionários têm exclusão restrita. Itens e histórico pertencem ao pedido. Valores usam decimal/numeric; datas UTC; número único e índice de idempotência garantidos pelo banco.
 
-- `GET /api/orders`: paginação, busca, filtro de status e cliente.
+- `GET /api/orders`: paginação, busca e filtros de status, cliente, origem e situação do pagamento.
 - `POST /api/orders`: carrinho, identificação da revisão e requestId; 201 na criação, 200 na repetição.
 - `GET /api/orders/{id}`: detalhes e histórico.
 - `PUT /api/orders/{id}/status`: status, versão esperada e motivo.
 
-O frontend possui botão de registro no carrinho revisado, listagem e detalhes de pedidos. Falha de resultado desconhecido preserva a tentativa na página para repetir com a mesma chave e bloqueia a edição. Totais sempre vêm da API. Sair da página ou perder a sessão descarta o carrinho e a chave; nesse caso, consultar Pedidos antes de iniciar outra compra. Idempotência não deduplica tentativas com chaves diferentes.
+O frontend possui botão de registro no carrinho revisado, listagem e detalhes de pedidos. Falha de resultado desconhecido preserva a tentativa para repetir com a mesma chave e bloqueia a edição. Totais sempre vêm da API. Os ajustes operacionais acrescentam recuperação na sessão da aba, inclusive após navegação, reload e novo login do mesmo funcionário. Fechar a aba pode perder essa recuperação; nesse caso, consultar Pedidos antes de iniciar outra compra. Idempotência não deduplica tentativas com chaves diferentes.
 
 ### Contratos
 
@@ -37,7 +37,7 @@ O frontend possui botão de registro no carrinho revisado, listagem e detalhes d
 
 `PUT /api/orders/{id}/status` recebe `{ "status": "Confirmed", "expectedVersion": 1, "reason": null }` ou `Cancelled` com motivo de até 500 caracteres. Repetição idêntica da última transição pelo mesmo funcionário não duplica histórico. `expectedVersion` desatualizada exige nova leitura. O cancelamento pode ocorrer mesmo com cadastros atualmente inativos.
 
-`GET /api/orders` aceita `page` (1–1.000.000), `pageSize` (1–100, padrão 20), `search` (até 120 caracteres: nome, telefone ou número, com # opcional), `status` e `customerId`. Ordem decrescente por criação/número. Detalhe retorna cópias da compra, valores, versão e histórico ordenado; não expõe hash nem chave de reenvio.
+`GET /api/orders` aceita `page` (1–1.000.000), `pageSize` (1–100, padrão 20), `search` (até 120 caracteres: nome, telefone ou número, com # opcional), `status`, `customerId`, `origin` e `paymentStatus`. Ordem decrescente por criação/número. Cada resumo inclui origem e situação financeira atual. Regras de precedência, valores aceitos e fila A receber: [filtros de pedidos](order-filters.md). Detalhe retorna cópias da compra, valores, versão e histórico ordenado; não expõe hash nem chave de reenvio.
 
 Erros de domínio: `OrderNotFound` (404); `OrderReviewChanged`, `OrderRequestConflict`, `OrderVersionConflict`, `OrderTransitionDenied` (409); `OrderCancellationDenied`/`PermissionDenied` (403); `InvalidSession` (401). Indisponibilidade reaproveita os códigos Cart* (409). DTO inválido retorna 400. Respostas de pedidos usam `Cache-Control: no-store`.
 

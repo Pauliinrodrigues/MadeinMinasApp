@@ -90,7 +90,7 @@ async function setup(page: Page, role = 'Administrator') {
 }
 
 async function login(page: Page) {
-  await page.goto('/entrar');
+  await page.goto('/entrar?returnUrl=%2Fequipe');
   await page.getByLabel('Login', { exact: true }).fill('equipe.teste');
   await page.getByLabel('Senha', { exact: true }).fill('Senha apenas para os testes');
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
@@ -211,7 +211,7 @@ for (const role of ['Attendant', 'Kitchen', 'Dispatch']) {
 test('ingredientes: acesso direto sem sessão exige login', async ({ page }) => {
   await setup(page);
   await page.goto('/equipe/ingredientes');
-  await expect(page).toHaveURL(/\/entrar$/);
+  await expect(page).toHaveURL(/\/entrar(?:\?.*)?$/);
 });
 
 test('ingredientes: unidades, limites decimais e valores enviados para a API', async ({ page }) => {
@@ -254,6 +254,6 @@ test('ingredientes: sessão expirada durante consulta volta ao login', async ({ 
   await login(page);
   state.listStatus = 401;
   await page.getByRole('link', { name: 'Ingredientes', exact: true }).click();
-  await expect(page).toHaveURL(/\/entrar$/);
+  await expect(page).toHaveURL(/\/entrar(?:\?.*)?$/);
   expect(state.writes).toBe(0);
 });

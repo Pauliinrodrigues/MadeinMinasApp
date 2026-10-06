@@ -8,11 +8,11 @@
       <span class="eyebrow">SEUS FAVORITOS, DO SEU JEITO.</span>
       <h1>Seu <em>carrinho.</em></h1>
       <p>Ajuste os itens e revise os preços atuais. A revisão ainda não envia um pedido.</p>
-      <p class="notice">
-        Seu carrinho é temporário e será perdido se você atualizar ou fechar a página.
-      </p>
+      <p class="notice">Salvo nesta aba por até 8 horas. Revise os valores ao voltar.</p>
     </section>
-    @if (cart.checkout.locked()) {
+    @if (cart.storageNotice()) {
+    <p role="status" class="notice">{{ cart.storageNotice() }}</p>
+    } @if (cart.checkout.locked()) {
     <section class="empty">
       <h2>Confira o envio do pedido</h2>
       <p>Conclua a conferência do envio anterior antes de montar outro pedido.</p>
@@ -43,16 +43,36 @@
               </button>
             </div>
             <label [for]="'quantity-' + line.key">Quantidade do item {{ i + 1 }}</label>
-            <input
-              [id]="'quantity-' + line.key"
-              type="number"
-              min="1"
-              max="99"
-              step="1"
-              inputmode="numeric"
-              [ngModel]="line.quantity"
-              (ngModelChange)="changeQuantity(line.key, $event)"
-            />
+            <div class="quantity-control">
+              <button
+                type="button"
+                class="secondary"
+                [disabled]="(line.quantity ?? 0) <= 1"
+                (click)="changeQuantity(line.key, (line.quantity ?? 1) - 1)"
+                [attr.aria-label]="'Diminuir quantidade do item ' + (i + 1)"
+              >
+                −
+              </button>
+              <input
+                [id]="'quantity-' + line.key"
+                type="number"
+                min="1"
+                max="99"
+                step="1"
+                inputmode="numeric"
+                [ngModel]="line.quantity"
+                (ngModelChange)="changeQuantity(line.key, $event)"
+              />
+              <button
+                type="button"
+                class="secondary"
+                [disabled]="(line.quantity ?? 0) >= 99"
+                (click)="changeQuantity(line.key, (line.quantity ?? 0) + 1)"
+                [attr.aria-label]="'Aumentar quantidade do item ' + (i + 1)"
+              >
+                +
+              </button>
+            </div>
             <label [for]="'notes-' + line.key">Observações do item {{ i + 1 }}</label>
             <textarea
               [id]="'notes-' + line.key"
@@ -94,7 +114,13 @@
       </section>
       <section class="review" aria-labelledby="review-title">
         <h2 id="review-title">Revisão do carrinho</h2>
-        <p>Confira os valores antes de continuar montando sua seleção.</p>
+        <p>{{ cart.itemCount() }} unidade(s) selecionada(s).</p>
+        @if (!quote() && cart.estimatedSubtotal() !== null) {
+        <p>
+          Subtotal estimado dos produtos: <strong>{{ price(cart.estimatedSubtotal()!) }}</strong>.
+          Confira os valores atuais na revisão.
+        </p>
+        }
         <button type="button" (click)="review()" [disabled]="busy()">
           {{ busy() ? 'Revisando…' : 'Revisar carrinho' }}
         </button>

@@ -1,5 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -13,6 +20,8 @@ import {
 } from '../../core/services/chat-api.service';
 import { PublicChatState } from '../../core/services/public-chat-state.service';
 import { ChatMessagesComponent } from './chat-messages.component';
+import { PublicCheckoutState } from '../../core/services/public-checkout-state.service';
+import { PublicOrderHistory } from '../../core/services/public-order-history.service';
 
 @Component({
   selector: 'app-public-chat',
@@ -24,6 +33,14 @@ import { ChatMessagesComponent } from './chat-messages.component';
 })
 export class PublicChatPage {
   readonly state = inject(PublicChatState);
+  private readonly checkout = inject(PublicCheckoutState);
+  private readonly history = inject(PublicOrderHistory);
+  readonly receipt = computed(
+    () =>
+      this.history.entries().find((entry) => entry.number === this.history.selectedNumber()) ??
+      this.checkout.receipt() ??
+      this.history.entries()[0],
+  );
   private readonly api = inject(PublicChatApi);
   private readonly destroyRef = inject(DestroyRef);
   readonly transcript = signal<ChatTranscript | null>(null);
@@ -39,6 +56,22 @@ export class PublicChatPage {
   private retryAt = 0;
   name = '';
   text = '';
+
+  shareOrder(): void {
+    const receipt = this.receipt();
+    if (
+      !receipt ||
+      this.busy() ||
+      this.state.value().pendingMessage ||
+      this.state.value().pendingStart
+    ) {
+      return;
+    }
+    const message = `Preciso de ajuda com o pedido #${receipt.number}.`;
+    if ((this.text + '\n' + message).length <= 2000) {
+      this.text = this.text.trim() ? this.text + '\n' + message : message;
+    }
+  }
 
   constructor() {
     interval(5000)

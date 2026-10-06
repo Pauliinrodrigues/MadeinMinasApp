@@ -1,0 +1,67 @@
+.summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
+  gap: 12px;
+  button {
+    text-align: left;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+  }
+  strong {
+    display: block;
+    font-size: 26px;
+    margin-bottom: 6px;
+  }
+  button[aria-pressed='true'] {
+    background: #f4e7dd;
+    border-color: #722f27;
+  }
+}
+.ingredients {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 16px;
+  .panel {
+    margin: 0;
+    min-width: 0;
+  }
+  h2 {
+    margin-top: 0;
+  }
+}
+.supplier {
+  overflow-wrap: anywhere;
+}
+.badges,
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.badge.warning {
+  background: #fff0cc;
+  color: #68451b;
+}
+dl {
+  display: grid;
+  gap: 8px;
+}
+dl div {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+dd {
+  margin: 0;
+  font-weight: 600;
+}
+.filters label {
+  min-width: min(100%, 240px);
+}
+.filters .checkbox {
+  flex-basis: 200px;
+  min-width: min(100%, 200px);
+  min-height: 44px;
+}

@@ -21,6 +21,7 @@ Com frontend e API iniciados, acesse http://localhost:8101/entrar ou clique em *
 | /equipe/produtos | Gestão de produtos, somente catalog.manage (Fase 3B) |
 | /equipe/produtos/novo | Cadastro de produto, somente catalog.manage |
 | /equipe/produtos/:id | Edição de produto, somente catalog.manage |
+| /equipe/regioes-entrega | Cobertura/taxas públicas, somente delivery.manage (administrador) |
 
 Use a conta administrativa criada pelo comando interativo em [authentication.md](authentication.md#administrador-inicial). Não existe usuário ou senha padrão. Se ainda não houver administrador, execute o bootstrap no Terminal do Rider; nunca informe a senha no chat.
 
@@ -30,6 +31,8 @@ A tela de conta apresenta apenas dados do funcionário. Indicadores operacionais
 
 - JWT e perfil permanecem somente na memória. Não são gravados em localStorage, sessionStorage, cookies ou URL.
 - Atualizar/fechar a página exige novo login. Não há refresh token nem renovação automática.
+- Após login, administrador abre dashboard, atendente abre pedidos, cozinha abre KDS e expedição abre seu painel, conforme permissões atuais. Quando o acesso foi interrompido, uma rota interna válida tem precedência; destinos externos são rejeitados e guards verificam a autorização. Logout explícito não guarda destino anterior.
+- Login tem mostrar/ocultar senha, aviso de Caps Lock e orientação para procurar o administrador. Rascunhos do carrinho sobrevivem à expiração e são recuperados apenas na mesma aba/conta, sem persistir credenciais; veja [carrinho](cart.md).
 - A validade vem de expiresAt retornado pelo backend; o padrão é 15 minutos. Um temporizador encerra a sessão local ao expirar.
 - O interceptor envia Bearer somente para o caminho /api/ na origem configurada, excluindo o login. Aplica timeout de 15 segundos às requisições da API.
 - Respostas 401 autenticadas encerram a sessão; 403 mostra falta de permissão. Uma resposta atrasada de outro token não encerra uma sessão nova.

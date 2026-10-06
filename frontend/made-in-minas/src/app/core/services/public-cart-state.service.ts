@@ -1,4 +1,4 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import type { MenuProduct } from './menu-api.service';
 import type { PublicCartInput, PublicCartQuote } from './public-cart-api.service';
 import { PublicCheckoutState } from './public-checkout-state.service';
@@ -13,12 +13,36 @@ interface PublicCartLine {
 
 @Injectable({ providedIn: 'root' })
 export class PublicCartState {
+  private readonly storageKey = 'made-in-minas.public-cart.v1';
+  readonly storageNotice = signal('');
   readonly checkout = inject(PublicCheckoutState);
   private nextKey = 1;
   private readonly entries = signal<PublicCartLine[]>([]);
   private readonly generalNotes = signal('');
+  private readonly prices = signal<Record<string, number>>({});
   readonly lines = this.entries.asReadonly();
   readonly notes = this.generalNotes.asReadonly();
+  readonly estimatedSubtotal = computed(() => {
+    if (!this.lines().length || this.validationError()) {
+      return null;
+    }
+    let cents = 0;
+    for (const line of this.lines()) {
+      const price = this.prices()[line.productId];
+      if (!Number.isFinite(price) || price < 0) {
+        return null;
+      }
+      cents += Math.round(price * 100) * line.quantity!;
+    }
+    return cents / 100;
+  });
+
+  rememberPrices(products: { id: string; price: number }[]): void {
+    this.prices.update((current) => ({
+      ...current,
+      ...Object.fromEntries(products.map((product) => [product.id, product.price])),
+    }));
+  }
   readonly itemCount = computed(() =>
     this.lines().reduce(
       (total, line) =>
@@ -27,6 +51,65 @@ export class PublicCartState {
     ),
   );
 
+  constructor() {
+    try {
+      const stored = sessionStorage.getItem(this.storageKey);
+      if (stored && !this.checkout.locked()) {
+        if (stored.length > 65536) {
+          throw new Error('Invalid draft');
+        }
+        const value = JSON.parse(stored);
+        if (
+          value.version !== 1 ||
+          !Array.isArray(value.lines) ||
+          value.lines.length > 50 ||
+          typeof value.notes !== 'string' ||
+          value.notes.length > 500 ||
+          !Number.isFinite(value.savedAt) ||
+          Date.now() - value.savedAt > 8 * 60 * 60 * 1000 ||
+          !value.lines.every(
+            (line: PublicCartLine) =>
+              line &&
+              typeof line.productId === 'string' &&
+              typeof line.name === 'string' &&
+              line.name.length <= 200 &&
+              typeof line.notes === 'string' &&
+              line.notes.length <= 250 &&
+              (line.quantity === null || Number.isFinite(line.quantity)),
+          )
+        ) {
+          throw new Error('Invalid draft');
+        }
+        this.entries.set(
+          value.lines.map((line: PublicCartLine) => ({ ...line, key: this.nextKey++ })),
+        );
+        this.generalNotes.set(value.notes);
+      }
+    } catch {
+      this.storageNotice.set(
+        'Não foi possível recuperar o carrinho anterior. Confira os itens antes de continuar.',
+      );
+    }
+    effect(() => {
+      const lines = this.lines();
+      const notes = this.notes();
+      try {
+        if (!lines.length) {
+          sessionStorage.removeItem(this.storageKey);
+        } else {
+          sessionStorage.setItem(
+            this.storageKey,
+            JSON.stringify({ version: 1, savedAt: Date.now(), lines, notes }),
+          );
+        }
+      } catch {
+        this.storageNotice.set(
+          'Este navegador não conseguiu salvar o carrinho. Mantenha a página aberta até concluir.',
+        );
+      }
+    });
+  }
+
   add(product: MenuProduct): string | null {
     if (this.checkout.locked()) {
       return 'Confira o envio anterior antes de montar outro pedido.';
@@ -34,6 +117,7 @@ export class PublicCartState {
     if (!product.isAvailable) {
       return 'Este produto está indisponível.';
     }
+    this.rememberPrices([product]);
     if (this.lines().length && this.validationError()) {
       return 'Confira as quantidades e observações no carrinho antes de adicionar mais produtos.';
     }
@@ -108,6 +192,7 @@ export class PublicCartState {
   }
 
   refreshNames(quote: PublicCartQuote): void {
+    this.rememberPrices(quote.items.map((item) => ({ id: item.productId, price: item.unitPrice })));
     this.entries.update((lines) =>
       lines.map((line) => ({
         ...line,

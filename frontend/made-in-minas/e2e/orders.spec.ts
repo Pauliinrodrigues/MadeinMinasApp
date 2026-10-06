@@ -3,6 +3,7 @@ import type { CartQuote, CartQuoteInput } from '../src/app/core/services/cart-ap
 import type {
   CreateOrderInput,
   Order,
+  OrderPaymentStatus,
   OrderStatusInput,
 } from '../src/app/core/services/order-api.service';
 
@@ -84,6 +85,7 @@ async function setup(page: Page, role = 'Attendant') {
     created: [] as CreateOrderInput[],
     changes: [] as OrderStatusInput[],
     queries: [] as string[],
+    paymentStatuses: {} as Record<string, OrderPaymentStatus>,
     createStatus: 201,
     createCode: 'OrderReviewChanged',
     listStatus: 200,
@@ -188,15 +190,28 @@ async function setup(page: Page, role = 'Attendant') {
       }
       const search = (url.searchParams.get('search') ?? '').toLowerCase();
       const status = url.searchParams.get('status');
+      const origin = url.searchParams.get('origin');
+      const paymentStatus = url.searchParams.get('paymentStatus');
+      const summary = (order: Order) => ({
+        ...order,
+        customerName: order.customer.name,
+        paymentStatus:
+          state.paymentStatuses[order.id] ??
+          (order.status === 'Cancelled' ? 'NotDue' : 'NotRegistered'),
+      });
       const filtered = state.orders.filter(
         (order) =>
           (!status || order.status === status) &&
+          (!origin || order.origin === origin) &&
+          (!paymentStatus ||
+            (paymentStatus === 'Unpaid'
+              ? !['Cancelled', 'Finalized'].includes(order.status) &&
+                summary(order).paymentStatus !== 'Received'
+              : summary(order).paymentStatus === paymentStatus)) &&
           (order.customer.name.toLowerCase().includes(search) ||
             String(order.number).includes(search)),
       );
-      return json(
-        pageOf(filtered.map((order) => ({ ...order, customerName: order.customer.name }))),
-      );
+      return json(pageOf(filtered.map(summary)));
     }
     const match = path.match(/^\/api\/orders\/([^/]+)(\/status)?$/);
     if (match) {
@@ -237,11 +252,11 @@ async function setup(page: Page, role = 'Attendant') {
     }
     return json({}, 404);
   });
-  return state;
+  return Object.assign(state, { profile });
 }
 
 async function login(page: Page) {
-  await page.goto('/entrar');
+  await page.goto('/entrar?returnUrl=%2Fequipe');
   await page.getByLabel('Login', { exact: true }).fill('staff');
   await page.getByLabel('Senha', { exact: true }).fill('Senha apenas para testes');
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
@@ -374,6 +389,10 @@ test('pedidos: registra entrega revisada e abre detalhes com histórico', async 
   await expect(page).toHaveURL(/\/equipe\/pedidos\/order-1$/);
   await expect(page.getByRole('heading', { name: 'Pedido #1542' })).toBeVisible();
   await expect(page.getByRole('region', { name: 'Pedido #1542' })).toContainText('64,30');
+  await expect(
+    page.getByRole('region', { name: 'Histórico do pedido' }).locator('ol'),
+  ).toBeHidden();
+  await page.getByText('Histórico do pedido', { exact: true }).click();
   await expect(page.getByRole('region', { name: 'Histórico do pedido' })).toContainText('Novo');
   expect(state.created).toHaveLength(1);
   expect(state.created[0].requestId).toMatch(/^[0-9a-f-]{36}$/);
@@ -382,6 +401,81 @@ test('pedidos: registra entrega revisada e abre detalhes com histórico', async 
   expect(state.created[0].cart.items[0]).not.toHaveProperty('unitPrice');
   expect(errors).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('pedidos: tentativa incerta sobrevive ao reload e ao login sem duplicar o envio', async ({
+  page,
+}) => {
+  const state = await setup(page);
+  state.createStatus = 503;
+  await cart(page);
+  await review(page);
+  await page.getByRole('button', { name: 'Registrar pedido', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('Não foi possível confirmar o resultado');
+  await page.reload();
+  await expect(page).toHaveURL(/entrar\?returnUrl=/);
+  await page.getByLabel('Login', { exact: true }).fill('staff');
+  await page.getByLabel('Senha', { exact: true }).fill('Senha apenas para testes');
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click();
+  await expect(page).toHaveURL(/\/equipe\/carrinho$/);
+  await expect(page.getByLabel('Quantidade do item 1', { exact: true })).toBeDisabled();
+  expect(state.created).toHaveLength(1);
+  state.createStatus = 401;
+  await page.getByRole('button', { name: 'Tentar registro novamente', exact: true }).click();
+  await expect(page).toHaveURL(/entrar\?returnUrl=/);
+  await page.getByLabel('Login', { exact: true }).fill('staff');
+  await page.getByLabel('Senha', { exact: true }).fill('Senha apenas para testes');
+  await page.getByRole('button', { name: 'Entrar', exact: true }).click();
+  await expect(page).toHaveURL(/\/equipe\/carrinho$/);
+  await expect(page.getByLabel('Quantidade do item 1', { exact: true })).toBeDisabled();
+  state.createStatus = 201;
+  await page.getByRole('button', { name: 'Tentar registro novamente', exact: true }).click();
+  await expect(page).toHaveURL(/\/pedidos\/order-1$/);
+  expect(state.created).toHaveLength(3);
+  expect(state.created[1]).toEqual(state.created[0]);
+  expect(state.created[2]).toEqual(state.created[0]);
+  expect(
+    await page.evaluate(() => sessionStorage.getItem('made-in-minas.staff-cart.v1.staff')),
+  ).toBeNull();
+});
+
+test('pedidos: outro funcionário não recupera o rascunho da conta anterior', async ({ page }) => {
+  const state = await setup(page);
+  await cart(page);
+  state.profile.id = 'another-worker';
+  await login(page);
+  await page.getByRole('link', { name: 'Carrinho', exact: true }).click();
+  await expect(page.getByText('O carrinho está vazio.', { exact: false })).toBeVisible();
+  await expect(page.getByText('Cliente selecionado:', { exact: false })).toHaveCount(0);
+});
+
+test('pedidos: fila detecta novos pedidos e pausa consultas com a aba oculta', async ({ page }) => {
+  await page.clock.install();
+  const state = await setup(page);
+  await login(page);
+  await page.getByRole('link', { name: 'Pedidos', exact: true }).click();
+  await expect(
+    page.getByRole('button', { name: 'Aguardando confirmação (1)', exact: true }),
+  ).toBeVisible();
+  state.orders.unshift({ ...structuredClone(original), id: 'new-order', number: 1543 });
+  await page.clock.fastForward(10000);
+  await expect(
+    page.getByRole('button', { name: 'Aguardando confirmação (2)', exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText('Chegou pedido novo. Confira a fila aguardando confirmação.', { exact: true }),
+  ).toBeVisible();
+  const queries = state.queries.length;
+  await page.evaluate(() =>
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => true }),
+  );
+  await page.clock.fastForward(30000);
+  expect(state.queries.length).toBe(queries);
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => false });
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  await expect.poll(() => state.queries.length).toBeGreaterThan(queries);
 });
 
 test('pedidos: falha incerta conserva tentativa e bloqueia edição até repetir', async ({
@@ -395,11 +489,19 @@ test('pedidos: falha incerta conserva tentativa e bloqueia edição até repetir
   await expect(page.getByRole('alert')).toContainText('Não foi possível confirmar o resultado');
   await expect(page.getByLabel('Quantidade do item 1', { exact: true })).toBeDisabled();
   await expect(page.getByRole('button', { name: 'Limpar carrinho', exact: true })).toBeDisabled();
+  state.createStatus = 429;
+  await page.getByRole('button', { name: 'Tentar registro novamente', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('Não foi possível confirmar o resultado');
+  await expect(page.getByLabel('Quantidade do item 1', { exact: true })).toBeDisabled();
+  await expect(
+    page.getByRole('button', { name: 'Tentar registro novamente', exact: true }),
+  ).toBeEnabled();
   state.createStatus = 200;
   await page.getByRole('button', { name: 'Tentar registro novamente', exact: true }).click();
   await expect(page).toHaveURL(/\/pedidos\/order-1$/);
-  expect(state.created).toHaveLength(2);
+  expect(state.created).toHaveLength(3);
   expect(state.created[1]).toEqual(state.created[0]);
+  expect(state.created[2]).toEqual(state.created[0]);
 });
 
 test('pedidos: envio em andamento bloqueia repetição e revisão antiga exige nova revisão', async ({
@@ -538,6 +640,160 @@ test('pedidos: lista pagina, filtra e recupera falha de consulta', async ({ page
   await expect(page.getByRole('link', { name: 'Abrir pedido 1542' })).toBeVisible();
   expect(state.queries.at(-1)).toContain('status=New');
   await page.getByRole('combobox', { name: 'Status', exact: true }).selectOption('Cancelled');
+  await page.getByRole('button', { name: 'Buscar pedidos', exact: true }).click();
+  await expect(page.getByText('Nenhum pedido nesta página.', { exact: false })).toBeVisible();
+});
+
+test('pedidos: origem e pagamento combinam com busca e paginação sem aplicar rascunhos', async ({
+  page,
+}) => {
+  const state = await setup(page);
+  for (let index = 0; index < 22; index++) {
+    const id = 'site-' + index;
+    state.orders.push({
+      ...structuredClone(original),
+      id,
+      number: 1700 + index,
+      origin: 'DirectLink',
+    });
+    state.paymentStatuses[id] = 'Received';
+  }
+  await login(page);
+  await page.getByRole('link', { name: 'Pedidos', exact: true }).click();
+  await expect(page.getByText('23 pedido(s) encontrado(s).', { exact: true })).toBeVisible();
+  await page.getByRole('combobox', { name: 'Origem', exact: true }).selectOption('DirectLink');
+  await page.getByRole('combobox', { name: 'Pagamento', exact: true }).selectOption('Received');
+  await page.getByRole('button', { name: 'Buscar pedidos', exact: true }).click();
+  await expect(page.getByText('22 pedido(s) encontrado(s).', { exact: true })).toBeVisible();
+  const row = page
+    .getByRole('row')
+    .filter({ has: page.getByRole('link', { name: 'Abrir pedido 1700', exact: true }) });
+  await expect(row.locator('td[data-label="Origem"]')).toHaveText('Site');
+  await expect(row.locator('td[data-label="Pagamento"]')).toHaveText('Recebido');
+  await page.getByRole('combobox', { name: 'Origem', exact: true }).selectOption('Manual');
+  await expect(page.getByText('Filtros alterados.', { exact: false })).toBeVisible();
+  await page.getByRole('button', { name: 'Próxima', exact: true }).click();
+  await expect(page.getByText('Página 2', { exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Abrir pedido 1721', exact: true })).toBeVisible();
+  const query = new URLSearchParams(state.queries.findLast((value) => value.includes('page=2')));
+  expect(query.get('origin')).toBe('DirectLink');
+  expect(query.get('paymentStatus')).toBe('Received');
+  await page.getByRole('combobox', { name: 'Origem', exact: true }).selectOption('DirectLink');
+  await page.getByLabel('Buscar por número, cliente ou telefone', { exact: true }).fill('1721');
+  await page.getByRole('button', { name: 'Buscar pedidos', exact: true }).click();
+  await expect(page.getByText('Página 1', { exact: true })).toBeVisible();
+  await expect(page.getByText('1 pedido(s) encontrado(s).', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Próxima', exact: true })).toBeDisabled();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('pedidos: atalho a receber limpa filtros e exclui recebidos e encerrados', async ({
+  page,
+}) => {
+  const state = await setup(page);
+  state.orders.push(
+    { ...structuredClone(original), id: 'pending', number: 1543, origin: 'DirectLink' },
+    { ...structuredClone(original), id: 'paid', number: 1544 },
+    { ...structuredClone(original), id: 'cancelled', number: 1545, status: 'Cancelled' },
+    { ...structuredClone(original), id: 'refunded', number: 1546, status: 'Confirmed' },
+    { ...structuredClone(original), id: 'finalized', number: 1547, status: 'Finalized' },
+  );
+  Object.assign(state.paymentStatuses, {
+    pending: 'Pending',
+    paid: 'Received',
+    refunded: 'Refunded',
+    finalized: 'Refunded',
+  });
+  await login(page);
+  await page.getByRole('link', { name: 'Pedidos', exact: true }).click();
+  await page.getByRole('combobox', { name: 'Origem', exact: true }).selectOption('Manual');
+  await page
+    .getByLabel('Buscar por número, cliente ou telefone', { exact: true })
+    .fill('sem resultado');
+  await page.getByRole('button', { name: 'A receber', exact: true }).click();
+  await expect(page.getByText('3 pedido(s) encontrado(s).', { exact: true })).toBeVisible();
+  for (const number of [1542, 1543, 1546]) {
+    await expect(
+      page.getByRole('link', { name: 'Abrir pedido ' + number, exact: true }),
+    ).toBeVisible();
+  }
+  for (const number of [1544, 1545, 1547]) {
+    await expect(
+      page.getByRole('link', { name: 'Abrir pedido ' + number, exact: true }),
+    ).toHaveCount(0);
+  }
+  await expect(page.getByRole('button', { name: 'A receber', exact: true })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(page.getByRole('combobox', { name: 'Origem', exact: true })).toHaveValue('');
+  await expect(
+    page.getByRole('button', { name: 'Aguardando confirmação (3)', exact: true }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Todos os pedidos', exact: true }).click();
+  await expect(page.getByText('6 pedido(s) encontrado(s).', { exact: true })).toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Pagamento', exact: true })).toHaveValue('');
+  await expect(
+    page.locator('td[data-label="Pagamento"]').filter({ hasText: 'Sem cobrança' }),
+  ).toBeVisible();
+});
+
+test('pedidos: atualização usa filtros aplicados e pagamento recebido deixa a fila a receber', async ({
+  page,
+}) => {
+  await page.clock.install();
+  const state = await setup(page);
+  state.orders[0].origin = 'DirectLink';
+  state.paymentStatuses[original.id] = 'Pending';
+  await login(page);
+  await page.getByRole('link', { name: 'Pedidos', exact: true }).click();
+  await page.getByRole('button', { name: 'A receber', exact: true }).click();
+  await expect(page.locator('td[data-label="Pagamento"]')).toHaveText('Aguardando recebimento');
+  await page.getByRole('combobox', { name: 'Origem', exact: true }).selectOption('Manual');
+  await page.getByRole('combobox', { name: 'Pagamento', exact: true }).selectOption('Received');
+  const before = state.queries.length;
+  await page.clock.fastForward(10000);
+  await expect.poll(() => state.queries.length).toBeGreaterThan(before);
+  const applied = state.queries.slice(before).map((value) => new URLSearchParams(value));
+  expect(applied.find((value) => value.get('paymentStatus') === 'Unpaid')?.has('origin')).toBe(
+    false,
+  );
+  expect(applied.some((value) => value.get('paymentStatus') === 'Received')).toBe(false);
+  state.paymentStatuses[original.id] = 'Received';
+  await page.clock.fastForward(10000);
+  await expect(page.getByText('0 pedido(s) encontrado(s).', { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Aguardando confirmação (1)', exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText('Filtros alterados.', { exact: false })).toBeVisible();
+});
+
+test('pedidos: falha automática conserva lista e repetição não aplica filtros em edição', async ({
+  page,
+}) => {
+  await page.clock.install();
+  const state = await setup(page);
+  state.orders[0].origin = 'DirectLink';
+  await login(page);
+  await page.getByRole('link', { name: 'Pedidos', exact: true }).click();
+  await page.getByRole('combobox', { name: 'Origem', exact: true }).selectOption('DirectLink');
+  await page.getByRole('button', { name: 'Buscar pedidos', exact: true }).click();
+  await expect(page.locator('td[data-label="Origem"]')).toHaveText('Site');
+  await page.getByRole('combobox', { name: 'Origem', exact: true }).selectOption('Manual');
+  state.listStatus = 503;
+  await page.clock.fastForward(10000);
+  await expect(page.getByRole('alert')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Abrir pedido 1542' })).toBeVisible();
+  state.listStatus = 200;
+  const before = state.queries.length;
+  await page.getByRole('button', { name: 'Tentar novamente', exact: true }).click();
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Abrir pedido 1542' })).toBeVisible();
+  expect(
+    state.queries
+      .slice(before)
+      .some((value) => new URLSearchParams(value).get('origin') === 'DirectLink'),
+  ).toBe(true);
   await page.getByRole('button', { name: 'Buscar pedidos', exact: true }).click();
   await expect(page.getByText('Nenhum pedido nesta página.', { exact: false })).toBeVisible();
 });

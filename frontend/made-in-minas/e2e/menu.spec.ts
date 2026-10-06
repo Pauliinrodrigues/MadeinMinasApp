@@ -247,7 +247,7 @@ test('consulta pública não envia token da equipe nem encerra sessão após fal
   page,
 }) => {
   const state = await setup(page);
-  await page.goto('/entrar');
+  await page.goto('/entrar?returnUrl=%2Fequipe');
   await page.getByLabel('Login', { exact: true }).fill('ana');
   await page.getByLabel('Senha', { exact: true }).fill('Senha de teste 123!');
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();

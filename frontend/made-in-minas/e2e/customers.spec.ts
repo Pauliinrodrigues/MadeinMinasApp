@@ -165,7 +165,7 @@ async function setup(page: Page, role = 'Administrator') {
 }
 
 async function login(page: Page) {
-  await page.goto('/entrar');
+  await page.goto('/entrar?returnUrl=%2Fequipe');
   await page.getByLabel('Login', { exact: true }).fill('equipe.teste');
   await page.getByLabel('Senha', { exact: true }).fill('Senha apenas para os testes');
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
@@ -391,10 +391,10 @@ for (const role of ['Kitchen', 'Dispatch']) {
 test('clientes: acesso sem sessão e sessão encerrada exigem login', async ({ page }) => {
   const state = await setup(page);
   await page.goto('/equipe/clientes/customer-1/enderecos');
-  await expect(page).toHaveURL(/\/entrar$/);
+  await expect(page).toHaveURL(/\/entrar(?:\?.*)?$/);
   await login(page);
   state.listStatus = 401;
   await navigate(page, '/equipe/clientes');
-  await expect(page).toHaveURL(/\/entrar$/);
+  await expect(page).toHaveURL(/\/entrar(?:\?.*)?$/);
   expect(state.writes).toBe(0);
 });

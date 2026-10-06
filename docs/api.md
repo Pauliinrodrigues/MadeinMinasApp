@@ -1,5 +1,7 @@
 # API — Fundação e autenticação
 
+Na listagem administrativa `GET /api/products`, `hasRecipe` e `hasMissingCosts` indicam composição cadastrada e ingrediente com custo zero, respectivamente. Os indicadores são calculados no banco; `hasRecipe=false` também cobre ficha vazia. Nas respostas de detalhe/escrita, esses campos são `null`, pois não foram consultados. Não alteram a liberação manual de venda nem substituem a conferência de produção do cardápio/checkout.
+
 Base local: `http://localhost:5080`.
 
 | Método | Rota | Resposta |
@@ -47,6 +49,8 @@ A Fase 4B adiciona GET /api/cart/products e POST /api/cart/quote, com orders.man
 
 A Fase 4C estende a revisão com taxa de entrega validada, total e identificação do conteúdo, e adiciona GET/POST /api/orders, GET /api/orders/{id} e PUT /api/orders/{id}/status. Todos exigem orders.manage. Criação idempotente (201/200), cópias dos dados da compra, número único e histórico. Estados iniciais: New, Confirmed e Cancelled. Confirmar não recebe pagamento. Contratos, permissões de cancelamento e conflitos: [orders.md](orders.md).
 
+O bloco operacional E estende `GET /api/orders` com filtros opcionais `origin` (`Manual`, `DirectLink`) e `paymentStatus` (`Unpaid`, `NotRegistered`, `Pending`, `Received`, `Refunded`, `NotDue`). Cada item retorna `origin` e `paymentStatus`; `Unpaid` é apenas um filtro agregado. Total e página usam o mesmo snapshot, sem movimentação financeira. Valores desconhecidos retornam 400. Regras de tentativas/devoluções e interface: [order-filters.md](order-filters.md).
+
 A Fase 4D adiciona GET/POST /api/orders/{orderId}/payments, GET /api/orders/{orderId}/payments/{id} e PUT nas terminações /receive, /cancel e /refund. Todos exigem payments.manage; /refund exige também payments.refund (administrador). Somente registro manual, com valor integral derivado do pedido, idempotência e histórico. Cancelar pedido com pagamento Pending/Received retorna OrderPaymentUnresolved (409). Contratos e regras: [payments.md](payments.md).
 
 A Fase 5A adiciona GET /api/kitchen/orders e PUT /api/kitchen/orders/{id}/status, com kitchen.work (administrador/cozinha). A leitura retorna três colunas paginadas em snapshot consistente, somente com dados de produção. A escrita recebe status e expectedVersion, permitindo Confirmed → InPreparation → Ready. Os filtros/listagens de pedidos reconhecem os novos estados; cancelamento de InPreparation/Ready exige administrador e resolução do pagamento. Contratos, paginação e roteiro: [kitchen.md](kitchen.md).
@@ -54,6 +58,8 @@ A Fase 5A adiciona GET /api/kitchen/orders e PUT /api/kitchen/orders/{id}/status
 As Fases 5B/5C adicionam GET /api/dispatch/orders e PUT /api/dispatch/orders/{id}/status (dispatch.work), GET /api/print/orders/{id}/kitchen (printing.kitchen) e GET /api/print/orders/{id}/dispatch (printing.dispatch). O filtro comercial de pedidos aceita AwaitingDelivery, OutForDelivery, Delivered e Finalized. Contratos, transições, papéis e erros: [expedição e impressão](dispatch-printing.md).
 
 A Fase 6A acrescenta GET /api/ingredients/{ingredientId}/stock e POST /api/ingredients/{ingredientId}/stock/movements, ambos catalog.manage. GET retorna saldo e histórico paginado consistente. POST recebe RequestId, ExpectedVersion, Type (Entry/Exit/Count), Quantity e Reason; rejeita campos adicionais e retorna 200 inclusive na repetição idempotente. Autor e saldos são derivados pelo servidor. Contratos, erros e limites: [estoque manual](stock.md).
+
+O bloco operacional F adiciona `GET /api/stock/replenishment`, com `catalog.manage` e `no-store`, para busca por nome/fornecedor, filas de pendências e inclusão opcional de inativos. Retorna contadores, saldos e diferença até o mínimo, com paginação e snapshot consistente, sem gravação. Contratos e limites: [central de reposição](stock-replenishment.md).
 
 A Fase 6B mantém as rotas e entradas de pedidos. A confirmação em PUT /api/orders/{id}/status também baixa estoque; o cancelamento anterior ao preparo devolve a baixa. OrderResponse acrescenta stockStatus/stockComponents, e StockMovementResponse, orderId opcional. Conflitos 409: OrderRecipeRequired, OrderIngredientInactive, OrderInsufficientStock, OrderStockQuantityExceeded e OrderStockReturnOverflow. Não há endpoint público para lançar consumo automático. Contratos e regras: [order-stock.md](order-stock.md).
 
@@ -64,9 +70,9 @@ A Fase 7A adiciona GET /api/dashboard/today, exclusivo de dashboard.view (admini
 
 A Fase 7B adiciona GET /api/reports/sales?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd, exclusivo de reports.view (administrador), com no-store. Aceita 1 a 90 dias inclusivos; sem filtros, usa os últimos sete dias em Brasília. Retorna resumo, dias (inclusive vazios), recebimentos/estornos por forma e até dez produtos por quantidade. Período inválido retorna 400/ValidationProblemDetails; sem sessão 401, sem permissão 403. Somente leitura. Contrato e limites: [period-reports.md](period-reports.md).
 
-A Fase 8A adiciona GET /api/menu, público e somente leitura, com categoryId opcional e paginação de até 48 produtos. Somente catálogo ativo; venda pausada aparece como indisponível. DTOs excluem custos, receitas e dados administrativos; Cache-Control no-store. Contrato e validações: [public-menu.md](public-menu.md).
+A Fase 8A adiciona GET /api/menu, público e somente leitura, com categoryId e search opcionais (busca por nome, até 120 caracteres) e paginação de até 48 produtos. Somente catálogo ativo; disponibilidade combina liberação manual, ficha, ingredientes ativos e saldo para uma unidade. DTOs excluem custos, receitas e dados administrativos; Cache-Control no-store. Contrato e validações: [public-menu.md](public-menu.md).
 
-A Fase 8B adiciona POST /api/public-cart/quote, público e somente leitura, com no-store. Recebe apenas itens (produto/quantidade/observações) e observações gerais; responde com nomes/preços atuais, valores por linha, subtotal e instante da consulta. Limites: 50 linhas, 99 unidades por produto somadas entre linhas, 250 caracteres por item, 500 gerais e corpo de 65.536 bytes. Entrada inválida/campos desconhecidos: 400; produto indisponível: 409/CartProductUnavailable. Não cria pedido ou identidade de cliente. Contrato: [public-cart.md](public-cart.md).
+A Fase 8B adiciona POST /api/public-cart/quote, público e somente leitura, com no-store. Recebe apenas itens (produto/quantidade/observações) e observações gerais; responde com nomes/preços atuais, valores por linha, subtotal e instante da consulta. Limites: 50 linhas, 99 unidades por produto somadas entre linhas, 250 caracteres por item, 500 gerais e corpo de 65.536 bytes. Entrada inválida/campos desconhecidos: 400; produto/ingrediente indisponível, ficha ausente ou saldo insuficiente para a cesta: 409/CartProductUnavailable. A consulta não reserva estoque. Não cria pedido ou identidade de cliente. Contrato: [public-cart.md](public-cart.md).
 
 A Fase 8C adiciona POST /api/public-checkout/review e POST /api/public-checkout/orders, anônimos, no-store, até 65.536 bytes e 20 requisições/minuto por IP compartilhadas entre os dois endpoints. Revisão recebe nome/telefone/carrinho e calcula a compra para retirada. Envio recebe checkout/reviewToken/requestId, retorna 201 na criação ou 200 na repetição com comprovante mínimo, sem dados privados. Pedido nasce Novo/DirectLink; não cobra ou confirma preparo. OrderHistoryResponse.actorId passa a aceitar null na criação pública; origem no detalhe da equipe passa a incluir DirectLink. Erros, concorrência e recuperação: [public-checkout.md](public-checkout.md).
 
@@ -82,3 +88,7 @@ A Fase 8E adiciona POST/GET /api/public-chat e POST /api/public-chat/messages, c
 - Detalhe e expedição retornam endereço da compra com `id=null` para entrega pública. Comprovante/acompanhamento não expõem endereço.
 
 Contrato completo, limites e compatibilidade com retirada em [public-delivery.md](public-delivery.md).
+
+## Administração da entrega
+
+`GET /api/delivery-settings` e `PUT /api/delivery-settings` exigem `delivery.manage` (administrador) e usam `no-store`. GET retorna lista completa, revisão e autor/data da última edição. PUT recebe `{ expectedRevision, areas }`; cada área tem `id`, `neighborhood`, `city`, `state`, `fee` e `isActive`. Até 500 regiões, taxa explícita com duas casas, sem IDs ou bairros/cidades/UF duplicados. Exclusão é recusada; pausar mantém o identificador. 400 para entrada inválida, 401/403 para acesso negado e 409 para revisão desatualizada ou remoção. Salvar o conteúdo já atual recupera uma resposta perdida. A consulta pública existente retorna somente regiões ativas. Contratos e concorrência: [delivery-settings.md](delivery-settings.md).

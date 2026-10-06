@@ -7,6 +7,10 @@ import { finalize } from 'rxjs';
 import { MenuApi, MenuProduct, PublicMenu } from '../../core/services/menu-api.service';
 import { PublicCartState } from '../../core/services/public-cart-state.service';
 import { formatProductPrice } from '../../core/services/product-api.service';
+import {
+  PublicCheckoutApi,
+  PublicDeliveryArea,
+} from '../../core/services/public-checkout-api.service';
 
 @Component({
   selector: 'app-menu',
@@ -20,6 +24,9 @@ export class MenuPage {
   readonly cart = inject(PublicCartState);
   readonly cartNotice = signal('');
   private readonly api = inject(MenuApi);
+  private readonly checkoutApi = inject(PublicCheckoutApi);
+  readonly deliveryAreas = signal<PublicDeliveryArea[] | null>(null);
+  readonly coverageError = signal(false);
   private readonly destroyRef = inject(DestroyRef);
   readonly data = signal<PublicMenu | null>(null);
   readonly categories = signal<PublicMenu['categories']>([]);
@@ -29,10 +36,18 @@ export class MenuPage {
   readonly loadedImages = signal<Set<string>>(new Set());
   readonly price = formatProductPrice;
   categoryId = '';
+  search = '';
   page = 1;
 
   constructor() {
     this.load();
+    this.checkoutApi
+      .deliveryAreas()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (areas) => this.deliveryAreas.set(areas),
+        error: () => this.coverageError.set(true),
+      });
   }
 
   addToCart(product: MenuProduct): void {
@@ -56,6 +71,7 @@ export class MenuPage {
 
   allCategories(): void {
     this.categoryId = '';
+    this.search = '';
     this.selectCategory();
   }
 
@@ -85,13 +101,14 @@ export class MenuPage {
     this.failedImages.set(new Set());
     this.loadedImages.set(new Set());
     this.api
-      .get(this.categoryId, this.page)
+      .get(this.categoryId, this.page, this.search)
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => this.loading.set(false)),
       )
       .subscribe({
         next: (menu) => {
+          this.cart.rememberPrices(menu.items);
           this.categories.set(menu.categories);
           this.data.set(menu);
         },

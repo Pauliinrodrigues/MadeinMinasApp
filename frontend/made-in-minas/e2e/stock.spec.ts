@@ -127,7 +127,7 @@ async function setup(page: Page, role = 'Administrator') {
 }
 
 async function login(page: Page) {
-  await page.goto('/entrar');
+  await page.goto('/entrar?returnUrl=%2Fequipe');
   await page.getByLabel('Login', { exact: true }).fill('admin');
   await page.getByLabel('Senha', { exact: true }).fill('Senha de teste');
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();

@@ -1,0 +1,167 @@
+<section>
+  <p class="eyebrow">CONFIGURAÇÕES</p>
+  <h1>Regiões de entrega</h1>
+  <p>
+    Defina os bairros atendidos e a taxa de cada região. Alterações valem para novas compras;
+    pedidos registrados mantêm seus valores.
+  </p>
+  <div class="actions">
+    <button type="button" (click)="load()" [disabled]="loading() || saving()">
+      {{ editing() || pending() ? 'Recarregar lista e descartar edição' : 'Atualizar regiões' }}
+    </button>
+    <button
+      type="button"
+      class="primary"
+      (click)="edit()"
+      [disabled]="!data() || loading() || saving() || !!pending() || needsRefresh() || editing() || (data()?.areas?.length ?? 0) >= 500"
+    >
+      Nova região
+    </button>
+  </div>
+  @if (loading()) {
+  <p role="status">Consultando regiões…</p>
+  } @if (error()) {
+  <p class="error" role="alert">{{ error() }}</p>
+  } @if (notice()) {
+  <p class="notice" role="status">{{ notice() }}</p>
+  } @if (data(); as result) {
+  <p class="notice">
+    {{ activeCount() }} região(ões) ativa(s). @if (!activeCount()) { O site aceita somente retirada
+    enquanto não houver uma região ativa. }
+  </p>
+  @if (result.updatedAt) {
+  <p class="hint">
+    Última alteração por {{ result.updatedBy }} em {{ result.updatedAt | date:'dd/MM/yyyy
+    HH:mm':'-0300' }} (Brasília).
+  </p>
+  } @if (editing()) {
+  <form class="panel" (ngSubmit)="review()" novalidate aria-label="Editar região de entrega">
+    <h2>Dados da região</h2>
+    <fieldset [disabled]="saving() || loading() || !!pending() || needsRefresh()">
+      <label for="area-neighborhood">Bairro</label>
+      <input
+        id="area-neighborhood"
+        name="neighborhood"
+        [(ngModel)]="neighborhood"
+        maxlength="80"
+        required
+      />
+      <div class="area-address">
+        <label>Cidade<input name="city" [(ngModel)]="city" maxlength="80" required /></label>
+        <label
+          >UF<select name="state" [(ngModel)]="state" required>
+            <option value="">Selecione</option>
+            @for (uf of states; track uf) {
+            <option [value]="uf">{{ uf }}</option>
+            }
+          </select></label
+        >
+      </div>
+      <label
+        >Taxa de entrega (R$)<input
+          name="fee"
+          type="number"
+          inputmode="decimal"
+          min="0"
+          max="9999.99"
+          step="0.01"
+          [(ngModel)]="fee"
+          required
+          aria-describedby="fee-hint"
+      /></label>
+      <p class="hint" id="fee-hint">
+        A taxa é obrigatória. Informe zero somente para entrega gratuita.
+      </p>
+      <label class="checkbox"
+        ><input name="isActive" type="checkbox" [(ngModel)]="isActive" /> Receber pedidos nesta
+        região</label
+      >
+      @if (attempted && validation()) {
+      <p class="error" role="alert">{{ validation() }}</p>
+      }
+      <div class="actions">
+        <button type="submit" class="primary">Revisar alteração</button>
+        <button type="button" (click)="editing.set(false)">Cancelar edição</button>
+      </div>
+    </fieldset>
+  </form>
+  } @if (reviewedArea(); as area) {
+  <section class="panel confirmation" aria-label="Conferir alteração de entrega">
+    <h2>Conferir alteração</h2>
+    <p><strong>{{ area.neighborhood }} — {{ area.city }}/{{ area.state }}</strong></p>
+    <p>
+      Taxa: <strong>{{ price(area.fee) }}</strong> · {{ area.isActive ? 'Ativa para pedidos' :
+      'Pausada' }}
+    </p>
+    <p>
+      {{ area.isActive ? 'O site oferecerá entrega nesta região com a taxa acima.' : 'A região
+      deixará de aparecer nas novas compras pelo site.' }}
+    </p>
+    <div class="actions">
+      <button
+        type="button"
+        id="confirm-area-save"
+        class="primary"
+        (click)="save()"
+        [disabled]="saving() || loading() || needsRefresh()"
+      >
+        {{ saving() ? 'Salvando…' : uncertain() ? 'Tentar salvamento novamente' : 'Confirmar
+        salvamento' }}
+      </button>
+      <button type="button" (click)="cancelReview()" [disabled]="saving() || uncertain()">
+        Voltar à edição
+      </button>
+    </div>
+  </section>
+  }
+  <div class="filters">
+    <label
+      >Buscar bairro ou cidade<input
+        type="search"
+        maxlength="160"
+        [ngModel]="search()"
+        (ngModelChange)="search.set($event)"
+    /></label>
+    <label
+      >Situação<select [ngModel]="active()" (ngModelChange)="active.set($event)">
+        <option value="">Todas</option>
+        <option value="true">Ativas</option>
+        <option value="false">Pausadas</option>
+      </select></label
+    >
+  </div>
+  <ul class="area-list" aria-label="Regiões cadastradas">
+    @for (area of areas(); track area.id) {
+    <li class="panel">
+      <div>
+        <h2>{{ area.neighborhood }}</h2>
+        <p>{{ area.city }}/{{ area.state }} · <strong>{{ price(area.fee) }}</strong></p>
+        <span class="badge" [class.inactive]="!area.isActive"
+          >{{ area.isActive ? 'Ativa' : 'Pausada' }}</span
+        >
+      </div>
+      <div class="actions">
+        <button
+          type="button"
+          (click)="edit(area)"
+          [disabled]="editing() || !!pending() || saving() || loading() || needsRefresh()"
+          [attr.aria-label]="'Editar ' + area.neighborhood + ' em ' + area.city"
+        >
+          Editar
+        </button>
+        <button
+          type="button"
+          (click)="reviewStatus(area)"
+          [disabled]="editing() || !!pending() || saving() || loading() || needsRefresh()"
+          [attr.aria-label]="(area.isActive ? 'Pausar ' : 'Ativar ') + area.neighborhood + ' em ' + area.city"
+        >
+          {{ area.isActive ? 'Pausar' : 'Ativar' }}
+        </button>
+      </div>
+    </li>
+    } @empty {
+    <li>Nenhuma região nesta busca. Cadastre apenas locais que a hamburgueria atende.</li>
+    }
+  </ul>
+  }
+</section>

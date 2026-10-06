@@ -2,6 +2,20 @@
 
 Monólito modular, com uma API ASP.NET Core, um frontend Ionic/Angular e PostgreSQL.
 
+## Ajustes operacionais de outubro de 2026
+
+- G mantém até 20 comprovantes de acompanhamento em `PublicOrderHistory`, separados da tentativa idempotente do checkout. Padrão por aba; `localStorage` somente por escolha explícita em dispositivo pessoal. Trocar pedido cancela a consulta antiga e reinicia a atualização. O token continua exclusivo do cabeçalho público. A consulta de status permanece no backend, sem cache de dados pessoais.
+- H mantém a fila como rota pai do atendimento. A conversa é recriada por id para encerrar requisições e isolar mensagens/tentativas; filtros da fila sobrevivem à navegação. Rascunhos são por funcionário/conversa na aba. A lista de produtos projeta `hasRecipe` e `hasMissingCosts` em SQL somente na listagem, sem N+1, migration ou valores de custo no DTO. Nas demais respostas, esses indicadores são `null` (não consultados).
+- O bloco F adiciona a [central de reposição](stock-replenishment.md): controller de leitura e `StockService.ReplenishmentAsync` com projeções EF e `RepeatableRead`. Reutiliza ingredientes/saldos/versão existentes, sem migration ou dependência. A página Angular usa a permissão de catálogo, consulta manual e atalhos para estoque/cadastro; cálculos e contadores vêm da API.
+- `ProductionAvailability` consulta fichas e saldos sem escrever no banco. Cardápio e carrinho públicos usam a mesma regra de arredondamento/agrupamento da confirmação; o bloqueio transacional e a baixa definitiva continuam em `OrderStockService`. Disponibilidade não reserva ingredientes para pedidos em estado Novo.
+- Rascunhos públicos e da equipe usam `sessionStorage`, com formato versionado e limites. O rascunho da equipe é separado pelo funcionário; a sessão JWT continua exclusivamente em memória. Preços recuperados não autorizam uma compra: novas tentativas exigem revisão da API. Envios incertos conservam o identificador e o corpo para repetição idempotente, inclusive após recarga/login.
+- A fila da equipe consulta pedidos e a contagem de novos a cada 10 segundos enquanto a aba está visível, sem requisições sobrepostas. Falhas preservam a lista anterior com erro e horário da última atualização. Alertas sonoros dependem de ativação pelo usuário. Não há WebSocket ou infraestrutura adicional.
+- O bloco E deriva a situação financeira por consultas de existência em `OrderService.ListAsync`, filtrando origem/pagamento antes de contar e paginar em `RepeatableRead`. A interface separa os filtros em edição dos aplicados; polling, paginação e repetição usam os aplicados. O contador de novos permanece geral. Sem migration ou dependência nova; regras em [filtros de pedidos](order-filters.md).
+- Login guarda apenas a rota interna pretendida na URL. Guards continuam conferindo permissões; destinos externos são recusados. Navegação por Operação, Cadastros, Gestão e Conta conserva os mesmos contratos de autorização.
+- Compartilhar pedido no chat preenche uma mensagem com o número após ação explícita. Não transmite token de acompanhamento, não envia automaticamente e não comprova identidade. O indicador de atividade da conversa é local, por funcionário/aba, e acompanha a versão lida; não é confirmação de leitura sincronizada.
+
+Detalhes e limites em [ajustes operacionais](operational-usability.md). Os blocos A–C não adicionaram dependências, tabelas ou migrations. A continuação D acrescenta a configuração de regiões descrita abaixo, sem novas dependências.
+
 ```mermaid
 flowchart LR
   WhatsApp -->|link futuro| Frontend[Ionic / Angular]
@@ -75,4 +89,8 @@ A Fase 8E acrescenta ChatConversations/ChatMessages, HumanChatService, controlad
 
 ## Entrega pública — 8F
 
-O checkout passa a receber modalidade e endereço. `PublicDeliveryOptions` mantém cobertura e taxa por bairro/cidade/UF na configuração do backend, validada ao iniciar; não há valor operacional padrão. `PublicCheckoutService` resolve a região, calcula o total e revalida a revisão na transação. `Orders.Address*` guarda a cópia da compra, sem gravar endereços no cadastro identificado por telefone. Pedido manual mantém sua referência a `Addresses`; a resposta compartilhada aceita `address.id=null` em entregas públicas. Confirmação, cozinha, expedição e acompanhamento preservam as regras existentes. Contratos, ativação e limites em [public-delivery.md](public-delivery.md).
+O checkout recebe modalidade e endereço. `PublicDeliveryOptions` fornece cobertura inicial validada ao iniciar, até o primeiro salvamento administrativo; não há valor operacional padrão. `PublicCheckoutService` consulta `DeliverySettingsService`, resolve a região, calcula o total e revalida a revisão na transação. `Orders.Address*` guarda a cópia da compra, sem gravar endereços no cadastro identificado por telefone. Pedido manual mantém sua referência a `Addresses`; a resposta compartilhada aceita `address.id=null` em entregas públicas. Confirmação, cozinha, expedição e acompanhamento preservam as regras existentes. Contratos, ativação e limites em [public-delivery.md](public-delivery.md).
+
+## Administração de cobertura
+
+`DeliverySettings` guarda uma lista JSONB limitada a 500 regiões em uma linha versionada, mais autor/data da última alteração. A configuração é pequena e editada como conjunto, sem relações com pedidos históricos. `DeliverySettingsService` usa revisão esperada, transação e bloqueio exclusivo de cobertura; criar entrega pública obtém o bloqueio compartilhado até o commit. A repetição do conteúdo atual recupera uma resposta perdida sem regravar. `delivery.manage` restringe GET/PUT ao administrador. A página `features/delivery` oferece revisão, busca, pausa e tratamento de conflitos. A migration `AddDeliverySettings` não insere dados; seu Down protege a configuração salva. Regras e compatibilidade: [delivery-settings.md](delivery-settings.md).

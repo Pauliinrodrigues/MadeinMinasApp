@@ -16,6 +16,8 @@ export interface Product {
   isAvailableForSale: boolean;
   createdAt: string;
   updatedAt: string;
+  hasRecipe?: boolean | null;
+  hasMissingCosts?: boolean | null;
 }
 export interface ProductInput {
   name: string;

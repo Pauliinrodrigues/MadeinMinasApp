@@ -167,7 +167,7 @@ async function setup(page: Page, role = 'Dispatch') {
   return state;
 }
 async function login(page: Page) {
-  await page.goto('/entrar');
+  await page.goto('/entrar?returnUrl=%2Fequipe');
   await page.getByLabel('Login', { exact: true }).fill('staff');
   await page.getByLabel('Senha', { exact: true }).fill('Senha apenas para testes');
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
@@ -293,7 +293,7 @@ test('expedição: resposta perdida e sessão revogada', async ({ page }) => {
   expect(state.changes).toHaveLength(1);
   state.readStatus = 401;
   await page.clock.fastForward(11000);
-  await expect(page).toHaveURL(/\/entrar$/);
+  await expect(page).toHaveURL(/\/entrar(?:\?.*)?$/);
 });
 for (const role of ['Attendant', 'Kitchen']) {
   test('expedição: guard impede acesso de ' + role, async ({ page }) => {
@@ -369,7 +369,7 @@ test('impressão: falha remove documento antigo e recuperação mostra cancelame
   await expect(page.getByRole('article')).toContainText('CANCELADO — NÃO PRODUZIR / NÃO ENTREGAR');
   state.printStatus = 401;
   await page.getByRole('button', { name: 'Atualizar comanda' }).click();
-  await expect(page).toHaveURL(/\/entrar$/);
+  await expect(page).toHaveURL(/\/entrar(?:\?.*)?$/);
   await expect(page.getByRole('article')).toHaveCount(0);
 });
 for (const [role, mode] of [

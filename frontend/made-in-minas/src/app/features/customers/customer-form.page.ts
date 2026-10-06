@@ -22,6 +22,7 @@ export class CustomerFormPage {
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
   readonly id = inject(ActivatedRoute).snapshot.paramMap.get('id');
+  readonly returnToCart = inject(ActivatedRoute).snapshot.queryParamMap.get('returnTo') === 'cart';
   readonly loading = signal(false);
   readonly ready = signal(!this.id);
   readonly busy = signal(false);
@@ -83,6 +84,13 @@ export class CustomerFormPage {
       )
       .subscribe({
         next: (customer) => {
+          if (this.returnToCart) {
+            void this.router.navigate(['/equipe/carrinho'], {
+              queryParams: { customerId: customer.id },
+              replaceUrl: true,
+            });
+            return;
+          }
           if (!this.id) {
             void this.router.navigate(['/equipe/clientes', customer.id], {
               replaceUrl: true,

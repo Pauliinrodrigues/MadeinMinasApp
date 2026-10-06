@@ -119,7 +119,7 @@ async function setup(page: Page, role = 'Administrator') {
 }
 
 async function login(page: Page) {
-  await page.goto('/entrar');
+  await page.goto('/entrar?returnUrl=%2Fequipe');
   await page.getByLabel('Login', { exact: true }).fill('staff');
   await page.getByLabel('Senha', { exact: true }).fill('Senha de teste');
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
@@ -275,7 +275,7 @@ test('Relatórios: sessão revogada remove todos os resultados', async ({ page }
   await expect(metric(page, 'Valor confirmado')).toBeVisible();
   state.status = 401;
   await page.getByRole('button', { name: 'Gerar relatório', exact: true }).click();
-  await expect(page).toHaveURL(/\/entrar$/);
+  await expect(page).toHaveURL(/\/entrar(?:\?.*)?$/);
   await expect(page.getByRole('table')).toHaveCount(0);
 });
 
@@ -296,7 +296,7 @@ for (const role of ['Attendant', 'Kitchen', 'Dispatch']) {
 test('Relatórios: visitante é direcionado ao login', async ({ page }) => {
   const state = await setup(page);
   await page.goto('/equipe/relatorios');
-  await expect(page).toHaveURL(/\/entrar$/);
+  await expect(page).toHaveURL(/\/entrar(?:\?.*)?$/);
   expect(state.queries).toEqual([]);
 });
 

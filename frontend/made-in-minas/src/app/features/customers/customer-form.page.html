@@ -1,4 +1,5 @@
-<a routerLink="/equipe/clientes" class="back-link">← Clientes</a>
+<a routerLink="/equipe/clientes" class="back-link">← Clientes</a> @if (returnToCart) {
+<a routerLink="/equipe/carrinho" class="button">Voltar ao carrinho preservado</a> }
 <section class="panel narrow">
   <p class="eyebrow">ATENDIMENTO</p>
   <h1>{{ id ? 'Editar cliente' : 'Novo cliente' }}</h1>

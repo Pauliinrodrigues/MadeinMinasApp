@@ -246,7 +246,7 @@ for (const condition of ['missing', 'legacy', 'corrupt'] as const) {
 
 test('falha pública não envia JWT nem encerra sessão da equipe', async ({ page }) => {
   const state = await setup(page);
-  await page.goto('/entrar');
+  await page.goto('/entrar?returnUrl=%2Fequipe');
   await page.getByLabel('Login', { exact: true }).fill('ana');
   await page.getByLabel('Senha', { exact: true }).fill('Senha teste 123!');
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();

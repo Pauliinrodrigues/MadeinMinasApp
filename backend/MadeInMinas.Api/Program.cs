@@ -14,6 +14,8 @@ builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<UserManagementExceptionHandler>();
 builder.Services.AddExceptionHandler<CategoryExceptionHandler>();
+builder.Services.AddExceptionHandler<DeliverySettingsExceptionHandler>();
+builder.Services.AddScoped<MadeInMinas.Api.Services.DeliverySettingsService>();
 builder.Services.AddExceptionHandler<ProductExceptionHandler>();
 builder.Services.AddExceptionHandler<IngredientExceptionHandler>();
 builder.Services.AddExceptionHandler<StockExceptionHandler>();

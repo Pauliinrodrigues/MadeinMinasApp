@@ -51,6 +51,31 @@ public sealed class PublicMenuTests(AuthenticationFactory factory) : IClassFixtu
 
     public Task DisposeAsync() => factory.WithDatabaseAsync(ClearAsync);
 
+    [Fact]
+    public async Task AvailabilityReflectsRecipeStockAndActiveIngredientsWithoutExposingThem()
+    {
+        using var client = factory.CreateStaffClient();
+        var menu = await ReadAsync(client);
+        Assert.True(menu.Items.Single(item => item.Id == burger.Id).IsAvailable);
+        Assert.False(menu.Items.Single(item => item.Id == drink.Id).IsAvailable);
+        await factory.WithDatabaseAsync(database => database.Ingredients.ExecuteUpdateAsync(update => update.SetProperty(item => item.CurrentStock, 0.999m)));
+        Assert.False((await ReadAsync(client)).Items.Single(item => item.Id == burger.Id).IsAvailable);
+        await factory.WithDatabaseAsync(database => database.Ingredients.ExecuteUpdateAsync(update => update.SetProperty(item => item.CurrentStock, 1m)));
+        Assert.True((await ReadAsync(client)).Items.Single(item => item.Id == burger.Id).IsAvailable);
+        await factory.WithDatabaseAsync(database => database.Ingredients.ExecuteUpdateAsync(update => update.SetProperty(item => item.IsActive, false)));
+        Assert.False((await ReadAsync(client)).Items.Single(item => item.Id == burger.Id).IsAvailable);
+    }
+
+    [Fact]
+    public async Task SearchCombinesWithCategoryAndKeepsNavigation()
+    {
+        using var client = factory.CreateStaffClient();
+        var menu = await ReadAsync(client, $"?search=%20uai%20&categoryId={burgers.Id}");
+        Assert.Equal(burger.Id, Assert.Single(menu.Items).Id);
+        Assert.Equal(2, menu.Categories.Length);
+        Assert.Empty((await ReadAsync(client, $"?search=uai&categoryId={drinks.Id}")).Items);
+    }
+
     private static Product Product(string name, Category category, decimal price) => new()
     {
         Name = name,
