@@ -265,9 +265,21 @@ test('navegação e reload preservam itens, mas exigem nova revisão dos valores
   await page.reload();
   await expect(page.getByLabel('Quantidade do item 1', { exact: true })).toHaveValue('1');
   await expect(page.getByRole('region', { name: 'Valores revisados' })).toHaveCount(0);
-  expect(
-    await page.evaluate(() => ({ local: localStorage.length, session: sessionStorage.length })),
-  ).toEqual({ local: 0, session: 1 });
+  const stored = await page.evaluate(() => ({
+    local: localStorage.length,
+    cart: JSON.parse(sessionStorage.getItem('made-in-minas.public-cart.v1') ?? 'null'),
+  }));
+  expect(stored).toEqual({
+    local: 0,
+    cart: {
+      version: 1,
+      savedAt: expect.any(Number),
+      lines: [
+        { key: expect.any(Number), productId: 'burger', name: 'Uai Sô', quantity: 1, notes: '' },
+      ],
+      notes: '',
+    },
+  });
 });
 
 test('falhas preservam itens e indisponibilidade nunca mostra subtotal antigo', async ({
