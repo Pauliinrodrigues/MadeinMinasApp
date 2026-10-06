@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import {
   administratorGuard,
+  deliveryGuard,
   dashboardGuard,
   reportsGuard,
   catalogGuard,
@@ -65,16 +66,33 @@ export const routes: Routes = [
       import('./features/staff/staff-layout.page').then((page) => page.StaffLayoutPage),
     children: [
       {
+        path: 'reposicao',
+        canActivate: [catalogGuard],
+        loadComponent: () =>
+          import('./features/stock/replenishment.page').then((page) => page.ReplenishmentPage),
+      },
+      {
+        path: 'regioes-entrega',
+        canActivate: [deliveryGuard],
+        loadComponent: () =>
+          import('./features/delivery/delivery-settings.page').then(
+            (page) => page.DeliverySettingsPage,
+          ),
+      },
+      {
         path: 'atendimentos',
         canActivate: [chatGuard],
         loadComponent: () =>
           import('./features/chat/chat-list.page').then((page) => page.ChatListPage),
-      },
-      {
-        path: 'atendimentos/:id',
-        canActivate: [chatGuard],
-        loadComponent: () =>
-          import('./features/chat/staff-chat.page').then((page) => page.StaffChatPage),
+        children: [
+          {
+            path: ':id',
+            loadComponent: () =>
+              import('./features/chat/staff-chat-route.page').then(
+                (page) => page.StaffChatRoutePage,
+              ),
+          },
+        ],
       },
       {
         path: 'relatorios',

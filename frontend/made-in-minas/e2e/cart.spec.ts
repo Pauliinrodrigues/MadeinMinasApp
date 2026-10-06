@@ -159,7 +159,7 @@ async function setup(page: Page, role = 'Attendant') {
 }
 
 async function login(page: Page) {
-  await page.goto('/entrar');
+  await page.goto('/entrar?returnUrl=%2Fequipe');
   await page.getByLabel('Login', { exact: true }).fill('equipe.teste');
   await page.getByLabel('Senha', { exact: true }).fill('Senha apenas para os testes');
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
@@ -353,7 +353,7 @@ test('carrinho: revisão em andamento bloqueia edição e envio duplicado', asyn
   expect(state.quoted).toHaveLength(1);
 });
 
-test('carrinho: limpar exige confirmação e sair descarta os dados', async ({ page }) => {
+test('carrinho: limpar exige confirmação e navegar preserva o rascunho', async ({ page }) => {
   await setup(page);
   await openCart(page);
   await selectAndAdd(page);
@@ -367,8 +367,8 @@ test('carrinho: limpar exige confirmação e sair descarta os dados', async ({ p
   await selectAndAdd(page);
   await page.getByRole('link', { name: 'Minha conta', exact: true }).click();
   await page.getByRole('link', { name: 'Carrinho', exact: true }).click();
-  await expect(review(page)).toBeDisabled();
-  await expect(page.getByText('O carrinho está vazio.', { exact: false })).toBeVisible();
+  await expect(review(page)).toBeEnabled();
+  await expect(page.getByLabel('Quantidade do item 1', { exact: true })).toHaveValue('1');
 });
 
 for (const role of ['Kitchen', 'Dispatch']) {
@@ -385,19 +385,19 @@ for (const role of ['Kitchen', 'Dispatch']) {
   });
 }
 
-test('carrinho: acesso anônimo e sessão revogada exigem login sem preservar dados', async ({
+test('carrinho: sessão revogada exige login e preserva o rascunho da mesma conta', async ({
   page,
 }) => {
   const state = await setup(page);
   await page.goto('/equipe/carrinho');
-  await expect(page).toHaveURL(/\/entrar$/);
+  await expect(page).toHaveURL(/\/entrar(?:\?.*)?$/);
   await openCart(page);
   await selectAndAdd(page);
   state.quoteStatus = 401;
   state.quoteCode = 'InvalidSession';
   await review(page).click();
-  await expect(page).toHaveURL(/\/entrar$/);
+  await expect(page).toHaveURL(/\/entrar(?:\?.*)?$/);
   await openCart(page);
-  await expect(review(page)).toBeDisabled();
-  await expect(page.getByText('O carrinho está vazio.', { exact: false })).toBeVisible();
+  await expect(review(page)).toBeEnabled();
+  await expect(page.getByLabel('Quantidade do item 1', { exact: true })).toHaveValue('1');
 });

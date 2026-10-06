@@ -1,0 +1,60 @@
+.queue-actions {
+  flex-wrap: wrap;
+}
+.queue-actions button[aria-pressed='true'] {
+  border-color: #722f27;
+  background: #f4e7dd;
+}
+.table-scroll td:first-child {
+  white-space: nowrap;
+}
+.filters label {
+  min-width: 180px;
+}
+.filters label:first-child {
+  flex-grow: 2;
+}
+@media (max-width: 700px) {
+  .table-scroll {
+    overflow: visible;
+    padding: 0;
+    background: transparent;
+    border: 0;
+  }
+  table,
+  tbody {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+  thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  tr {
+    display: grid;
+    gap: 8px;
+    padding: 16px;
+    margin-bottom: 14px;
+    background: #fffdf9;
+    border: 1px solid #dfd3c3;
+    border-radius: 12px;
+  }
+  td {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 12px;
+    border: 0;
+    padding: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  td[data-label]::before {
+    content: attr(data-label);
+    color: #695b4c;
+  }
+}

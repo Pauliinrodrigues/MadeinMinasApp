@@ -49,7 +49,11 @@ Acesso ausente, inválido, adulterado, expirado ou para pedido inexistente retor
 
 ## Navegador
 
-O acesso fica no comprovante já guardado em `sessionStorage`, na sessão da aba. Não vai na URL, no JWT da equipe ou em armazenamento permanente. Atualizar a página conserva o acompanhamento; fechar a aba pode perdê-lo. **Montar outro pedido remove o comprovante anterior e seu acesso desta aba**. Não existe recuperação pública por telefone/número ou compartilhamento de link neste incremento. Comprovantes anteriores à 8D continuam legíveis, orientando procurar o atendimento.
+O comprovante atual continua em `sessionStorage`. A rodada de usabilidade acrescenta **Meus pedidos**, acessível pelo cardápio, com até 20 acompanhamentos válidos, sem duplicatas. **Montar outro pedido preserva os acessos anteriores**. A seleção consulta novamente a API; status e histórico não são recuperados de cache. Comprovantes anteriores à 8D continuam legíveis, orientando procurar o atendimento.
+
+Por padrão, o histórico permanece somente na aba. A opção explícita **Lembrar meus pedidos neste dispositivo** permite reabrir os acessos em outras abas/sessões do mesmo navegador, usando `localStorage`; deve ser usada em dispositivo pessoal. A interface explica essa escolha. São guardados somente número, modalidade, total, criação e credencial/prazo do acompanhamento, nunca telefone, endereço, itens ou dados de pagamento. Credenciais não vão na URL nem no JWT da equipe. Entradas inválidas/expiradas são descartadas ao recuperar; a autorização e o vencimento definitivos continuam no backend. Remover um acompanhamento exige confirmação, não cancela o pedido e também retira o token do comprovante atual. Desmarcar a opção remove a cópia permanente, conservando a sessão da aba. Abas já abertas podem conservar sua própria cópia até serem fechadas.
+
+Não existe recuperação pública por telefone/número, sincronização entre dispositivos ou compartilhamento de link. Falha de armazenamento informa a limitação sem criar pedidos ou bloquear a leitura do comprovante. A recuperação idempotente de envio permanece independente do histórico de acompanhamentos.
 
 A página consulta a cada 15 segundos após a conclusão da chamada anterior, sem sobreposição. Ocultar a aba pausa as consultas e cancela a chamada pendente; voltar consulta novamente. Sair da página encerra temporizador e requisição. `Finalized`/`Cancelled` encerram a atualização automática. Há botão de atualização manual durante o acompanhamento.
 

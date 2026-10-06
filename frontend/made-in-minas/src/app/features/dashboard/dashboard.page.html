@@ -79,7 +79,13 @@
   <dl class="metrics queues">
     @for (queue of dashboard.queues; track queue.status) {
     <div>
-      <dt>{{ statusLabels[queue.status] || queue.status }}</dt>
+      <dt>
+        @if (session.canManageOrders()) {
+        <a routerLink="/equipe/pedidos" [queryParams]="{status: queue.status}"
+          >{{ statusLabels[queue.status] || queue.status }}</a
+        >
+        } @else { {{ statusLabels[queue.status] || queue.status }} }
+      </dt>
       <dd>{{ number.format(queue.count) }}</dd>
     </div>
     }
@@ -88,7 +94,9 @@
     @if (session.canManageOrders()) {
     <a class="button" routerLink="/equipe/pedidos">Abrir pedidos</a> } @if
     (session.canWorkKitchen()) { <a class="button" routerLink="/equipe/cozinha">Abrir cozinha</a> }
-    @if (session.canWorkDispatch()) {
+    @if (session.canManageCatalog()) {
+    <a class="button" routerLink="/equipe/reposicao">Conferir reposição</a> } @if
+    (session.canWorkDispatch()) {
     <a class="button" routerLink="/equipe/expedicao">Abrir expedição</a> }
   </div>
 </section>

@@ -160,7 +160,7 @@ async function setup(page: Page, options: { role?: number; expiresIn?: number } 
 }
 
 async function login(page: Page) {
-  await page.goto('/entrar');
+  await page.goto('/entrar?returnUrl=%2Fequipe');
   await page.getByLabel('Login', { exact: true }).fill('ana.admin');
   await page.getByLabel('Senha', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
@@ -178,7 +178,7 @@ test('rota privada exige login; credenciais inválidas e limite têm mensagens c
 }) => {
   const state = await setup(page);
   await page.goto('/equipe/funcionarios');
-  await expect(page).toHaveURL(/\/entrar$/);
+  await expect(page).toHaveURL(/\/entrar(?:\?.*)?$/);
   state.loginStatus = 401;
   await page.getByLabel('Login', { exact: true }).fill('ana.admin');
   await page.getByLabel('Senha', { exact: true }).fill(password);
@@ -200,7 +200,7 @@ test('sessão em memória, layout responsivo e recarregamento exigem login', asy
   ).toEqual({ local: 0, session: 0 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.reload();
-  await expect(page).toHaveURL(/\/entrar$/);
+  await expect(page).toHaveURL(/\/entrar(?:\?.*)?$/);
 });
 
 for (const role of [2, 3, 4]) {
@@ -319,7 +319,7 @@ test('troca da própria senha encerra sessão', async ({ page }) => {
   await page.getByLabel('Nova senha', { exact: true }).fill(password + ' nova');
   await page.getByLabel('Confirme a nova senha', { exact: true }).fill(password + ' nova');
   await page.getByRole('button', { name: 'Alterar senha' }).click();
-  await expect(page).toHaveURL(/\/entrar$/);
+  await expect(page).toHaveURL(/\/entrar(?:\?.*)?$/);
   await expect(page.getByRole('status')).toContainText('Senha alterada');
   expect(state.passwordChanges).toBe(1);
 });
@@ -331,7 +331,7 @@ test('alterar o próprio login encerra sessão imediatamente', async ({ page }) 
   await expect(page.getByRole('button', { name: 'Redefinir senha', exact: true })).toHaveCount(0);
   await page.getByLabel('Login', { exact: true }).fill('ana.novo');
   await page.getByRole('button', { name: 'Salvar funcionário' }).click();
-  await expect(page).toHaveURL(/\/entrar$/);
+  await expect(page).toHaveURL(/\/entrar(?:\?.*)?$/);
   await expect(page.getByRole('status')).toContainText('Seu acesso foi alterado');
 });
 
@@ -344,7 +344,7 @@ test('403 mantém sessão e 401 revoga acesso e remove dados', async ({ page }) 
   await expect(page).toHaveURL(/\/equipe\/funcionarios$/);
   state.usersStatus = 401;
   await page.getByRole('button', { name: 'Tentar novamente' }).click();
-  await expect(page).toHaveURL(/\/entrar$/);
+  await expect(page).toHaveURL(/\/entrar(?:\?.*)?$/);
   await expect(page.getByRole('status')).toContainText('expirou ou foi revogada');
   await page.goBack();
   await expect(page).not.toHaveURL(/\/equipe/);
@@ -354,7 +354,7 @@ test('403 mantém sessão e 401 revoga acesso e remove dados', async ({ page }) 
 test('expiração automática remove a tela protegida', async ({ page }) => {
   await setup(page, { expiresIn: 1200 });
   await login(page);
-  await expect(page).toHaveURL(/\/entrar$/, { timeout: 7000 });
+  await expect(page).toHaveURL(/\/entrar(?:\?.*)?$/, { timeout: 7000 });
   await expect(page.getByRole('status')).toContainText('sessão expirou');
 });
 
@@ -363,8 +363,8 @@ test('sair offline informa limite da revogação e impede retorno aos dados', as
   await login(page);
   state.logoutOffline = true;
   await page.getByRole('button', { name: 'Sair', exact: true }).click();
-  await expect(page).toHaveURL(/\/entrar$/);
+  await expect(page).toHaveURL(/\/entrar(?:\?.*)?$/);
   await expect(page.getByRole('status')).toContainText('Não foi possível confirmar');
   await navigate(page, '/equipe');
-  await expect(page).toHaveURL(/\/entrar$/);
+  await expect(page).toHaveURL(/\/entrar(?:\?.*)?$/);
 });

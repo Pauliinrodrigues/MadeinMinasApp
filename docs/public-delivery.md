@@ -12,11 +12,13 @@ O pedido nasce `New`, origem `DirectLink`, estoque `Pending`. Confirmar pela equ
 
 ## Cobertura e valores
 
-As regiões ficam em `PublicDelivery:Areas`, na configuração do backend por ambiente. Cada entrada exige `Id` estável (letras minúsculas, números e hífen, até 60 caracteres), `Neighborhood`, `City`, `State` e `Fee` explícito. Taxa de 0 a 9999.99 com até duas casas decimais; zero só representa entrega gratuita quando cadastrado expressamente. IDs e combinações bairro/cidade/UF devem ser únicos, até 500 regiões. Configuração inválida impede iniciar a API.
+O administrador mantém as regiões em **Cadastros → Regiões de entrega**, após aplicar `AddDeliverySettings`. A tela exige bairro, cidade, UF e taxa explícita, com revisão antes de salvar; permite pausar e reativar. Cada entrada tem identificador estável, taxa de 0 a 9999.99 com até duas casas decimais e situação ativa/pausada. Zero representa entrega gratuita quando informado expressamente. IDs e combinações bairro/cidade/UF devem ser únicos, até 500 regiões. Regras e concorrência: [delivery-settings.md](delivery-settings.md).
+
+Por compatibilidade, antes do primeiro salvamento, `PublicDelivery:Areas` fornece a lista inicial por ambiente. GET não a importa automaticamente. Depois de salvar, a lista no banco é a fonte da cobertura; somente regiões ativas aparecem no site. Configuração legada inválida ainda impede iniciar a API.
 
 **Nenhuma cobertura ou taxa operacional foi inventada.** O responsável ainda precisa informar as regiões e valores reais. A configuração versionada começa com `Areas: []`: retirada continua disponível; entrega informa indisponibilidade e orienta atendimento. Os locais e valores dos testes são exclusivamente fictícios.
 
-Para ativar, preencher a seção `PublicDelivery` do ambiente com a lista aprovada e reiniciar a API. Não substituir o arquivo inteiro de configurações nem apagar outros segredos. Também é possível usar variáveis, uma entrada por índice:
+Para ativar agora, cadastre e confirme os locais/valores aprovados pela tela administrativa, sem reiniciar a API. Em instalações que ainda usam somente a configuração inicial, é possível preencher `PublicDelivery` e reiniciar a API, sem substituir outros segredos. O formato legado por variáveis é:
 
 ```text
 PublicDelivery__Areas__0__Id=<identificador-estavel>
@@ -26,7 +28,7 @@ PublicDelivery__Areas__0__State=<UF>
 PublicDelivery__Areas__0__Fee=<valor-decimal-com-ponto>
 ```
 
-Índices adicionais seguem 1, 2 etc. Taxa única é representada repetindo o mesmo valor em cada bairro autorizado. Se a operação exigir distância ou divisões dentro de um bairro, definir e implementar essa regra antes de ativar a região inteira. Este incremento não cria tela administrativa de frete. Em múltiplas instâncias, manter configurações consistentes.
+Índices adicionais seguem 1, 2 etc. Taxa única é representada repetindo o mesmo valor em cada bairro autorizado. Se a operação exigir distância ou divisões dentro de um bairro, definir e implementar essa regra antes de ativar a região inteira. Em múltiplas instâncias, manter a configuração inicial consistente; depois do primeiro salvamento, todas consultam o banco compartilhado.
 
 ## Contratos
 
@@ -46,7 +48,7 @@ Retirada rejeita `address`; entrega exige endereço válido e região cadastrada
 
 A resposta acrescenta `address` normalizado e `deliveryAreaId`, mais `fulfillment`, `subtotal`, `deliveryFee` e `total`. `address.id` é nulo: trata-se da cópia informada para essa compra, não de um endereço do cadastro. Nome/telefone continuam autodeclarados.
 
-`POST /api/public-checkout/orders` recebe o mesmo envelope `{ requestId, reviewToken, checkout }`. Endereço/modalidade/região/taxa participam da revisão. Mudanças antes do envio exigem revisar novamente (`409 OrderReviewChanged`); região removida/desconhecida produz `409 PublicDeliveryUnavailable`. A transação desfaz também eventual novo cliente. Taxa e cobertura usam uma configuração consistente durante cada requisição.
+`POST /api/public-checkout/orders` recebe o mesmo envelope `{ requestId, reviewToken, checkout }`. Endereço/modalidade/região/taxa participam da revisão. Mudanças antes do envio exigem revisar novamente (`409 OrderReviewChanged`); região pausada/desconhecida produz `409 PublicDeliveryUnavailable`. A transação desfaz também eventual novo cliente. A criação mantém um bloqueio compartilhado de cobertura até o commit; uma edição administrativa usa o bloqueio exclusivo correspondente.
 
 Tentativa já gravada retorna o comprovante original antes de consultar a cobertura atual. Mesmo identificador com outro endereço/conteúdo retorna `409 OrderRequestConflict`. Hashes de retirada preservam o formato anterior para recuperar envios da 8C/8D/8E. O comprovante e o acompanhamento não expõem endereço ou cadastro; a modalidade e o total identificam a entrega.
 

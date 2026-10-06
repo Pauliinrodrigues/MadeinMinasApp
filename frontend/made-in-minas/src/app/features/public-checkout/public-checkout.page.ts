@@ -34,6 +34,7 @@ export class PublicCheckoutPage {
   readonly review = signal<PublicCheckoutReview | null>(null);
   readonly busy = signal(false);
   readonly error = signal('');
+  readonly attempted = signal(false);
   readonly price = formatProductPrice;
   private reviewedInput: PublicCheckoutInput | null = null;
   name = '';
@@ -85,6 +86,48 @@ export class PublicCheckoutPage {
     this.review.set(null);
     this.reviewedInput = null;
     this.error.set('');
+    this.attempted.set(false);
+  }
+
+  fieldError(field: string): string {
+    if (!this.attempted()) {
+      return '';
+    }
+    if (field === 'name' && !this.name.trim()) {
+      return 'Informe seu nome.';
+    }
+    if (field === 'phone' && !validBrazilianPhone(this.phone)) {
+      return 'Informe um telefone brasileiro válido com DDD.';
+    }
+    if (this.fulfillment !== 'Delivery') {
+      return '';
+    }
+    if (field === 'area' && !this.areas().some((area) => area.id === this.address.areaId)) {
+      return 'Selecione uma região atendida.';
+    }
+    if (field === 'street' && !this.address.street.trim()) {
+      return 'Informe a rua ou avenida.';
+    }
+    if (field === 'number' && !this.address.number.trim()) {
+      return 'Informe o número ou s/n.';
+    }
+    if (
+      field === 'postal' &&
+      this.address.postalCode?.trim() &&
+      !/^[0-9]{5}-?[0-9]{3}$/.test(this.address.postalCode.trim())
+    ) {
+      return 'Use oito dígitos no CEP.';
+    }
+    return '';
+  }
+
+  private focusInvalidField(): void {
+    const field = ['name', 'phone', 'area', 'street', 'number', 'postal'].find((field) =>
+      this.fieldError(field),
+    );
+    if (field) {
+      setTimeout(() => document.getElementById('checkout-' + field)?.focus());
+    }
   }
 
   revise(): void {
@@ -92,6 +135,7 @@ export class PublicCheckoutPage {
       return;
     }
     this.change();
+    this.attempted.set(true);
     const validation = this.cart.validationError();
     if (
       validation ||
@@ -100,6 +144,7 @@ export class PublicCheckoutPage {
       !validBrazilianPhone(this.phone)
     ) {
       this.error.set(validation ?? 'Informe seu nome e um telefone brasileiro válido com DDD.');
+      this.focusInvalidField();
       return;
     }
     if (
@@ -113,6 +158,7 @@ export class PublicCheckoutPage {
       this.error.set(
         'Selecione uma região atendida e informe rua e número (ou s/n). Se informar CEP, use oito dígitos.',
       );
+      this.focusInvalidField();
       return;
     }
     const input: PublicCheckoutInput = {

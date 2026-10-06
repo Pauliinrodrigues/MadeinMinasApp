@@ -1,10 +1,12 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { PublicOrderInput, PublicOrderReceipt } from './public-checkout-api.service';
+import { PublicOrderHistory } from './public-order-history.service';
 
 const storageKey = 'made-in-minas.public-checkout.v1';
 
 @Injectable({ providedIn: 'root' })
 export class PublicCheckoutState {
+  private readonly history = inject(PublicOrderHistory);
   readonly pending = signal<PublicOrderInput | null>(null);
   readonly names = signal<{ productId: string; name: string }[]>([]);
   readonly receipt = signal<PublicOrderReceipt | null>(null);
@@ -37,6 +39,7 @@ export class PublicCheckoutState {
         typeof value.receipt.total === 'number'
       ) {
         this.receipt.set(value.receipt);
+        this.history.add(value.receipt);
       } else {
         throw new Error('Invalid checkout recovery');
       }
@@ -55,6 +58,7 @@ export class PublicCheckoutState {
   }
 
   complete(receipt: PublicOrderReceipt): void {
+    this.history.add(receipt);
     this.receipt.set(receipt);
     this.pending.set(null);
     this.names.set([]);
@@ -72,5 +76,15 @@ export class PublicCheckoutState {
     this.receipt.set(null);
     this.names.set([]);
     this.recoveryError.set(false);
+  }
+
+  forgetTracking(number: number): void {
+    const receipt = this.receipt();
+    if (receipt?.number === number) {
+      const updated = { ...receipt, tracking: null };
+      sessionStorage.setItem(storageKey, JSON.stringify({ version: 1, receipt: updated }));
+      this.receipt.set(updated);
+    }
+    this.history.forget(number);
   }
 }

@@ -29,7 +29,12 @@ public sealed class ProductService(AppDbContext database, TimeProvider clock, IL
             .Skip((request.Page - 1) * request.PageSize).Take(request.PageSize)
             .Select(product => new ProductResponse(product.Id, product.CategoryId, product.Category.Name, product.Category.IsActive,
                 product.Name, product.Description, product.Price, product.ImageUrl, product.IsActive, product.IsAvailable,
-                product.IsActive && product.IsAvailable && product.Category.IsActive, product.CreatedAt, product.UpdatedAt))
+                product.IsActive && product.IsAvailable && product.Category.IsActive, product.CreatedAt, product.UpdatedAt)
+            {
+                HasRecipe = database.Recipes.Any(recipe => recipe.ProductId == product.Id && recipe.Items.Any()),
+                HasMissingCosts = database.Recipes.Any(recipe => recipe.ProductId == product.Id &&
+                    recipe.Items.Any(item => item.Ingredient.UnitCost == 0))
+            })
             .ToArrayAsync(cancellationToken);
         return new ProductPageResponse(items, request.Page, request.PageSize, total);
     }
@@ -147,4 +152,3 @@ public sealed class ProductService(AppDbContext database, TimeProvider clock, IL
         product.Category.IsActive, product.Name, product.Description, product.Price, product.ImageUrl, product.IsActive,
         product.IsAvailable, product.IsActive && product.IsAvailable && product.Category.IsActive, product.CreatedAt, product.UpdatedAt);
 }
-

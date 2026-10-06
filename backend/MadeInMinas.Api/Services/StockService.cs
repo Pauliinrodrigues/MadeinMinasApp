@@ -8,6 +8,49 @@ namespace MadeInMinas.Api.Services;
 
 public sealed class StockService(AppDbContext database, ILogger<StockService> logger)
 {
+    public async Task<StockReplenishmentResponse> ReplenishmentAsync(StockReplenishmentQuery request, CancellationToken cancellationToken)
+    {
+        await using var transaction = await database.Database.BeginTransactionAsync(IsolationLevel.RepeatableRead, cancellationToken);
+        var query = database.Ingredients.AsNoTracking();
+        if (!request.IncludeInactive)
+            query = query.Where(ingredient => ingredient.IsActive);
+        if (!string.IsNullOrWhiteSpace(request.Search))
+        {
+            var search = request.Search.Trim().Normalize().ToUpperInvariant();
+            query = query.Where(ingredient => ingredient.NormalizedName.Contains(search)
+                || ingredient.Supplier != null && ingredient.Supplier.ToUpper().Contains(search));
+        }
+        // Os contadores mantêm busca e inclusão de inativos, independentemente da fila selecionada.
+        var summary = await query.GroupBy(_ => 1).Select(group => new StockReplenishmentSummary(
+            group.Count(),
+            group.Count(ingredient => ingredient.CurrentStock <= ingredient.MinimumStock || ingredient.StockVersion == 0),
+            group.Count(ingredient => ingredient.CurrentStock == 0),
+            group.Count(ingredient => ingredient.CurrentStock <= ingredient.MinimumStock),
+            group.Count(ingredient => ingredient.StockVersion == 0))).SingleOrDefaultAsync(cancellationToken)
+            ?? new StockReplenishmentSummary(0, 0, 0, 0, 0);
+        query = request.Status switch
+        {
+            "Attention" => query.Where(ingredient => ingredient.CurrentStock <= ingredient.MinimumStock || ingredient.StockVersion == 0),
+            "OutOfStock" => query.Where(ingredient => ingredient.CurrentStock == 0),
+            "LowStock" => query.Where(ingredient => ingredient.CurrentStock <= ingredient.MinimumStock),
+            "Unrecorded" => query.Where(ingredient => ingredient.StockVersion == 0),
+            _ => query
+        };
+        var count = await query.CountAsync(cancellationToken);
+        var items = await query.OrderByDescending(ingredient => ingredient.CurrentStock == 0)
+            .ThenByDescending(ingredient => ingredient.CurrentStock <= ingredient.MinimumStock)
+            .ThenByDescending(ingredient => ingredient.StockVersion == 0)
+            .ThenBy(ingredient => ingredient.NormalizedName).ThenBy(ingredient => ingredient.Id)
+            .Skip((request.Page - 1) * request.PageSize).Take(request.PageSize)
+            .Select(ingredient => new StockReplenishmentItem(ingredient.Id, ingredient.Name, ingredient.Unit,
+                ingredient.Supplier, ingredient.IsActive, ingredient.CurrentStock, ingredient.MinimumStock,
+                ingredient.CurrentStock < ingredient.MinimumStock ? ingredient.MinimumStock - ingredient.CurrentStock : 0m,
+                ingredient.CurrentStock <= ingredient.MinimumStock, ingredient.StockVersion > 0))
+            .ToArrayAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return new StockReplenishmentResponse(summary, items, request.Page, request.PageSize, count);
+    }
+
     public async Task<StockResponse> GetAsync(Guid ingredientId, StockQuery query, CancellationToken cancellationToken)
     {
         // Saldo e histórico pertencem à mesma visão, mesmo com lançamentos concorrentes.

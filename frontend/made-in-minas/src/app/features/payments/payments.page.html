@@ -93,8 +93,12 @@
           [(ngModel)]="cashTendered"
           [disabled]="blocked()"
       /></label>
-      <p class="hint">Informe o dinheiro entregue. O troco será exibido após o registro.</p>
-      }
+      <p class="hint">Informe o dinheiro entregue para conferir o troco antes do registro.</p>
+      @if (changePreview() !== null) {
+      <p role="status" class="notice">
+        Troco previsto: <strong>{{ formatPrice(changePreview()!) }}</strong>
+      </p>
+      } }
       <label class="checkbox"
         ><input
           type="checkbox"

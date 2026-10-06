@@ -22,9 +22,35 @@
   <p class="error" role="alert">Dados desatualizados. Atualize o painel para continuar.</p>
   } @if (notice()) {
   <p class="notice" role="status">{{ notice() }}</p>
-  } @if (board(); as data) {
-  <div class="kitchen-board" [class.unavailable]="needsRefresh() || stale()">
+  } @if (board(); as data) { @if (queueNotice()) {
+  <p role="status" class="notice">{{ queueNotice() }}</p>
+  }
+  <div class="actions" aria-label="Etapas da cozinha">
+    <button
+      type="button"
+      (click)="selectedStage.set('')"
+      [attr.aria-pressed]="!selectedStage()"
+      [disabled]="!!pending()"
+    >
+      Todas as etapas
+    </button>
     @for (column of data.columns; track column.status) {
+    <button
+      type="button"
+      (click)="selectedStage.set(column.status); queueNotice.set('')"
+      [attr.aria-pressed]="selectedStage() === column.status"
+      [disabled]="!!pending()"
+    >
+      {{ statusLabel(column.status) }} ({{ column.totalCount }})
+    </button>
+    }
+  </div>
+  <div
+    class="kitchen-board"
+    [class.single-stage]="!!selectedStage()"
+    [class.unavailable]="needsRefresh() || stale()"
+  >
+    @for (column of visibleColumns(); track column.status) {
     <section class="kitchen-column" [attr.aria-label]="statusLabel(column.status)">
       <h2>{{ statusLabel(column.status) }} <span class="badge">{{ column.totalCount }}</span></h2>
       @for (order of column.items; track order.id) {

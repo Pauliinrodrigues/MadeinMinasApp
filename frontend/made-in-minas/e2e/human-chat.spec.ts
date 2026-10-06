@@ -177,7 +177,7 @@ async function begin(page: Page) {
   await page.getByRole('button', { name: 'Solicitar atendimento' }).click();
 }
 async function login(page: Page) {
-  await page.goto('/entrar');
+  await page.goto('/entrar?returnUrl=%2Fequipe');
   await page.getByLabel('Login', { exact: true }).fill('ana');
   await page.getByLabel('Senha', { exact: true }).fill('Senha teste 123!');
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
@@ -199,6 +199,40 @@ async function seedAccess(page: Page) {
     { key: publicKey, access },
   );
 }
+
+test('cliente inclui somente o número do pedido no texto e decide quando enviar', async ({
+  page,
+}) => {
+  const { state } = await setup(page);
+  await page.addInitScript(() =>
+    sessionStorage.setItem(
+      'made-in-minas.public-checkout.v1',
+      JSON.stringify({
+        version: 1,
+        receipt: {
+          number: 1542,
+          fulfillment: 'Pickup',
+          total: 59.8,
+          createdAt: '2026-10-05T14:00:00Z',
+          tracking: { token: 'private-tracking-token', expiresAt: '2026-10-12T14:00:00Z' },
+        },
+      }),
+    ),
+  );
+  await page.goto('/pedido/atendimento');
+  await page.getByRole('button', { name: 'Incluir pedido #1542 na mensagem', exact: true }).click();
+  await expect(page.getByLabel('Sua mensagem', { exact: true })).toHaveValue(
+    'Preciso de ajuda com o pedido #1542.',
+  );
+  expect(state.starts).toHaveLength(0);
+  await page.getByLabel('Seu nome', { exact: true }).fill('Maria');
+  await page.getByRole('button', { name: 'Solicitar atendimento', exact: true }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Aguardando atendimento', exact: true }),
+  ).toBeVisible();
+  expect(JSON.stringify(state.starts)).not.toContain('private-tracking-token');
+  expect(state.starts[0].text).toBe('Preciso de ajuda com o pedido #1542.');
+});
 
 test('visitante pede ajuda pelo cardápio, recebe resposta e conserva acesso ao recarregar', async ({
   page,

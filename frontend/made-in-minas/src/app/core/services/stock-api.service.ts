@@ -4,6 +4,38 @@ import { environment } from '../../../environments/environment';
 import { IngredientUnit } from './ingredient-api.service';
 
 export type StockMovementType = 'Entry' | 'Exit' | 'Count';
+export type StockReplenishmentStatus =
+  'Attention' | 'OutOfStock' | 'LowStock' | 'Unrecorded' | 'All';
+export interface StockReplenishmentFilters {
+  search: string;
+  status: StockReplenishmentStatus;
+  includeInactive: boolean;
+}
+export interface StockReplenishmentItem {
+  ingredientId: string;
+  name: string;
+  unit: IngredientUnit;
+  supplier: string | null;
+  isActive: boolean;
+  currentStock: number;
+  minimumStock: number;
+  quantityToMinimum: number;
+  isLowStock: boolean;
+  hasMovements: boolean;
+}
+export interface StockReplenishment {
+  summary: {
+    totalCount: number;
+    attentionCount: number;
+    outOfStockCount: number;
+    lowStockCount: number;
+    unrecordedCount: number;
+  };
+  items: StockReplenishmentItem[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+}
 export interface StockInput {
   requestId: string;
   expectedVersion: number;
@@ -46,6 +78,17 @@ export interface IngredientStock {
 @Injectable({ providedIn: 'root' })
 export class StockApi {
   private readonly http = inject(HttpClient);
+  replenishment(page: number, filters: StockReplenishmentFilters) {
+    const params = new HttpParams()
+      .set('page', page)
+      .set('pageSize', 20)
+      .set('search', filters.search.trim())
+      .set('status', filters.status)
+      .set('includeInactive', filters.includeInactive);
+    return this.http.get<StockReplenishment>(environment.apiBaseUrl + '/stock/replenishment', {
+      params,
+    });
+  }
   private url(id: string) {
     return environment.apiBaseUrl + '/ingredients/' + encodeURIComponent(id) + '/stock';
   }

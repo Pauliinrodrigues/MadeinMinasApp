@@ -93,6 +93,37 @@ public sealed class PaymentTests(AuthenticationFactory factory) : IClassFixture<
         Assert.Equal(code, body.RootElement.GetProperty("code").GetString());
     }
 
+    [Fact]
+    public async Task OrderListReflectsReceiptRefundAndReplacementWithoutChangingProduction()
+    {
+        using var client = await SignInAsync();
+        var order = await OrderAsync(client);
+        async Task AssertSummaryAsync(string expected, bool unpaid)
+        {
+            var list = (await client.GetFromJsonAsync<OrderPageResponse>("/api/orders"))!;
+            var item = Assert.Single(list.Items);
+            Assert.Equal(order.Id, item.Id);
+            Assert.Equal("New", item.Status);
+            Assert.Equal(expected, item.PaymentStatus);
+            Assert.Equal(unpaid ? 1 : 0, (await client.GetFromJsonAsync<OrderPageResponse>("/api/orders?paymentStatus=Unpaid"))!.TotalCount);
+        }
+        await AssertSummaryAsync("NotRegistered", true);
+        var payment = await CreateAsync(client, order);
+        await AssertSummaryAsync("Pending", true);
+        (await client.PutAsJsonAsync($"{Path(order.Id)}/{payment.Id}/receive", new ReceivePaymentRequest(1, true))).EnsureSuccessStatusCode();
+        await AssertSummaryAsync("Received", false);
+        (await client.PutAsJsonAsync($"{Path(order.Id)}/{payment.Id}/refund", new RefundPaymentRequest(2, "Devolução de teste", true))).EnsureSuccessStatusCode();
+        await AssertSummaryAsync("Refunded", true);
+        var replacement = await CreateAsync(client, order);
+        await AssertSummaryAsync("Pending", true);
+        (await client.PutAsJsonAsync($"{Path(order.Id)}/{replacement.Id}/cancel", new CancelPaymentRequest(1, "Troca de forma"))).EnsureSuccessStatusCode();
+        await AssertSummaryAsync("Refunded", true);
+        (await client.PutAsJsonAsync($"/api/orders/{order.Id}/status", new OrderStatusRequest("Cancelled", 1, "Cancelamento de teste"))).EnsureSuccessStatusCode();
+        var cancelled = Assert.Single((await client.GetFromJsonAsync<OrderPageResponse>("/api/orders"))!.Items);
+        Assert.Equal("Refunded", cancelled.PaymentStatus);
+        Assert.Empty((await client.GetFromJsonAsync<OrderPageResponse>("/api/orders?paymentStatus=Unpaid"))!.Items);
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(3)]

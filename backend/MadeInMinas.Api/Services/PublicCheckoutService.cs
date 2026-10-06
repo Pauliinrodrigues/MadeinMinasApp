@@ -8,7 +8,6 @@ using MadeInMinas.Api.Models;
 using MadeInMinas.Api.Security;
 using MadeInMinas.Api.Validation;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 
 namespace MadeInMinas.Api.Services;
 
@@ -18,12 +17,12 @@ public sealed class PublicCheckoutService(
     TimeProvider clock,
     ILogger<PublicCheckoutService> logger,
     PublicOrderAccess access,
-    IOptionsSnapshot<PublicDeliveryOptions> delivery)
+    DeliverySettingsService settings)
 {
     public async Task<PublicCheckoutReviewResponse> ReviewAsync(PublicCheckoutRequest request, CancellationToken cancellationToken)
     {
         var area = request.Fulfillment == "Delivery"
-            ? DeliveryAreas().SingleOrDefault(area => area.Id == request.Address!.AreaId)
+            ? (await DeliveryAreasAsync(cancellationToken)).SingleOrDefault(area => area.Id == request.Address!.AreaId)
                 ?? throw new OrderException(OrderError.PublicDeliveryUnavailable, "A região selecionada não está disponível para entrega. Confira as regiões atendidas ou escolha retirada.")
             : null;
         var address = area is null ? null : new CartAddressResponse(null,
@@ -38,11 +37,8 @@ public sealed class PublicCheckoutService(
         return review with { ReviewToken = PublicCheckoutFingerprint.ForReview(review) };
     }
 
-    public PublicDeliveryAreaResponse[] DeliveryAreas() => delivery.Value.Areas
-        .Select(area => new PublicDeliveryAreaResponse(area.Id, area.Neighborhood.Trim().Normalize(),
-            area.City.Trim().Normalize(), area.State, area.Fee!.Value))
-        .OrderBy(area => area.State, StringComparer.Ordinal).ThenBy(area => area.City, StringComparer.Ordinal)
-        .ThenBy(area => area.Neighborhood, StringComparer.Ordinal).ToArray();
+    public Task<PublicDeliveryAreaResponse[]> DeliveryAreasAsync(CancellationToken cancellationToken) =>
+        settings.PublicAreasAsync(cancellationToken);
 
     private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim().Normalize();
 
@@ -62,6 +58,8 @@ public sealed class PublicCheckoutService(
             return new PublicOrderCreationResult(Receipt(existing), false);
         }
 
+        if (request.Checkout.Fulfillment == "Delivery")
+            await settings.LockForOrderAsync(cancellationToken);
         var now = DateTimeOffset.FromUnixTimeMilliseconds(clock.GetUtcNow().ToUnixTimeMilliseconds());
         // Cliente antes do catálogo, na mesma ordem dos bloqueios do atendimento.
         var customerId = await ResolveCustomerAsync(request.Checkout, now, cancellationToken);

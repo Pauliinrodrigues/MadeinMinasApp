@@ -8,9 +8,45 @@
       <span class="eyebrow">FEITO COM CUIDADO.</span>
       <h1>Acompanhe <em>seu pedido.</em></h1>
     </section>
-    @if (access()) {
+    @if (history.entries().length) {
+    <section class="panel saved-orders" aria-label="Meus pedidos neste navegador">
+      <h2>Meus pedidos</h2>
+      <label for="tracked-order">Escolher pedido</label>
+      <select
+        id="tracked-order"
+        [value]="selected()?.number"
+        (change)="select(+$any($event.target).value)"
+      >
+        @for (entry of history.entries(); track entry.number) {
+        <option [value]="entry.number">
+          #{{ entry.number }} · {{ entry.createdAt | date:'dd/MM HH:mm':'-0300' }} · {{
+          price(entry.total) }}
+        </option>
+        }
+      </select>
+      <label class="remember">
+        <input type="checkbox" [checked]="history.remembered()" (change)="remember($event)" />
+        Lembrar meus pedidos neste dispositivo
+      </label>
+      <p class="notice">
+        Guarde até 20 acompanhamentos enquanto o acesso for válido. Sem esta opção, ficam apenas
+        nesta aba. Use somente em dispositivo pessoal: quem usa o navegador poderá consultar os
+        pedidos salvos.
+      </p>
+      <details>
+        <summary>Remover este acompanhamento</summary>
+        <p>
+          Remove o acesso salvo ao pedido #{{ selected()?.number }} deste navegador. O pedido
+          continua com a equipe.
+        </p>
+        <button type="button" (click)="forget()">Confirmar remoção do acompanhamento</button>
+      </details>
+    </section>
+    } @if (history.warning()) {
+    <p class="error" role="alert">{{ history.warning() }}</p>
+    } @if (access()) {
     <section class="panel" aria-label="Acompanhamento do pedido">
-      @if (state.receipt(); as receipt) {
+      @if (selected(); as receipt) {
       <h2>Pedido #{{ order()?.number ?? receipt.number }}</h2>
       } @if (order(); as current) {
       <div role="status" aria-live="polite">
@@ -47,8 +83,7 @@
       </p>
       }
       <p class="notice">
-        Mantenha esta aba aberta para acompanhar. Acesso até {{ access()!.expiresAt |
-        date:'dd/MM/yyyy HH:mm':'-0300' }} (Brasília).
+        Acesso até {{ access()!.expiresAt | date:'dd/MM/yyyy HH:mm':'-0300' }} (Brasília).
       </p>
     </section>
     } @else {
@@ -63,5 +98,6 @@
     }
     <footer>Made in Minas · Feito com cuidado.</footer>
     <p><a routerLink="/pedido/atendimento">Falar com atendente</a></p>
+    <p><a routerLink="/pedido">Voltar ao cardápio</a></p>
   </main>
 </ion-content>

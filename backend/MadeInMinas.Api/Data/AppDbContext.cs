@@ -5,6 +5,7 @@ namespace MadeInMinas.Api.Data;
 
 public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
+    public DbSet<DeliverySettings> DeliverySettings => Set<DeliverySettings>();
     public DbSet<User> Users => Set<User>();
     public DbSet<ChatConversation> ChatConversations => Set<ChatConversation>();
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();

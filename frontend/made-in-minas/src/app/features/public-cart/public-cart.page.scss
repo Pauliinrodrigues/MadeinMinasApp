@@ -1,6 +1,20 @@
 :host {
   display: block;
 }
+.quantity-control {
+  display: grid;
+  grid-template-columns: 44px minmax(60px, 90px) 44px;
+  gap: 8px;
+  align-items: center;
+}
+.quantity-control input {
+  width: 100%;
+  margin: 0;
+}
+.quantity-control button {
+  padding: 8px;
+  font-size: 22px;
+}
 ion-content {
   --background: #faf5ec;
   --color: #35281e;
@@ -38,7 +52,7 @@ header > a:last-child {
   padding: 12px 0;
 }
 .intro {
-  padding: 48px 0 28px;
+  padding: 24px 0 12px;
 }
 .eyebrow {
   color: #722f27;

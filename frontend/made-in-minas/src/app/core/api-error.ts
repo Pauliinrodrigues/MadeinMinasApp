@@ -5,6 +5,9 @@ export function apiError(error: unknown, login = false): string {
     return 'Não foi possível concluir. Verifique a conexão e tente novamente.';
   }
   const codes: Record<string, string> = {
+    DeliverySettingsChanged:
+      'Outro administrador alterou as regiões. Recarregue e confira os valores atuais.',
+    DeliveryAreaRemovalDenied: 'Pause a região em vez de removê-la da lista.',
     OrderRecipeRequired:
       'Cadastre a ficha técnica de todos os produtos antes de confirmar o pedido.',
     OrderIngredientInactive: 'A ficha contém ingrediente inativo. Solicite a revisão do cadastro.',

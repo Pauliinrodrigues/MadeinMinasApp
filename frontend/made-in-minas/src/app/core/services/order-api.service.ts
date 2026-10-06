@@ -14,10 +14,13 @@ export type OrderStatus =
   | 'Delivered'
   | 'Finalized'
   | 'Cancelled';
+export type OrderPaymentStatus = 'NotRegistered' | 'Pending' | 'Received' | 'Refunded' | 'NotDue';
 export interface OrderSummary {
   id: string;
   number: number;
   customerName: string;
+  origin: 'Manual' | 'DirectLink';
+  paymentStatus: OrderPaymentStatus;
   fulfillment: 'Pickup' | 'Delivery';
   status: OrderStatus;
   total: number;
@@ -83,18 +86,36 @@ export function orderStatusLabel(status: OrderStatus): string {
   }[status];
 }
 
+export function orderPaymentStatusLabel(status: OrderPaymentStatus): string {
+  return (
+    {
+      NotRegistered: 'Não definido',
+      Pending: 'Aguardando recebimento',
+      Received: 'Recebido',
+      Refunded: 'Devolvido',
+      NotDue: 'Sem cobrança',
+    }[status] ?? 'Não informado'
+  );
+}
+
 @Injectable({ providedIn: 'root' })
 export class OrderApi {
   private readonly http = inject(HttpClient);
   private readonly url = environment.apiBaseUrl + '/orders';
 
-  list(page: number, search: string, status: string) {
+  list(page: number, search: string, status: string, origin = '', paymentStatus = '') {
     let params = new HttpParams()
       .set('page', page)
       .set('pageSize', 20)
       .set('search', search.trim());
     if (status) {
       params = params.set('status', status);
+    }
+    if (origin) {
+      params = params.set('origin', origin);
+    }
+    if (paymentStatus) {
+      params = params.set('paymentStatus', paymentStatus);
     }
     return this.http.get<OrderPage>(this.url, { params });
   }

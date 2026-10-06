@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { IonContent } from '@ionic/angular/ion-content';
 import { finalize } from 'rxjs';
 import { AuthSession } from '../../core/auth/auth-session.service';
@@ -19,15 +19,26 @@ export class LoginPage {
   readonly session = inject(AuthSession);
   private readonly api = inject(StaffApi);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
   readonly busy = signal(false);
   readonly error = signal('');
   username = '';
   password = '';
+  showPassword = false;
+  capsLock = false;
+
+  checkCapsLock(event: KeyboardEvent): void {
+    this.capsLock = event.getModifierState('CapsLock');
+  }
+
+  private destination(): string {
+    return this.session.returnUrl(this.route.snapshot.queryParamMap.get('returnUrl'));
+  }
 
   constructor() {
     if (this.session.token()) {
-      void this.router.navigateByUrl('/equipe');
+      void this.router.navigateByUrl(this.destination());
     }
   }
 
@@ -47,7 +58,7 @@ export class LoginPage {
       .subscribe({
         next: () => {
           this.password = '';
-          void this.router.navigateByUrl('/equipe', { replaceUrl: true });
+          void this.router.navigateByUrl(this.destination(), { replaceUrl: true });
         },
         error: (error) => {
           this.password = '';

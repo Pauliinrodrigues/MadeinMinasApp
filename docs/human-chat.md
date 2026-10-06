@@ -12,6 +12,7 @@ Este incremento entrega a solicitação e o atendimento humano. Não há IA, bot
 
 ## Fluxo e regras
 
+- Na rodada de usabilidade, a fila permanece ao lado da conversa em telas acima de 1050 px; no celular, **Voltar à fila** conserva filtro/página. Trocar a conversa cancela a leitura anterior e mantém rascunhos/tentativas por funcionário e conversa. O histórico tem rolagem própria e acesso às últimas mensagens. **Nova atividade** indica versão ainda não carregada por essa conta nesta aba; não é recibo de leitura do cliente nem contagem exata de mensagens não lidas. A tela pública permite incluir explicitamente somente o número do pedido selecionado, sem token e sem envio automático.
 - `Waiting`: solicitação na fila; visitante pode complementar a mensagem.
 - `InService`: conversa assumida por um funcionário. Só o responsável pode responder/encerrar. Outro atendente recebe conflito; um administrador pode assumir uma conversa de outra pessoa, com registro no histórico. Para encerrar uma solicitação abandonada/expirada, primeiro assumir.
 - `Closed`: sem novas mensagens; histórico continua legível até o vencimento do acesso público. Encerramento exige confirmação na interface. Não existe reabertura; o visitante pode iniciar outro atendimento, perdendo o acesso anterior da aba.

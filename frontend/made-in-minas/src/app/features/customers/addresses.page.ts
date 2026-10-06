@@ -38,6 +38,7 @@ export class AddressesPage {
   private readonly destroyRef = inject(DestroyRef);
   private request?: Subscription;
   readonly customerId = inject(ActivatedRoute).snapshot.paramMap.get('customerId')!;
+  readonly returnToCart = inject(ActivatedRoute).snapshot.queryParamMap.get('returnTo') === 'cart';
   readonly customer = signal<Customer | null>(null);
   readonly result = signal<AddressPage | null>(null);
   readonly loading = signal(false);

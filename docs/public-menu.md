@@ -7,7 +7,8 @@ Continuidade em 05/10/2026: a 8A foi preservada no commit local `4bcd978`. A [Fa
 ## Regras
 
 - Somente produtos ativos em categorias ativas aparecem. Categorias vazias ou que contenham apenas produtos inativos ficam ocultas.
-- Produtos ativos com venda pausada continuam visíveis, identificados como **Indisponível**. A disponibilidade vem do backend; não é uma promessa de saldo físico, reserva ou horário de funcionamento.
+- Produtos ativos com venda pausada continuam visíveis, identificados como **Indisponível**. A disponibilidade pública combina a liberação manual com ficha, ingredientes ativos e saldo suficiente para uma unidade. O cálculo vem do backend e não divulga composição, custos ou saldos. Não representa reserva nem horário de funcionamento; a confirmação confere novamente.
+- Busca por nome (`search`, até 120 caracteres) combina com categoria e paginação. O cardápio apresenta a cobertura e as taxas retornadas pela API antes do checkout; lista vazia informa somente retirada, e falha de consulta não é tratada como ausência de cobertura.
 - Nome, descrição, preço e imagem vêm do cadastro existente. A descrição comercial não é montada a partir da ficha técnica e deve ser revisada pela equipe.
 - Categorias seguem DisplayOrder, nome normalizado e ID. Produtos seguem a ordem das categorias, nome normalizado e ID. O filtro conserva todas as categorias públicas para navegação.
 - Preços são lidos em decimal e apenas formatados no frontend. Não há preço demonstrativo, cálculo comercial no navegador, custo, saldo, fornecedor ou instrução de preparo na resposta pública.

@@ -23,6 +23,7 @@ A Fase 4B (carrinho/revisão) consulta esse modelo sem criar tabelas ou migratio
 | Payments | Pedido/funcionário com FK restrita, chave de tentativa por funcionário, método, valor numeric(12,2), status/versão, dinheiro entregue e datas UTC; no máximo um Pending/Received por pedido | 4D implementada e validada |
 | PaymentStatusHistory | Pagamento, versão única, status anterior/novo, funcionário com FK restrita e nome copiado, motivo, instante UTC | 4D implementada e validada |
 | OrderStatusHistory | Pedido, versão única por pedido, status anterior/novo, instante UTC, funcionário com FK restrita e nome copiado, motivo | 4C implementada e validada |
+| DeliverySettings | Linha única, versão, lista JSONB de regiões/taxas/situação e autor/data da última edição; sem FK com pedidos | Ajustes operacionais D |
 
 ## Diretrizes
 
@@ -90,4 +91,8 @@ Migration 20261005183152_AddHumanChat cria ChatConversations e ChatMessages, sem
 
 ## Entrega pública — 8F
 
-`20261005210534_AddPublicDelivery` altera somente `CK_Orders_Origin` e `CK_Orders_Fulfillment`: DirectLink permite entrega com AddressId nulo e cópia histórica completa; Manual exige referência ao endereço de cadastro. Não cria tabelas nem colunas. Down recusa reversão quando existem entregas públicas. Valores e cobertura ficam na configuração por ambiente e não são ativados pela migration. Ver [public-delivery.md](public-delivery.md).
+`20261005210534_AddPublicDelivery` altera somente `CK_Orders_Origin` e `CK_Orders_Fulfillment`: DirectLink permite entrega com AddressId nulo e cópia histórica completa; Manual exige referência ao endereço de cadastro. Não cria tabelas nem colunas. Down recusa reversão quando existem entregas públicas. A migration não ativa valores ou cobertura. Ver [public-delivery.md](public-delivery.md).
+
+## Administração de regiões e taxas
+
+`20261006174915_AddDeliverySettings` cria a configuração única com `Id=1`, `Version bigint > 0`, `AreasJson jsonb` (array de até 500 regiões), `UpdatedAt timestamptz`, `UpdatedById uuid` e `UpdatedByName varchar(120)`. Não há inserção inicial. Antes do primeiro salvamento, consulta a configuração legada; depois, o banco prevalece. Revisão esperada e bloqueio transacional protegem a lista completa, sem alterar cópias históricas de pedidos. Down recusa descartar configuração salva. Sem novos índices de busca: a lista pequena é consultada como conjunto. Ver [delivery-settings.md](delivery-settings.md).

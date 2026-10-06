@@ -24,6 +24,26 @@ import { orderStatusLabel } from '../../core/services/order-api.service';
   selector: 'app-dispatch',
   imports: [DatePipe, CurrencyPipe, RouterLink],
   templateUrl: './dispatch.page.html',
+  styles: `
+    .destination,
+    .payment-summary {
+      padding: 16px;
+      border-radius: 10px;
+      background: #faf5ec;
+      border-left: 4px solid #722f27;
+      margin-block: 16px;
+    }
+    .payment-summary p {
+      margin: 8px 0;
+    }
+    .payment-summary.unpaid {
+      border-left-color: #9b3f17;
+      background: #fff4d8;
+    }
+    h2 {
+      font-size: 28px;
+    }
+  `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DispatchPage {

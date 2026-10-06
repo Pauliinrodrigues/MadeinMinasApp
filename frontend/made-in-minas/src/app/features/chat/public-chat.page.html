@@ -10,7 +10,17 @@
       <p>Peça ajuda a um atendente. A resposta depende da disponibilidade da equipe.</p>
     </section>
     <section class="panel">
-      @if (state.recoveryError()) {
+      @if (receipt(); as order) { @if (!state.recoveryError() && !unavailable() &&
+      !state.value().pendingStart && !state.value().pendingMessage && transcript()?.status !==
+      'Closed') {
+      <button type="button" (click)="shareOrder()" [disabled]="busy() || text.length > 1900">
+        Incluir pedido #{{ order.number }} na mensagem
+      </button>
+      <p class="hint">
+        Confira o texto e envie quando estiver pronto. O número não comprova a titularidade do
+        pedido.
+      </p>
+      } } @if (state.recoveryError()) {
       <h2>Não conseguimos recuperar a conversa</h2>
       <p>Ao recomeçar, você perde o acesso anterior desta aba.</p>
       <button (click)="reset()">Recomeçar atendimento</button>

@@ -1,4 +1,5 @@
-<a [routerLink]="['/equipe/clientes', customerId]" class="back-link">← Cadastro do cliente</a>
+<a [routerLink]="['/equipe/clientes', customerId]" class="back-link">← Cadastro do cliente</a> @if
+(returnToCart) { <a routerLink="/equipe/carrinho" class="button">Voltar ao carrinho preservado</a> }
 <section>
   <p class="eyebrow">ATENDIMENTO</p>
   <h1>Endereços</h1>

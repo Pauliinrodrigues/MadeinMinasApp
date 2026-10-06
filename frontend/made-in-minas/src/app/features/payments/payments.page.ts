@@ -50,6 +50,22 @@ export class PaymentsPage {
     this.load();
   }
 
+  changePreview(): number | null {
+    const amount = this.result()?.activePayment?.amount;
+    const cash = this.cashTendered;
+    if (
+      amount === undefined ||
+      cash === null ||
+      !Number.isFinite(cash) ||
+      cash < amount ||
+      cash > 9999999999.99 ||
+      Math.abs(cash * 100 - Math.round(cash * 100)) > 0.000001
+    ) {
+      return null;
+    }
+    return (Math.round(cash * 100) - Math.round(amount * 100)) / 100;
+  }
+
   blocked(): boolean {
     return this.loading() || this.saving() || this.needsRefresh() || this.retryCommand() !== null;
   }

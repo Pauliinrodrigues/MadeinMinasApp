@@ -21,6 +21,7 @@ import {
   chatStatusLabel,
 } from '../../core/services/chat-api.service';
 import { ChatMessagesComponent } from './chat-messages.component';
+import { ChatReadState } from '../../core/services/chat-read-state.service';
 
 @Component({
   selector: 'app-staff-chat',
@@ -28,6 +29,16 @@ import { ChatMessagesComponent } from './chat-messages.component';
   templateUrl: './staff-chat.page.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: `
+    .messages-scroll {
+      max-height: 45dvh;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      border-block: 1px solid #dfd3c3;
+    }
+    .messages-scroll:focus-visible {
+      outline: 3px solid #722f27;
+      outline-offset: 2px;
+    }
     .actions {
       display: flex;
       gap: 12px;
@@ -42,6 +53,7 @@ import { ChatMessagesComponent } from './chat-messages.component';
 })
 export class StaffChatPage {
   readonly session = inject(AuthSession);
+  private readonly readState = inject(ChatReadState);
   private readonly api = inject(StaffChatApi);
   private readonly destroyRef = inject(DestroyRef);
   private readonly id = inject(ActivatedRoute).snapshot.paramMap.get('id')!;
@@ -73,6 +85,14 @@ export class StaffChatPage {
   recoveryAcknowledged = false;
 
   constructor() {
+    try {
+      const draft = sessionStorage.getItem(this.storageKey + '.draft');
+      if (draft && draft.length <= 2000) {
+        this.text = draft;
+      }
+    } catch {
+      /* A recuperação de envio abaixo continua obrigatória. */
+    }
     try {
       const stored = sessionStorage.getItem(this.storageKey);
       if (stored) {
@@ -141,6 +161,9 @@ export class StaffChatPage {
       .subscribe({
         next: (data) => {
           this.data.set(data);
+          if (!data.transcript.hasMore && !document.hidden) {
+            this.readState.markRead(this.id, data.conversation.version);
+          }
           this.messages.update((messages) => [
             ...messages,
             ...data.transcript.messages.filter(
@@ -232,6 +255,7 @@ export class StaffChatPage {
             return;
           }
           this.text = '';
+          this.saveDraft();
           this.busy.set(false);
           this.fresh.set(false);
           this.load();
@@ -265,6 +289,17 @@ export class StaffChatPage {
     }
     if (this.clearPending()) {
       this.recoveryError.set(false);
+    }
+  }
+  saveDraft(): void {
+    try {
+      if (this.text) {
+        sessionStorage.setItem(this.storageKey + '.draft', this.text);
+      } else {
+        sessionStorage.removeItem(this.storageKey + '.draft');
+      }
+    } catch {
+      this.error.set('Não foi possível guardar o rascunho. Mantenha a conversa aberta até enviar.');
     }
   }
   private clearPending(): boolean {

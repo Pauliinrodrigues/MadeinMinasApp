@@ -212,10 +212,16 @@ test('dados inválidos não são revisados e editar contato invalida a revisão'
   await start(page);
   await page.getByRole('button', { name: 'Revisar pedido para retirada' }).click();
   await expect(page.getByRole('alert')).toContainText('Informe seu nome');
+  await expect(page.getByLabel('Seu nome', { exact: true })).toBeFocused();
+  await expect(page.getByLabel('Seu nome', { exact: true })).toHaveAttribute(
+    'aria-invalid',
+    'true',
+  );
   await page.getByLabel('Seu nome').fill('Maria');
   await page.getByLabel('Telefone com DDD').fill('123');
   await page.getByRole('button', { name: 'Revisar pedido para retirada' }).click();
   expect(state.reviews).toHaveLength(0);
+  await expect(page.getByLabel('Telefone com DDD', { exact: true })).toBeFocused();
   await review(page);
   await page.getByLabel('Seu nome').fill('Ana');
   await expect(page.getByRole('region', { name: 'Pedido revisado' })).toHaveCount(0);
@@ -409,7 +415,7 @@ test('recuperação corrompida exige conferir atendimento antes de limpar', asyn
 
 test('consulta pública não envia JWT e falha não encerra a sessão da equipe', async ({ page }) => {
   const state = await setup(page);
-  await page.goto('/entrar');
+  await page.goto('/entrar?returnUrl=%2Fequipe');
   await page.getByLabel('Login', { exact: true }).fill('ana');
   await page.getByLabel('Senha', { exact: true }).fill('Senha teste 123!');
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
@@ -427,7 +433,7 @@ test('consulta pública não envia JWT e falha não encerra a sessão da equipe'
   await expect(page.getByRole('alert')).toBeVisible();
   await page.getByRole('link', { name: /^MADE IN MINAS/ }).click();
   await page.getByRole('link', { name: 'Área da equipe' }).click();
-  await expect(page).toHaveURL(/\/equipe$/);
+  await expect(page).toHaveURL(/\/equipe\/pedidos$/);
 });
 
 test('contato e observações são escapados e a revisão cabe no celular', async ({ page }) => {

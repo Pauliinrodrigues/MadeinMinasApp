@@ -3,14 +3,38 @@
   <h1>Carrinho da equipe</h1>
   <p>Monte os itens, revise os valores e registre o pedido.</p>
   <p class="hint">
-    Carrinho temporário: sair desta tela, atualizar a página ou encerrar a sessão descarta os dados.
-    A revisão ainda não cria um pedido.
+    O rascunho fica nesta aba por até 8 horas e pertence à sua conta. Ao voltar, revise preços e
+    disponibilidade. A revisão ainda não cria um pedido.
   </p>
 </section>
-<fieldset class="cart-editor" [disabled]="busy() || !!pendingOrder() || !!createdOrderId()">
+@if (draftNotice()) {
+<p role="status" class="notice">{{ draftNotice() }}</p>
+} @if (recoveryError()) {
+<section class="panel">
+  <a class="button" routerLink="/equipe/pedidos">Conferir pedidos registrados</a>
+  <button type="button" (click)="discardBrokenDraft()">
+    Já conferi os pedidos, descartar rascunho
+  </button>
+</section>
+}
+<fieldset
+  class="cart-editor"
+  [disabled]="busy() || !!pendingOrder() || !!createdOrderId() || recoveryError()"
+>
   <section class="panel" aria-labelledby="customer-title">
     <h2 id="customer-title">1. Cliente e recebimento</h2>
+    @if (!pendingOrder() && !recoveryError()) {
+    <a class="button" routerLink="/equipe/clientes/novo" [queryParams]="{ returnTo: 'cart' }"
+      >Cadastrar cliente e voltar</a
+    >
     @if (selectedCustomer(); as customer) {
+    <a
+      class="button"
+      [routerLink]="['/equipe/clientes', customer.id, 'enderecos']"
+      [queryParams]="{ returnTo: 'cart' }"
+      >Cadastrar endereço</a
+    >
+    } } @if (selectedCustomer(); as customer) {
     <p class="notice">
       Cliente selecionado: <strong>{{ customer.name }}</strong> · {{ customer.phone }}
     </p>
@@ -315,7 +339,7 @@
   <p class="subtotal">Total: <strong>{{ formatPrice(result.total) }}</strong></p>
   <p>
     Nenhum pedido foi criado nesta revisão. Registrar salva o pedido como Novo. O registro de
-    pagamento será disponibilizado em outra etapa.
+    pagamento pode ser feito na tela de pagamentos do pedido.
   </p>
   <p class="hint">
     Valores consultados em {{ result.calculatedAt | date:'dd/MM/yyyy HH:mm:ss':'-0300' }} (horário

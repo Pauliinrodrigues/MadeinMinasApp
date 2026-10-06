@@ -50,7 +50,8 @@
       (Brasília).
     </p>
     @if (order.address; as address) {
-    <p>
+    <p class="destination">
+      <strong>Endereço de entrega</strong><br />
       {{ address.street }}, {{ address.number }} · {{ address.neighborhood }} · {{ address.city
       }}/{{ address.state }}<br />{{ address.complement }} {{ address.postalCode }} {{
       address.reference }}
@@ -68,19 +69,25 @@
     @if (order.notes) {
     <p><strong>Observações:</strong> {{ order.notes }}</p>
     }
-    <p>Total: <strong>{{ order.total | currency:'BRL' }}</strong></p>
-    @if (order.payment; as payment) {
-    <p>
-      {{ method(payment.method) }} · {{ payment.status === 'Received' ? 'Recebido' : 'Pendente —
-      conferir cobrança' }}
-    </p>
-    @if (payment.changeAmount !== null) {
-    <p>Troco registrado: {{ payment.changeAmount | currency:'BRL' }}</p>
-    } } @else {
-    <p>Pagamento não definido. Confira com o atendimento.</p>
-    } @if (unpaid(order)) {
-    <p class="hint">Solicite ao atendimento o registro do recebimento antes de finalizar.</p>
-    }
+    <section
+      class="payment-summary"
+      [class.unpaid]="order.payment?.status !== 'Received'"
+      aria-label="Pagamento e troco"
+    >
+      <p>Total: <strong>{{ order.total | currency:'BRL' }}</strong></p>
+      @if (order.payment; as payment) {
+      <p>
+        {{ method(payment.method) }} · {{ payment.status === 'Received' ? 'Recebido' : 'Pendente —
+        conferir cobrança' }}
+      </p>
+      @if (payment.changeAmount !== null) {
+      <p>Troco registrado: {{ payment.changeAmount | currency:'BRL' }}</p>
+      } } @else {
+      <p>Pagamento não definido. Confira com o atendimento.</p>
+      } @if (unpaid(order)) {
+      <p class="hint">Solicite ao atendimento o registro do recebimento antes de finalizar.</p>
+      }
+    </section>
     <div class="actions">
       <a
         class="button"

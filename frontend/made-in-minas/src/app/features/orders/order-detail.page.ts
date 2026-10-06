@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, Subscription } from 'rxjs';
 import { apiError } from '../../core/api-error';
 import { AuthSession } from '../../core/auth/auth-session.service';
 import {
@@ -13,15 +13,55 @@ import {
   orderStatusLabel,
 } from '../../core/services/order-api.service';
 import { formatProductPrice } from '../../core/services/product-api.service';
+import {
+  PaymentApi,
+  PaymentPage,
+  paymentMethodLabel,
+  paymentStatusLabel,
+} from '../../core/services/payment-api.service';
 
 @Component({
   selector: 'app-order-detail',
   imports: [FormsModule, RouterLink, DatePipe],
   templateUrl: './order-detail.page.html',
+  styles: `
+    .order-content {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(240px, 1fr);
+      gap: 24px;
+      align-items: start;
+      margin-block: 24px;
+    }
+    .order-summary {
+      background: #faf5ec;
+      border-radius: 12px;
+      padding: 18px;
+    }
+    .order-content li {
+      margin-bottom: 16px;
+    }
+    summary {
+      cursor: pointer;
+      font-size: 20px;
+      font-weight: 700;
+      padding: 8px 0;
+    }
+    @media (max-width: 850px) {
+      .order-content {
+        grid-template-columns: 1fr;
+      }
+    }
+  `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrderDetailPage {
   private readonly api = inject(OrderApi);
+  private readonly paymentsApi = inject(PaymentApi);
+  private paymentRequest?: Subscription;
+  readonly payments = signal<PaymentPage | null>(null);
+  readonly paymentError = signal(false);
+  readonly paymentMethodLabel = paymentMethodLabel;
+  readonly paymentStatusLabel = paymentStatusLabel;
   private readonly session = inject(AuthSession);
   private readonly destroyRef = inject(DestroyRef);
   private readonly id = inject(ActivatedRoute).snapshot.paramMap.get('id')!;
@@ -58,6 +98,18 @@ export class OrderDetailPage {
     this.error.set('');
     this.order.set(null);
     this.pending.set(null);
+    this.paymentRequest?.unsubscribe();
+    this.payments.set(null);
+    this.paymentError.set(false);
+    if (this.canManagePayments()) {
+      this.paymentRequest = this.paymentsApi
+        .list(this.id, 1)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (payments) => this.payments.set(payments),
+          error: () => this.paymentError.set(true),
+        });
+    }
     this.api
       .get(this.id)
       .pipe(
@@ -84,6 +136,30 @@ export class OrderDetailPage {
         status === 'OutForDelivery') &&
         this.session.user()?.role === 'Administrator')
     );
+  }
+
+  nextAction(): string {
+    switch (this.order()?.status) {
+      case 'New':
+        return 'Confira contato, itens e recebimento; depois confirme o pedido.';
+      case 'Confirmed':
+        return 'Pedido confirmado. A cozinha pode iniciar o preparo.';
+      case 'InPreparation':
+        return 'Acompanhe o preparo na cozinha.';
+      case 'Ready':
+      case 'AwaitingDelivery':
+        return 'Confira embalagem, destino e pagamento na expedição.';
+      case 'OutForDelivery':
+        return 'Aguarde a confirmação da entrega e confira o recebimento.';
+      case 'Delivered':
+        return 'Confira o pagamento e finalize o pedido na expedição.';
+      case 'Finalized':
+        return 'Pedido finalizado.';
+      case 'Cancelled':
+        return 'Pedido cancelado. Consulte o histórico abaixo.';
+      default:
+        return '';
+    }
   }
 
   requestStatus(status: 'Confirmed' | 'Cancelled'): void {

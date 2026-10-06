@@ -8,7 +8,11 @@ Aceite manual concluído pelo usuário em 01/10/2026. O [PR #3](https://github.c
 
 Administrador e atendente montam um carrinho temporário, selecionam cliente ativo, retirada ou entrega, endereço ativo do cliente para entrega, produtos disponíveis, quantidades e observações. A API consulta os cadastros e calcula o subtotal em decimal. A revisão não cria um pedido nem reserva preço ou estoque.
 
-Este incremento usa a permissão existente `orders.manage`, sem conceder ao atendente acesso à administração do catálogo. Não há novas dependências, tabelas ou migrations. O carrinho existe somente na página e é descartado ao sair, atualizar a página ou encerrar a sessão. Não salvar dados pessoais em armazenamento do navegador.
+Este incremento usa a permissão existente `orders.manage`, sem conceder ao atendente acesso à administração do catálogo. Não há novas dependências, tabelas ou migrations. Desde os [ajustes operacionais](operational-usability.md), o rascunho fica em `sessionStorage`, separado pelo identificador do funcionário, por até 8 horas. Inclui contato/endereço e itens necessários à recuperação na mesma aba, sem senha ou JWT. Fechar a aba pode apagar o rascunho. Outro funcionário não recupera a montagem pela aplicação. Preços recuperados são apenas referência: registrar uma nova tentativa exige revisão atual na API.
+
+Uma tentativa de registro sem resposta confirmada preserva a chave, o corpo e a revisão originais antes do HTTP; sua recuperação não expira automaticamente. Repetir consulta ou conclui a mesma tentativa no servidor. Falha de armazenamento impede iniciar o envio. Dados de recuperação inválidos bloqueiam a edição até conferência dos pedidos e descarte explícito. Cadastro de cliente/endereço pode ser aberto a partir do carrinho e retornar sem perder a seleção.
+
+Expiração de sessão, falta de permissão e limite de requisições durante uma retomada não comprovam que o primeiro envio falhou. A tentativa continua preservada nesses casos, inclusive após novo login.
 
 ## Contratos e regras
 

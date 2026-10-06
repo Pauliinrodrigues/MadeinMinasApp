@@ -10,24 +10,49 @@
     <section class="intro" aria-labelledby="menu-title">
       <span class="eyebrow">TEM SABOR DE MINAS.</span>
       <h1 id="menu-title">Nosso <em>cardápio.</em></h1>
-      <p>Conheça os sabores da Made in Minas e encontre o seu favorito.</p>
       <p class="notice">
         Monte seu carrinho e escolha retirada ou entrega nas regiões atendidas. A equipe confirmará
         o preparo.
       </p>
     </section>
 
+    @if (deliveryAreas(); as areas) { @if (areas.length === 0) {
+    <p class="coverage-notice">
+      No momento, os pedidos pelo site estão disponíveis somente para retirada.
+    </p>
+    } @else {
+    <details class="coverage-notice">
+      <summary>Consultar regiões e taxas de entrega</summary>
+      <ul>
+        @for (area of areas; track area.id) {
+        <li>{{ area.neighborhood }} — {{ area.city }}/{{ area.state }}: {{ price(area.fee) }}</li>
+        }
+      </ul>
+    </details>
+    } } @else if (coverageError()) {
+    <p class="coverage-notice">
+      Não foi possível consultar a cobertura. Confira a entrega ao finalizar.
+    </p>
+    }
+
+    <a routerLink="/pedido/atendimento" class="help-link">Falar com atendente</a>
+    <a routerLink="/pedido/acompanhar" class="help-link">Meus pedidos</a>
     <div class="cart-summary">
-      <a routerLink="/pedido/atendimento">Falar com atendente</a>
       @if (cart.checkout.locked()) {
       <a routerLink="/pedido/finalizar">Ver envio do pedido</a>
       } @else {
       <a routerLink="/pedido/carrinho">Ver carrinho ({{ cart.itemCount() }})</a>
-      }
-      <span role="status" aria-live="polite" class="cart-notice">{{ cartNotice() }}</span>
+      @if (cart.estimatedSubtotal() !== null) {
+      <strong>Produtos: {{ price(cart.estimatedSubtotal()!) }} <small>estimado</small></strong> } }
     </div>
+    <div role="status" aria-live="polite" class="cart-notice">{{ cartNotice() }}</div>
 
     <div class="filters">
+      <form class="category-filter" (ngSubmit)="selectCategory()">
+        <label for="menu-search">Buscar produto</label>
+        <input id="menu-search" name="search" type="search" maxlength="120" [(ngModel)]="search" />
+        <button type="submit" [disabled]="loading()">Buscar</button>
+      </form>
       <div class="category-filter">
         <label for="menu-category">Categoria</label>
         <select
@@ -67,10 +92,10 @@
       <h2>Nenhum produto por aqui</h2>
       <p>
         {{ page > 1 ? 'Os produtos desta página mudaram. Consulte o cardápio desde o início.' :
-        categoryId ? 'Esta categoria não tem produtos para exibir agora.' : 'Estamos preparando
-        nosso cardápio. Volte em breve.' }}
+        search ? 'Nenhum produto corresponde à busca.' : categoryId ? 'Esta categoria não tem
+        produtos para exibir agora.' : 'Estamos preparando nosso cardápio. Volte em breve.' }}
       </p>
-      @if (categoryId || page > 1) {
+      @if (categoryId || search || page > 1) {
       <button type="button" (click)="allCategories()">Ver todas as categorias</button>
       }
     </section>

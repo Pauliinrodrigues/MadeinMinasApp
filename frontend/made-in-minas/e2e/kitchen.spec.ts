@@ -113,7 +113,7 @@ async function setup(page: Page, role = 'Kitchen') {
   return state;
 }
 async function login(page: Page) {
-  await page.goto('/entrar');
+  await page.goto('/entrar?returnUrl=%2Fequipe');
   await page.getByLabel('Login', { exact: true }).fill('staff');
   await page.getByLabel('Senha', { exact: true }).fill('Senha apenas para testes');
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
@@ -165,6 +165,24 @@ for (const role of ['Kitchen', 'Administrator']) {
     expect(errors).toEqual([]);
   });
 }
+
+test('cozinha: etapa selecionada reduz o painel e avisa aumento da fila sem mudar pedidos', async ({
+  page,
+}) => {
+  const state = await setup(page);
+  await open(page);
+  await page.getByRole('button', { name: 'Em preparação (1)', exact: true }).click();
+  await expect(page.getByRole('article')).toHaveCount(1);
+  await expect(page.getByRole('article', { name: 'Pedido 1543', exact: true })).toBeVisible();
+  state.orders.push(order(1545));
+  await page.clock.fastForward(10000);
+  await expect(
+    page.getByText('A fila de confirmados aumentou. Confira os pedidos aguardando preparo.'),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Confirmado (2)', exact: true }).click();
+  await expect(page.getByRole('article')).toHaveCount(2);
+  expect(state.changes).toHaveLength(0);
+});
 
 test('cozinha: pagina cada coluna sem esconder pedidos de dias anteriores', async ({ page }) => {
   const state = await setup(page);
@@ -325,6 +343,6 @@ test('cozinha: falha inicial tem recuperação e sessão revogada remove os dado
   await expect(page.getByRole('article', { name: 'Pedido 1542', exact: true })).toBeVisible();
   state.boardStatus = 401;
   await page.clock.fastForward(11000);
-  await expect(page).toHaveURL(/\/entrar$/);
+  await expect(page).toHaveURL(/\/entrar(?:\?.*)?$/);
   await expect(page.getByRole('article', { name: 'Pedido 1542', exact: true })).toHaveCount(0);
 });

@@ -20,6 +20,9 @@ public sealed class PublicCartService(AppDbContext database, TimeProvider clock)
             .ToDictionaryAsync(product => product.Id, cancellationToken);
         if (products.Count != ids.Length)
             throw new CartException(CartError.CartProductUnavailable, "Um produto do carrinho está indisponível. Confira o cardápio e remova os itens indisponíveis.");
+        var availability = await ProductionAvailability.ReadAsync(database, ids, cancellationToken);
+        if (!availability.CanProduce(request.Items.Select(item => (item.ProductId!.Value, item.Quantity!.Value))))
+            throw new CartException(CartError.CartProductUnavailable, "Não há disponibilidade para produzir esta quantidade. Ajuste o carrinho ou procure o atendimento.");
         var items = request.Items.Select(item =>
         {
             var product = products[item.ProductId!.Value];

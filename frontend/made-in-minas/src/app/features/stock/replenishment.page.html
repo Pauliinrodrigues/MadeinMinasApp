@@ -1,0 +1,171 @@
+<section>
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">ESTOQUE</p>
+      <h1>Central de reposição</h1>
+    </div>
+    <button type="button" (click)="refresh()" [disabled]="loading()">Atualizar estoque</button>
+  </div>
+  <p>
+    Confira os ingredientes que precisam de atenção e acesse o estoque para registrar uma contagem
+    ou entrada.
+  </p>
+  <form class="panel filters" (ngSubmit)="apply()">
+    <label
+      >Buscar ingrediente ou fornecedor<input
+        type="search"
+        name="search"
+        maxlength="150"
+        [(ngModel)]="search"
+    /></label>
+    <label
+      >Situação<select name="status" [(ngModel)]="status">
+        <option value="Attention">Precisam de atenção</option>
+        <option value="OutOfStock">Saldo zero</option>
+        <option value="LowStock">No mínimo ou abaixo</option>
+        <option value="Unrecorded">Sem movimentação</option>
+        <option value="All">Todos</option>
+      </select></label
+    >
+    <label class="checkbox"
+      ><input type="checkbox" name="includeInactive" [(ngModel)]="includeInactive" />Incluir
+      ingredientes inativos</label
+    >
+    <button class="primary" [disabled]="loading()">Buscar estoque</button>
+  </form>
+  @if (filtersChanged()) {
+  <p class="hint">
+    Filtros alterados. Clique em Buscar estoque para aplicá-los. Atualizar e paginar mantêm a última
+    busca.
+  </p>
+  } @if (error()) {
+  <p class="error" role="alert">{{ error() }} Os dados exibidos podem estar desatualizados.</p>
+  <button type="button" (click)="refresh()" [disabled]="loading()">Tentar novamente</button>
+  } @if (loading()) {
+  <p role="status">Consultando estoque…</p>
+  } @if (data(); as stock) {
+  <div class="summary" role="group" aria-label="Resumo do estoque">
+    <button
+      type="button"
+      (click)="selectQueue('Attention')"
+      [attr.aria-pressed]="appliedFilters().status === 'Attention'"
+      [disabled]="loading()"
+    >
+      <strong>{{ stock.summary.attentionCount }}</strong>Precisam de atenção
+    </button>
+    <button
+      type="button"
+      (click)="selectQueue('OutOfStock')"
+      [attr.aria-pressed]="appliedFilters().status === 'OutOfStock'"
+      [disabled]="loading()"
+    >
+      <strong>{{ stock.summary.outOfStockCount }}</strong>Saldo zero
+    </button>
+    <button
+      type="button"
+      (click)="selectQueue('LowStock')"
+      [attr.aria-pressed]="appliedFilters().status === 'LowStock'"
+      [disabled]="loading()"
+    >
+      <strong>{{ stock.summary.lowStockCount }}</strong>No mínimo ou abaixo
+    </button>
+    <button
+      type="button"
+      (click)="selectQueue('Unrecorded')"
+      [attr.aria-pressed]="appliedFilters().status === 'Unrecorded'"
+      [disabled]="loading()"
+    >
+      <strong>{{ stock.summary.unrecordedCount }}</strong>Sem movimentação
+    </button>
+    <button
+      type="button"
+      (click)="selectQueue('All')"
+      [attr.aria-pressed]="appliedFilters().status === 'All'"
+      [disabled]="loading()"
+    >
+      <strong>{{ stock.summary.totalCount }}</strong>Todos
+    </button>
+  </div>
+  <p class="hint">
+    Contadores consideram a busca e a inclusão de inativos. Um ingrediente pode aparecer em mais de
+    um grupo.
+  </p>
+  @if (updatedAt(); as updated) {
+  <p class="hint">
+    Consulta às {{ time.format(updated) }}. Use Atualizar estoque após mudanças em outra tela.
+  </p>
+  }
+  <p role="status">{{ stock.totalCount }} ingrediente(s) nesta busca.</p>
+  <p class="hint">
+    Falta até o mínimo é a diferença para o mínimo cadastrado. No limite, a diferença é zero e o
+    alerta continua. Confira o estoque físico e o consumo esperado antes de decidir a compra.
+  </p>
+  <div class="ingredients">
+    @for (item of stock.items; track item.ingredientId) {
+    <article class="panel" [attr.aria-label]="'Estoque de ' + item.name">
+      <h2>{{ item.name }}</h2>
+      <p class="supplier">Fornecedor: {{ item.supplier || 'Não informado' }}</p>
+      <div class="badges">
+        @if (!item.isActive) { <span class="badge inactive">Inativo</span> } @if (item.currentStock
+        === 0) { <span class="badge warning">Saldo zero</span> } @if (item.isLowStock) {
+        <span class="badge warning">No mínimo ou abaixo</span> } @if (!item.hasMovements) {
+        <span class="badge warning">Sem movimentação</span> } @if (item.currentStock > 0 &&
+        !item.isLowStock && item.hasMovements) { <span class="badge">Acima do mínimo</span> }
+      </div>
+      <dl>
+        <div>
+          <dt>Saldo registrado</dt>
+          <dd>{{ decimal.format(item.currentStock) }} {{ unitLabel(item.unit) }}</dd>
+        </div>
+        <div>
+          <dt>Mínimo</dt>
+          <dd>{{ decimal.format(item.minimumStock) }} {{ unitLabel(item.unit) }}</dd>
+        </div>
+        <div>
+          <dt>Falta até o mínimo</dt>
+          <dd>{{ decimal.format(item.quantityToMinimum) }} {{ unitLabel(item.unit) }}</dd>
+        </div>
+      </dl>
+      @if (!item.hasMovements) {
+      <p class="hint">
+        Confira o saldo físico antes de planejar a reposição. Ainda não há movimentação registrada.
+      </p>
+      } @if (!item.isActive) {
+      <p class="hint">Novos movimentos exigem reativação no cadastro.</p>
+      }
+      <div class="actions">
+        <a
+          class="button primary"
+          [routerLink]="['/equipe/ingredientes', item.ingredientId, 'estoque']"
+          [attr.aria-label]="'Conferir estoque de ' + item.name"
+          >Conferir estoque</a
+        >
+        <a
+          class="button"
+          [routerLink]="['/equipe/ingredientes', item.ingredientId]"
+          [attr.aria-label]="'Editar cadastro de ' + item.name"
+          >Editar cadastro</a
+        >
+      </div>
+    </article>
+    } @empty {
+    <p class="panel">
+      Nenhum ingrediente nesta página. Ajuste os filtros ou volte à página anterior.
+    </p>
+    }
+  </div>
+  <div class="pagination">
+    <button type="button" (click)="changePage(page - 1)" [disabled]="loading() || page <= 1">
+      Anterior
+    </button>
+    <span>Página {{ page }}</span>
+    <button
+      type="button"
+      (click)="changePage(page + 1)"
+      [disabled]="loading() || page * stock.pageSize >= stock.totalCount"
+    >
+      Próxima
+    </button>
+  </div>
+  }
+</section>

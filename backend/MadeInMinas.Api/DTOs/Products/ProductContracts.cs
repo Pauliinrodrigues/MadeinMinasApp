@@ -43,5 +43,9 @@ public sealed class ProductListQuery
 public sealed record ProductResponse(
     Guid Id, Guid CategoryId, string CategoryName, bool CategoryIsActive, string Name, string? Description,
     decimal Price, string? ImageUrl, bool IsActive, bool IsAvailable, bool IsAvailableForSale,
-    DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt);
+    DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt)
+{
+    public bool? HasRecipe { get; init; }
+    public bool? HasMissingCosts { get; init; }
+}
 public sealed record ProductPageResponse(ProductResponse[] Items, int Page, int PageSize, int TotalCount);

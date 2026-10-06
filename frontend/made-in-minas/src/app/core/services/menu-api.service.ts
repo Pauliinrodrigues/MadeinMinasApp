@@ -25,8 +25,11 @@ export interface PublicMenu {
 export class MenuApi {
   private readonly http = inject(HttpClient);
 
-  get(categoryId: string, page: number) {
+  get(categoryId: string, page: number, search = '') {
     let params = new HttpParams().set('page', page);
+    if (search.trim()) {
+      params = params.set('search', search.trim());
+    }
     if (categoryId) {
       params = params.set('categoryId', categoryId);
     }

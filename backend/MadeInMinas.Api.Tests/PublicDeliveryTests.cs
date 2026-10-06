@@ -306,8 +306,7 @@ public sealed class PublicDeliveryTests(AuthenticationFactory factory) : IClassF
         {
             var invalid = await Assert.ThrowsAsync<PostgresException>(() => database.Orders.ExecuteUpdateAsync(update => update.SetProperty(order => order.AddressStreet, (string?)null)));
             Assert.Equal("CK_Orders_Fulfillment", invalid.ConstraintName);
-            var migrations = (await database.Database.GetAppliedMigrationsAsync()).ToArray();
-            var script = database.GetService<IMigrator>().GenerateScript(migrations[^1], migrations[^2], MigrationsSqlGenerationOptions.NoTransactions);
+            var script = database.GetService<IMigrator>().GenerateScript("20261005210534_AddPublicDelivery", "20261005183152_AddHumanChat", MigrationsSqlGenerationOptions.NoTransactions);
             await using var transaction = await database.Database.BeginTransactionAsync();
             var rollback = await Assert.ThrowsAsync<PostgresException>(() => database.Database.ExecuteSqlRawAsync(script));
             Assert.Contains("Public deliveries exist", rollback.MessageText);

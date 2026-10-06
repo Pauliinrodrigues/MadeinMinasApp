@@ -15,6 +15,8 @@ import { Subscription, finalize, fromEvent } from 'rxjs';
 import { OrderStatus, orderStatusLabel } from '../../core/services/order-api.service';
 import { formatProductPrice } from '../../core/services/product-api.service';
 import { PublicCheckoutState } from '../../core/services/public-checkout-state.service';
+import { PublicOrderHistory } from '../../core/services/public-order-history.service';
+import { PublicOrderReceipt } from '../../core/services/public-checkout-api.service';
 import {
   PublicOrderTracking,
   PublicOrderTrackingApi,
@@ -30,6 +32,13 @@ import {
 })
 export class PublicOrderTrackingPage {
   readonly state = inject(PublicCheckoutState);
+  readonly history = inject(PublicOrderHistory);
+  readonly selected = computed<PublicOrderReceipt | null>(
+    () =>
+      this.history.entries().find((entry) => entry.number === this.history.selectedNumber()) ??
+      this.history.entries()[0] ??
+      this.state.receipt(),
+  );
   private readonly api = inject(PublicOrderTrackingApi);
   private readonly destroyRef = inject(DestroyRef);
   readonly order = signal<PublicOrderTracking | null>(null);
@@ -44,7 +53,7 @@ export class PublicOrderTrackingPage {
   private timer: number | undefined;
   private request: Subscription | undefined;
   readonly access = computed(() => {
-    const tracking = this.state.receipt()?.tracking;
+    const tracking = this.selected()?.tracking;
     return tracking &&
       typeof tracking.token === 'string' &&
       tracking.token.length > 0 &&
@@ -70,6 +79,41 @@ export class PublicOrderTrackingPage {
         }
       });
     this.load();
+  }
+
+  select(number: number): void {
+    this.stop();
+    this.history.selectedNumber.set(number);
+    this.load();
+  }
+
+  remember(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.history.remember(input.checked);
+    input.checked = this.history.remembered();
+  }
+
+  forget(): void {
+    const number = this.selected()?.number;
+    if (!number) {
+      return;
+    }
+    try {
+      this.state.forgetTracking(number);
+      this.stop();
+      this.load();
+    } catch {
+      this.error.set('Não foi possível remover o acesso deste navegador. Tente novamente.');
+    }
+  }
+
+  private stop(): void {
+    this.request?.unsubscribe();
+    window.clearTimeout(this.timer);
+    this.order.set(null);
+    this.checkedAt.set(null);
+    this.error.set('');
+    this.unavailable.set(false);
   }
 
   load(): void {

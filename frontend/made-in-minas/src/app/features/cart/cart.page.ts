@@ -3,7 +3,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { AuthSession } from '../../core/auth/auth-session.service';
 import { finalize } from 'rxjs';
 import { apiError } from '../../core/api-error';
 import { formatProductPrice } from '../../core/services/product-api.service';
@@ -43,6 +44,10 @@ export class CartPage {
   private readonly customersApi = inject(CustomerApi);
   private readonly ordersApi = inject(OrderApi);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly draftKey = 'made-in-minas.staff-cart.v1.' + inject(AuthSession).user()!.id;
+  readonly draftNotice = signal('');
+  readonly recoveryError = signal(false);
   private reviewedInput: CartQuoteInput | null = null;
   readonly pendingOrder = signal<CreateOrderInput | null>(null);
   readonly orderError = signal('');
@@ -74,8 +79,130 @@ export class CartPage {
   deliveryFee: number | null = null;
 
   constructor() {
+    this.restoreDraft();
     this.loadProducts();
     this.loadCustomers();
+    const customerId = this.route.snapshot.queryParamMap.get('customerId');
+    if (customerId && !this.pendingOrder() && !this.recoveryError()) {
+      this.customersApi
+        .get(customerId)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (customer) => this.selectCustomer(customer),
+          error: (error) => this.customerError.set(apiError(error)),
+        });
+    } else if (this.fulfillment === 'Delivery') {
+      this.loadAddresses();
+    }
+  }
+
+  private restoreDraft(): void {
+    try {
+      const stored = sessionStorage.getItem(this.draftKey);
+      if (!stored) {
+        return;
+      }
+      if (stored.length > 131072) {
+        throw new Error('Invalid draft');
+      }
+      const draft = JSON.parse(stored);
+      if (
+        draft.version !== 1 ||
+        !Array.isArray(draft.lines) ||
+        draft.lines.length > 50 ||
+        !draft.lines.every(
+          (line: CartLine) =>
+            line &&
+            typeof line.product?.id === 'string' &&
+            typeof line.product.name === 'string' &&
+            Number.isFinite(line.product.price) &&
+            typeof line.notes === 'string' &&
+            line.notes.length <= 250 &&
+            (line.quantity === null || Number.isFinite(line.quantity)),
+        ) ||
+        typeof draft.notes !== 'string' ||
+        draft.notes.length > 500 ||
+        !['Pickup', 'Delivery'].includes(draft.fulfillment) ||
+        !Number.isFinite(draft.savedAt) ||
+        (draft.pending &&
+          (typeof draft.pending.requestId !== 'string' ||
+            !draft.pending.cart?.items?.length ||
+            !draft.quote?.reviewToken))
+      ) {
+        throw new Error('Invalid draft');
+      }
+      if (!draft.pending && Date.now() - draft.savedAt > 8 * 60 * 60 * 1000) {
+        sessionStorage.removeItem(this.draftKey);
+        this.draftNotice.set('O rascunho anterior expirou após 8 horas. Monte uma nova revisão.');
+        return;
+      }
+      this.lines.set(draft.lines.map((line: CartLine) => ({ ...line, key: ++this.nextKey })));
+      this.selectedCustomer.set(draft.customer ?? null);
+      this.selectedAddress.set(draft.address ?? null);
+      this.fulfillment = draft.fulfillment;
+      this.deliveryFee = draft.deliveryFee ?? null;
+      this.notes = draft.notes;
+      if (draft.pending) {
+        this.pendingOrder.set(draft.pending);
+        this.quote.set(draft.quote);
+        this.reviewedInput = draft.pending.cart;
+        this.uncertainOrder.set(true);
+        this.orderError.set(
+          'Há um envio anterior sem resultado confirmado. Tente novamente para recuperar a mesma tentativa.',
+        );
+      }
+      this.draftNotice.set(
+        'Rascunho recuperado nesta aba. Revise os dados e os valores atuais antes de registrar.',
+      );
+    } catch {
+      this.recoveryError.set(true);
+      this.draftNotice.set(
+        'Não foi possível recuperar o rascunho. Confira se o pedido já foi registrado antes de descartar os dados.',
+      );
+    }
+  }
+
+  private saveDraft(): boolean {
+    if (this.recoveryError()) {
+      return false;
+    }
+    try {
+      if (this.createdOrderId() || (!this.lines().length && !this.selectedCustomer())) {
+        sessionStorage.removeItem(this.draftKey);
+      } else {
+        sessionStorage.setItem(
+          this.draftKey,
+          JSON.stringify({
+            version: 1,
+            savedAt: Date.now(),
+            lines: this.lines(),
+            customer: this.selectedCustomer(),
+            address: this.selectedAddress(),
+            fulfillment: this.fulfillment,
+            notes: this.notes,
+            deliveryFee: this.deliveryFee,
+            pending: this.pendingOrder(),
+            quote: this.pendingOrder() ? this.quote() : null,
+          }),
+        );
+      }
+      return true;
+    } catch {
+      this.draftNotice.set(
+        'Não foi possível salvar nesta aba. Libere o armazenamento do navegador antes de registrar o pedido.',
+      );
+      return false;
+    }
+  }
+
+  discardBrokenDraft(): void {
+    try {
+      sessionStorage.removeItem(this.draftKey);
+      this.recoveryError.set(false);
+      this.draftNotice.set('Rascunho descartado após conferência.');
+    } catch {
+      this.draftNotice.set('O navegador não permitiu limpar o rascunho.');
+    }
   }
 
   loadProducts(page = 1): void {
@@ -202,6 +329,7 @@ export class CartPage {
     this.orderError.set('');
     this.error.set('');
     this.confirmClear.set(false);
+    this.saveDraft();
   }
 
   validItems(): boolean {
@@ -231,6 +359,7 @@ export class CartPage {
 
   canReview(): boolean {
     return (
+      !this.recoveryError() &&
       !!this.selectedCustomer() &&
       this.validItems() &&
       !this.loadingAddresses() &&
@@ -306,12 +435,17 @@ export class CartPage {
     ) {
       return;
     }
-    const request = this.pendingOrder() ?? {
+    const previousAttempt = this.pendingOrder();
+    const request = previousAttempt ?? {
       requestId: crypto.randomUUID(),
       reviewToken: quote.reviewToken,
       cart: this.reviewedInput,
     };
     this.pendingOrder.set(request);
+    if (!this.saveDraft()) {
+      this.pendingOrder.set(previousAttempt);
+      return;
+    }
     this.busy.set(true);
     this.orderError.set('');
     this.ordersApi
@@ -324,6 +458,7 @@ export class CartPage {
         next: (order) => {
           this.createdOrderId.set(order.id);
           this.uncertainOrder.set(false);
+          this.saveDraft();
           void this.router.navigate(['/equipe/pedidos', order.id], { replaceUrl: true });
         },
         error: (error: unknown) => {
@@ -333,8 +468,7 @@ export class CartPage {
             this.orderError.set(apiError(error));
             return;
           }
-          const rejected =
-            error instanceof HttpErrorResponse && [400, 401, 403, 409, 429].includes(error.status);
+          const rejected = error instanceof HttpErrorResponse && [400, 409].includes(error.status);
           if (rejected) {
             this.pendingOrder.set(null);
             this.uncertainOrder.set(false);

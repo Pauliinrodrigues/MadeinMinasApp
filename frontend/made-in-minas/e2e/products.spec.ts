@@ -145,7 +145,7 @@ async function setup(page: Page, role = 'Administrator') {
   return state;
 }
 async function login(page: Page) {
-  await page.goto('/entrar');
+  await page.goto('/entrar?returnUrl=%2Fequipe');
   await page.getByLabel('Login', { exact: true }).fill('equipe.teste');
   await page.getByLabel('Senha', { exact: true }).fill('Senha apenas para os testes');
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
@@ -245,7 +245,7 @@ test('produtos: pausa, ativação e confirmação preservam disponibilidade manu
   await expect(page.getByText('Venda pausada', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Liberar venda de Uai Sô', exact: true }).click();
   await page.getByRole('button', { name: 'Confirmar', exact: true }).click();
-  await expect(page.getByText('Disponível', { exact: true })).toBeVisible();
+  await expect(page.getByText('Venda liberada', { exact: true })).toBeVisible();
   expect(state.writes).toBe(4);
 });
 
@@ -320,7 +320,7 @@ test('produtos: conflito de nome e categoria inativada durante cadastro mantêm 
 test('produtos: registro inexistente e acesso sem sessão', async ({ page }) => {
   await setup(page);
   await page.goto('/equipe/produtos');
-  await expect(page).toHaveURL(/\/entrar$/);
+  await expect(page).toHaveURL(/\/entrar(?:\?.*)?$/);
   await login(page);
   await navigate(page, '/equipe/produtos/inexistente');
   await expect(page.getByRole('alert')).toContainText('Produto não encontrado');
