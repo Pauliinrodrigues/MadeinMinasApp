@@ -137,6 +137,7 @@ test('lembrar é opcional, reabre em outra aba e permite retirar consentimento',
     'tracking',
   ]);
   const reopened = await context.newPage();
+  await reopened.clock.install({ time: new Date('2026-10-06T15:00:00Z') });
   await reopened.route('**/api/**', (route) => route.fulfill({ status: 404, json: {} }));
   await reopened.goto('/pedido/acompanhar');
   await expect(reopened.getByLabel('Escolher pedido').locator('option')).toHaveCount(2);
