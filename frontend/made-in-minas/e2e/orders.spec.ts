@@ -92,6 +92,7 @@ async function setup(page: Page, role = 'Attendant') {
     changeStatus: 200,
     changeCode: 'OrderVersionConflict',
     createGate: null as Promise<void> | null,
+    listGate: null as Promise<void> | null,
     orderRequests: 0,
   };
   const profile = {
@@ -185,6 +186,9 @@ async function setup(page: Page, role = 'Attendant') {
     }
     if (path === '/api/orders') {
       state.queries.push(url.search);
+      if (state.listGate) {
+        await state.listGate;
+      }
       if (state.listStatus !== 200) {
         return json({}, state.listStatus);
       }
@@ -752,8 +756,16 @@ test('pedidos: atualização usa filtros aplicados e pagamento recebido deixa a 
   await page.getByRole('combobox', { name: 'Origem', exact: true }).selectOption('Manual');
   await page.getByRole('combobox', { name: 'Pagamento', exact: true }).selectOption('Received');
   const before = state.queries.length;
-  await page.clock.fastForward(10000);
-  await expect.poll(() => state.queries.length).toBeGreaterThan(before);
+  let release!: () => void;
+  state.listGate = new Promise<void>((resolve) => (release = resolve));
+  try {
+    await page.clock.fastForward(10000);
+    await expect.poll(() => state.queries.length).toBe(before + 2);
+    await expect(page.getByRole('button', { name: 'Buscar pedidos', exact: true })).toBeDisabled();
+  } finally {
+    release();
+  }
+  await expect(page.getByRole('button', { name: 'Buscar pedidos', exact: true })).toBeEnabled();
   const applied = state.queries.slice(before).map((value) => new URLSearchParams(value));
   expect(applied.find((value) => value.get('paymentStatus') === 'Unpaid')?.has('origin')).toBe(
     false,
