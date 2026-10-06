@@ -71,7 +71,13 @@ async function setup(page: Page, role = 'Administrator') {
       hasMovements: false,
     },
   ];
-  const state = { items, queries: [] as URLSearchParams[], writes: 0, readStatus: 200 };
+  const state = {
+    items,
+    queries: [] as URLSearchParams[],
+    writes: 0,
+    readStatus: 200,
+    readGate: null as Promise<void> | null,
+  };
   await page.route('**/api/**', async (route) => {
     const request = route.request();
     const url = new URL(request.url());
@@ -95,6 +101,9 @@ async function setup(page: Page, role = 'Administrator') {
     }
     if (url.pathname === '/api/stock/replenishment') {
       state.queries.push(url.searchParams);
+      if (state.readGate) {
+        await state.readGate;
+      }
       if (state.readStatus !== 200) {
         return route.fulfill({ status: state.readStatus, json: {} });
       }
@@ -167,7 +176,9 @@ test('reposição: pendências, unidades e mínimo ficam legíveis sem lançar m
   const state = await setup(page);
   await login(page);
   await expect(page.getByRole('link', { name: 'Reposição', exact: true })).toBeVisible();
-  await expect(page.getByRole('status')).toHaveText('3 ingrediente(s) nesta busca.');
+  await expect(
+    page.getByRole('status').filter({ hasText: 'ingrediente(s) nesta busca.' }),
+  ).toHaveText('3 ingrediente(s) nesta busca.');
   const meat = page.getByRole('article', { name: 'Estoque de Carne', exact: true });
   await expect(meat).toContainText('1,375 kg');
   await expect(meat).toContainText('1,125 kg');
@@ -226,7 +237,9 @@ test('reposição: busca por fornecedor, filas e inativos combinam com os contad
   );
   await page.getByLabel('Buscar ingrediente ou fornecedor', { exact: true }).fill('inexistente');
   await page.getByRole('button', { name: 'Buscar estoque', exact: true }).click();
-  await expect(page.getByRole('status')).toHaveText('0 ingrediente(s) nesta busca.');
+  await expect(
+    page.getByRole('status').filter({ hasText: 'ingrediente(s) nesta busca.' }),
+  ).toHaveText('0 ingrediente(s) nesta busca.');
   await expect(page.getByText('Nenhum ingrediente nesta página.', { exact: false })).toBeVisible();
   expect(state.writes).toBe(0);
 });
@@ -246,7 +259,9 @@ test('reposição: paginação e atualização preservam filtros aplicados enqua
   await login(page);
   await page.getByLabel('Buscar ingrediente ou fornecedor', { exact: true }).fill('Lote');
   await page.getByRole('button', { name: 'Buscar estoque', exact: true }).click();
-  await expect(page.getByRole('status')).toHaveText('21 ingrediente(s) nesta busca.');
+  await expect(
+    page.getByRole('status').filter({ hasText: 'ingrediente(s) nesta busca.' }),
+  ).toHaveText('21 ingrediente(s) nesta busca.');
   await page
     .getByLabel('Buscar ingrediente ou fornecedor', { exact: true })
     .fill('Ainda não aplicar');
@@ -261,7 +276,9 @@ test('reposição: paginação e atualização preservam filtros aplicados enqua
   await expect(page.getByText('Filtros alterados.', { exact: false })).toBeVisible();
   await page.getByRole('button', { name: 'Buscar estoque', exact: true }).click();
   await expect(page.getByText('Página 1', { exact: true })).toBeVisible();
-  await expect(page.getByRole('status')).toHaveText('0 ingrediente(s) nesta busca.');
+  await expect(
+    page.getByRole('status').filter({ hasText: 'ingrediente(s) nesta busca.' }),
+  ).toHaveText('0 ingrediente(s) nesta busca.');
 });
 
 test('reposição: falha preserva dados e repetição atualiza a mesma busca', async ({ page }) => {
@@ -271,7 +288,9 @@ test('reposição: falha preserva dados e repetição atualiza a mesma busca', a
   await expect(page.getByRole('alert')).toBeVisible();
   state.readStatus = 200;
   await page.getByRole('button', { name: 'Tentar novamente', exact: true }).click();
-  await expect(page.getByRole('status')).toHaveText('3 ingrediente(s) nesta busca.');
+  await expect(
+    page.getByRole('status').filter({ hasText: 'ingrediente(s) nesta busca.' }),
+  ).toHaveText('3 ingrediente(s) nesta busca.');
   state.readStatus = 503;
   await page.getByRole('button', { name: 'Atualizar estoque', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('desatualizados');
@@ -280,8 +299,21 @@ test('reposição: falha preserva dados e repetição atualiza a mesma busca', a
   const meat = state.items.find((item) => item.ingredientId === 'meat')!;
   Object.assign(meat, { currentStock: 5, quantityToMinimum: 0, isLowStock: false });
   state.readStatus = 200;
-  await page.getByRole('button', { name: 'Tentar novamente', exact: true }).click();
-  await expect(page.getByRole('status')).toHaveText('2 ingrediente(s) nesta busca.');
+  let release!: () => void;
+  state.readGate = new Promise<void>((resolve) => (release = resolve));
+  try {
+    await page.getByRole('button', { name: 'Tentar novamente', exact: true }).click();
+    await expect(page.getByRole('status').filter({ hasText: 'Consultando estoque' })).toBeVisible();
+    await expect(
+      page.getByRole('status').filter({ hasText: 'ingrediente(s) nesta busca.' }),
+    ).toHaveText('3 ingrediente(s) nesta busca.');
+    await expect(page.getByRole('article')).toHaveCount(3);
+  } finally {
+    release();
+  }
+  await expect(
+    page.getByRole('status').filter({ hasText: 'ingrediente(s) nesta busca.' }),
+  ).toHaveText('2 ingrediente(s) nesta busca.');
   await expect(page.getByRole('article', { name: 'Estoque de Carne', exact: true })).toHaveCount(0);
   expect(state.queries.at(-1)?.get('search')).toBe('');
   expect(state.writes).toBe(0);
@@ -327,7 +359,9 @@ for (const role of ['Attendant', 'Kitchen', 'Dispatch']) {
 test('reposição: sessão expirada retorna ao login com destino preservado', async ({ page }) => {
   const state = await setup(page);
   await login(page);
-  await expect(page.getByRole('status')).toHaveText('3 ingrediente(s) nesta busca.');
+  await expect(
+    page.getByRole('status').filter({ hasText: 'ingrediente(s) nesta busca.' }),
+  ).toHaveText('3 ingrediente(s) nesta busca.');
   state.readStatus = 401;
   await page.getByRole('button', { name: 'Atualizar estoque', exact: true }).click();
   await expect(page).toHaveURL(/\/entrar\?returnUrl=%2Fequipe%2Freposicao/);
