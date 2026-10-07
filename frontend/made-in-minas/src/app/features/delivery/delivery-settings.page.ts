@@ -51,6 +51,7 @@ export class DeliverySettingsPage {
   readonly activeCount = computed(
     () => this.data()?.areas.filter((area) => area.isActive).length ?? 0,
   );
+  readonly fixedFee = computed(() => this.data()?.fixedFee ?? null);
   readonly areas = computed(() => {
     const search = this.search().trim().normalize().toLocaleLowerCase('pt-BR');
     return (this.data()?.areas ?? [])
@@ -70,6 +71,7 @@ export class DeliverySettingsPage {
   });
   id = '';
   neighborhood = '';
+  coversAllNeighborhoods = false;
   city = '';
   state = '';
   fee: number | null = null;
@@ -118,21 +120,28 @@ export class DeliverySettingsPage {
     }
     this.id = area?.id ?? crypto.randomUUID();
     this.neighborhood = area?.neighborhood ?? '';
+    this.coversAllNeighborhoods = area?.coversAllNeighborhoods ?? false;
     this.city = area?.city ?? '';
     this.state = area?.state ?? '';
-    this.fee = area?.fee ?? null;
+    this.fee = this.fixedFee() ?? area?.fee ?? null;
     this.isActive = area?.isActive ?? true;
     this.attempted = false;
     this.error.set('');
     this.notice.set('');
     this.editing.set(true);
-    afterNextRender(() => document.getElementById('area-neighborhood')?.focus(), {
-      injector: this.injector,
-    });
+    afterNextRender(
+      () =>
+        document
+          .getElementById(this.coversAllNeighborhoods ? 'area-city' : 'area-neighborhood')
+          ?.focus(),
+      {
+        injector: this.injector,
+      },
+    );
   }
 
   validation(): string {
-    if (!this.neighborhood.trim() || !this.city.trim()) {
+    if ((!this.coversAllNeighborhoods && !this.neighborhood.trim()) || !this.city.trim()) {
       return 'Informe o bairro e a cidade.';
     }
     if (!this.states.includes(this.state)) {
@@ -154,7 +163,8 @@ export class DeliverySettingsPage {
           area.id !== this.id &&
           area.state === this.state &&
           normalized(area.city) === normalized(this.city) &&
-          normalized(area.neighborhood) === normalized(this.neighborhood),
+          normalized(area.neighborhood) ===
+            normalized(this.coversAllNeighborhoods ? 'Todos os bairros' : this.neighborhood),
       )
     ) {
       return 'Já existe uma região com esse bairro, cidade e UF. Confira também as pausadas.';
@@ -175,7 +185,8 @@ export class DeliverySettingsPage {
     }
     this.prepare({
       id: this.id,
-      neighborhood: this.neighborhood.trim(),
+      neighborhood: this.coversAllNeighborhoods ? 'Todos os bairros' : this.neighborhood.trim(),
+      coversAllNeighborhoods: this.coversAllNeighborhoods,
       city: this.city.trim(),
       state: this.state,
       fee: this.fee!,

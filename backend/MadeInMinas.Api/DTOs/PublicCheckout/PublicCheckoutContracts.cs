@@ -38,14 +38,23 @@ public sealed record PublicDeliveryAddressRequest(
     [StringLength(10)] string? PostalCode = null,
     [StringLength(250)] string? Reference = null) : IValidatableObject
 {
+    [StringLength(80)]
+    public string? Neighborhood { get; init; }
+
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
+        if (Neighborhood is not null && string.IsNullOrWhiteSpace(Neighborhood))
+            yield return new ValidationResult("Informe o bairro para entrega.", [nameof(Neighborhood)]);
         if (!string.IsNullOrWhiteSpace(PostalCode) && !Regex.IsMatch(PostalCode.Trim(), "^[0-9]{5}-?[0-9]{3}$"))
             yield return new ValidationResult("Informe CEP com oito dígitos, com ou sem hífen.", [nameof(PostalCode)]);
     }
 }
 
-public sealed record PublicDeliveryAreaResponse(string Id, string Neighborhood, string City, string State, decimal Fee);
+public sealed record PublicDeliveryAreaResponse(string Id, string Neighborhood, string City, string State, decimal Fee)
+{
+    public bool CoversAllNeighborhoods { get; init; }
+}
+public sealed record PublicCheckoutOptionsResponse(decimal? FixedDeliveryFee, decimal PickupFee, string? PickupAddress);
 
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record PublicOrderRequest(

@@ -45,7 +45,9 @@ public sealed class AuthenticationFactory : WebApplicationFactory<Program>, IAsy
                 ["Jwt:SigningKey"] = SigningKey,
                 ["Jwt:AccessTokenMinutes"] = "15",
                 ["Logging:LogLevel:Default"] = "Warning",
-                ["ProductImages:StoragePath"] = ProductImagesPath
+                ["ProductImages:StoragePath"] = ProductImagesPath,
+                ["PublicDelivery:FixedFee"] = null,
+                ["PublicDelivery:Areas:0:CoversAllNeighborhoods"] = "false"
             }));
         builder.ConfigureTestServices(services =>
         {

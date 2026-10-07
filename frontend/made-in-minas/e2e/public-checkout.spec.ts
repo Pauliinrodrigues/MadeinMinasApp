@@ -23,6 +23,9 @@ async function setup(page: Page) {
       },
     ] as PublicDeliveryArea[],
     areasStatus: 200,
+    optionsStatus: 200,
+    fixedFee: null as number | null,
+    pickupAddress: 'Rua Esperança, 68 — Clarindo de Paiva, Corinto–MG',
     reviewStatus: 200,
     orderStatus: 201,
     code: 'OrderReviewChanged',
@@ -40,6 +43,16 @@ async function setup(page: Page) {
   await page.route('**/api/**', async (route) => {
     const request = route.request();
     const path = new URL(request.url()).pathname;
+    if (path === '/api/public-checkout/options') {
+      expect(request.headers()['authorization']).toBeUndefined();
+      return route.fulfill({
+        status: state.optionsStatus,
+        json:
+          state.optionsStatus === 200
+            ? { fixedDeliveryFee: state.fixedFee, pickupFee: 0, pickupAddress: state.pickupAddress }
+            : {},
+      });
+    }
     if (path === '/api/public-checkout/delivery-areas') {
       expect(request.headers()['authorization']).toBeUndefined();
       return route.fulfill({
@@ -99,7 +112,9 @@ async function setup(page: Page) {
           address: area
             ? {
                 ...input.address,
-                neighborhood: area.neighborhood,
+                neighborhood: area.coversAllNeighborhoods
+                  ? input.address!.neighborhood
+                  : area.neighborhood,
                 city: area.city,
                 state: area.state,
               }
@@ -165,7 +180,7 @@ async function setup(page: Page) {
   return state;
 }
 
-async function start(page: Page) {
+async function start(page: Page, fulfillment: 'Pickup' | 'Delivery' = 'Pickup') {
   await page.goto('/pedido');
   await page.getByRole('button', { name: 'Adicionar Uai Sô', exact: true }).click();
   await page.getByRole('link', { name: 'Ver carrinho (1)', exact: true }).click();
@@ -173,6 +188,9 @@ async function start(page: Page) {
   await page.getByLabel('Observações do item 1', { exact: true }).fill('Sem cebola');
   await page.getByRole('link', { name: 'Continuar pedido', exact: true }).click();
   await expect(page).toHaveURL(/\/pedido\/finalizar$/);
+  if (fulfillment === 'Pickup') {
+    await page.getByLabel('Retirada ou entrega').selectOption('Pickup');
+  }
 }
 
 async function review(page: Page) {
@@ -181,6 +199,154 @@ async function review(page: Page) {
   await page.getByRole('button', { name: 'Revisar pedido para retirada', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Pedido revisado' })).toBeVisible();
 }
+
+test('entrega é a opção inicial, região fica visível e taxa fixa compõe o total', async ({
+  page,
+}) => {
+  const state = await setup(page);
+  state.fixedFee = 5;
+  state.areas[0].fee = 5;
+  await start(page, 'Delivery');
+  await expect(page.getByLabel('Retirada ou entrega')).toHaveValue('Delivery');
+  await expect(page.getByLabel('Região de entrega (bairro e cidade)')).toBeVisible();
+  await expect(page.locator('.fulfillment-summary')).toContainText('Taxa de entrega: R$ 5,00');
+  await delivery(page);
+  await expect(page.getByRole('region', { name: 'Pedido revisado' })).toContainText(
+    'Taxa de entrega: R$ 5,00',
+  );
+  await expect(page.getByRole('region', { name: 'Pedido revisado' })).toContainText('R$ 64,80');
+  expect(state.reviews[0].address?.areaId).toBe('test-center');
+  expect(state.reviews[0]).not.toHaveProperty('deliveryFee');
+});
+
+test('todos os bairros de Corinto: exige bairro real, revisa e recupera o mesmo envio', async ({
+  page,
+}, testInfo) => {
+  const state = await setup(page);
+  state.fixedFee = 5;
+  state.areas = [
+    {
+      id: 'corinto-todos-bairros',
+      neighborhood: 'Todos os bairros',
+      city: 'Corinto',
+      state: 'MG',
+      fee: 5,
+      coversAllNeighborhoods: true,
+    },
+  ];
+  await start(page, 'Delivery');
+  await expect(page.getByLabel('Região de entrega (bairro e cidade)')).toHaveValue(
+    'corinto-todos-bairros',
+  );
+  await expect(
+    page.getByText('Atendemos todos os bairros de Corinto/MG.', { exact: false }),
+  ).toBeVisible();
+  await page.getByLabel('Seu nome').fill('Cliente de teste');
+  await page.getByLabel('Telefone com DDD').fill('31999991234');
+  await page.getByLabel('Rua ou avenida').fill('Rua de teste');
+  await page.getByLabel('Número (ou s/n)').fill('10');
+  await page.getByRole('button', { name: 'Revisar pedido para entrega' }).click();
+  await expect(page.getByText('Informe seu bairro.', { exact: true })).toBeVisible();
+  expect(state.reviews).toHaveLength(0);
+  await page.getByLabel('Seu bairro', { exact: true }).fill('Bairro informado A');
+  await page.getByRole('button', { name: 'Revisar pedido para entrega' }).click();
+  const reviewed = page.getByRole('region', { name: 'Pedido revisado' });
+  await expect(reviewed).toContainText('Bairro informado A');
+  await expect(reviewed).toContainText('Corinto/MG');
+  await expect(reviewed).toContainText('R$ 64,80');
+  await page.getByLabel('Seu bairro', { exact: true }).fill('Bairro informado B');
+  await expect(reviewed).toHaveCount(0);
+  await page.getByRole('button', { name: 'Revisar pedido para entrega' }).click();
+  await expect(reviewed).toContainText('Bairro informado B');
+  expect(state.reviews[1].address?.neighborhood).toBe('Bairro informado B');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({
+    path: '../../.local/corinto-checkout-' + testInfo.project.name + '.png',
+    fullPage: true,
+  });
+  state.loseResponse = true;
+  await page.getByRole('button', { name: 'Enviar pedido para entrega' }).click();
+  await expect(page.getByRole('alert')).toBeVisible();
+  await page.reload();
+  state.loseResponse = false;
+  await page.getByRole('button', { name: 'Conferir envio', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Pedido recebido' })).toBeVisible();
+  expect(state.orders[1]).toEqual(state.orders[0]);
+  expect(state.receipts.size).toBe(1);
+  const stored = await page.evaluate((key) => sessionStorage.getItem(key), recoveryKey);
+  expect(stored).not.toContain('Bairro informado B');
+});
+
+test('bairro livre pertence à cobertura de toda a cidade e é omitido em região específica ou retirada', async ({
+  page,
+}) => {
+  const state = await setup(page);
+  state.areas.push({
+    id: 'whole-city',
+    neighborhood: 'Todos os bairros',
+    city: 'Cidade de teste',
+    state: 'MG',
+    fee: 5,
+    coversAllNeighborhoods: true,
+  });
+  await start(page, 'Delivery');
+  await page.getByLabel('Região de entrega (bairro e cidade)').selectOption('whole-city');
+  await page.getByLabel('Seu bairro', { exact: true }).fill('Bairro de teste');
+  await delivery(page);
+  await expect(page.getByLabel('Seu bairro', { exact: true })).toHaveCount(0);
+  expect(state.reviews[0].address).not.toHaveProperty('neighborhood');
+  await page.getByLabel('Retirada ou entrega').selectOption('Pickup');
+  await page.getByRole('button', { name: 'Revisar pedido para retirada' }).click();
+  expect(state.reviews[1]).not.toHaveProperty('address');
+});
+
+test('retirada é gratuita e mostra o endereço antes da revisão e no comprovante', async ({
+  page,
+}, testInfo) => {
+  const state = await setup(page);
+  state.fixedFee = 5;
+  await start(page, 'Delivery');
+  await page.getByLabel('Retirada ou entrega').selectOption('Pickup');
+  await expect(page.locator('.fulfillment-summary')).toContainText('Retirada gratuita');
+  await expect(page.locator('.fulfillment-summary')).toContainText(state.pickupAddress);
+  await expect(page.getByLabel('Região de entrega (bairro e cidade)')).toHaveCount(0);
+  await review(page);
+  const reviewed = page.getByRole('region', { name: 'Pedido revisado' });
+  await expect(reviewed).toContainText(state.pickupAddress);
+  await expect(reviewed).toContainText('Sem taxa de entrega');
+  await expect(reviewed).toContainText('R$ 59,80');
+  expect(state.reviews[0]).not.toHaveProperty('address');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({
+    path: '../../.local/pickup-checkout-' + testInfo.project.name + '.png',
+    fullPage: true,
+  });
+  await page.getByRole('button', { name: 'Enviar pedido para retirada' }).click();
+  await expect(page.getByRole('region', { name: 'Pedido recebido' })).toContainText(
+    state.pickupAddress,
+  );
+  await page.reload();
+  await expect(page.getByRole('region', { name: 'Pedido recebido' })).toContainText(
+    state.pickupAddress,
+  );
+});
+
+test('falha na consulta das condições oferece nova tentativa sem assumir taxa de entrega', async ({
+  page,
+}) => {
+  const state = await setup(page);
+  state.optionsStatus = 503;
+  await start(page, 'Delivery');
+  await expect(
+    page.getByText('Não foi possível consultar a taxa e o local de retirada.'),
+  ).toBeVisible();
+  await expect(page.locator('.fulfillment-summary')).not.toContainText('Taxa de entrega:');
+  state.optionsStatus = 200;
+  state.fixedFee = 5;
+  await page.getByRole('button', { name: 'Atualizar informações de recebimento' }).click();
+  await expect(page.locator('.fulfillment-summary')).toContainText('Taxa de entrega: R$ 5,00');
+  expect(state.orders).toHaveLength(0);
+});
 
 test('visitante revisa dados e envia retirada com preços atuais da API', async ({ page }) => {
   const state = await setup(page);
@@ -427,6 +593,7 @@ test('consulta pública não envia JWT e falha não encerra a sessão da equipe'
   await page.getByRole('button', { name: 'Adicionar Uai Sô', exact: true }).click();
   await page.getByRole('link', { name: 'Ver carrinho (1)' }).click();
   await page.getByRole('link', { name: 'Continuar pedido' }).click();
+  await page.getByLabel('Retirada ou entrega').selectOption('Pickup');
   await review(page);
   state.orderStatus = 401;
   await page.getByRole('button', { name: 'Enviar pedido para retirada' }).click();
@@ -454,7 +621,7 @@ async function delivery(page: Page) {
   await page.getByLabel('Seu nome', { exact: true }).fill('Maria');
   await page.getByLabel('Telefone com DDD', { exact: true }).fill('31999991234');
   await page.getByLabel('Retirada ou entrega').selectOption('Delivery');
-  await page.getByLabel('Bairro e cidade atendidos').selectOption('test-center');
+  await page.getByLabel('Região de entrega (bairro e cidade)').selectOption('test-center');
   await page.getByLabel('Rua ou avenida').fill('Rua informada');
   await page.getByLabel('Número (ou s/n)').fill('s/n');
   await page.getByLabel('Complemento (opcional)').fill('Casa 2');

@@ -25,9 +25,15 @@ public sealed class PublicCheckoutService(
             ? (await DeliveryAreasAsync(cancellationToken)).SingleOrDefault(area => area.Id == request.Address!.AreaId)
                 ?? throw new OrderException(OrderError.PublicDeliveryUnavailable, "A região selecionada não está disponível para entrega. Confira as regiões atendidas ou escolha retirada.")
             : null;
+        if (area is not null && (area.CoversAllNeighborhoods
+            ? string.IsNullOrWhiteSpace(request.Address!.Neighborhood)
+            : request.Address!.Neighborhood is not null))
+            throw new OrderException(OrderError.InvalidPublicDeliveryAddress,
+                "Informe o bairro apenas quando a região atender todos os bairros da cidade.");
         var address = area is null ? null : new CartAddressResponse(null,
             request.Address!.Street.Trim().Normalize(), request.Address.Number.Trim().Normalize(),
-            area.Neighborhood, area.City, area.State, Clean(request.Address.Complement),
+            area.CoversAllNeighborhoods ? Clean(request.Address.Neighborhood)! : area.Neighborhood,
+            area.City, area.State, Clean(request.Address.Complement),
             Clean(request.Address.PostalCode)?.Replace("-", "", StringComparison.Ordinal), Clean(request.Address.Reference));
         var quote = await cart.QuoteAsync(request.Cart, cancellationToken);
         BrazilianPhone.TryNormalize(request.Phone, out var phone);
@@ -39,6 +45,8 @@ public sealed class PublicCheckoutService(
 
     public Task<PublicDeliveryAreaResponse[]> DeliveryAreasAsync(CancellationToken cancellationToken) =>
         settings.PublicAreasAsync(cancellationToken);
+
+    public PublicCheckoutOptionsResponse Options() => settings.PublicOptions();
 
     private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim().Normalize();
 
@@ -69,7 +77,16 @@ public sealed class PublicCheckoutService(
         var categoryIds = products.Select(product => product.CategoryId).Distinct().ToArray();
         await database.Categories.FromSqlInterpolated($"SELECT * FROM \"Categories\" WHERE \"Id\" = ANY ({categoryIds}) ORDER BY \"Id\" FOR SHARE")
             .AsNoTracking().ToArrayAsync(cancellationToken);
-        var review = await ReviewAsync(request.Checkout, cancellationToken);
+        PublicCheckoutReviewResponse review;
+        try
+        {
+            review = await ReviewAsync(request.Checkout, cancellationToken);
+        }
+        catch (OrderException failure) when (failure.Error == OrderError.InvalidPublicDeliveryAddress)
+        {
+            throw new OrderException(OrderError.OrderReviewChanged,
+                "A cobertura mudou. Confira a região e o bairro e revise novamente antes de enviar.");
+        }
         if (review.ReviewToken != request.ReviewToken)
             throw new OrderException(OrderError.OrderReviewChanged, "Os dados da compra mudaram. Revise novamente antes de enviar.");
 

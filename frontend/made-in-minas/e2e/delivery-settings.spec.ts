@@ -25,6 +25,7 @@ async function setup(page: Page, role = 'Administrator') {
     areas: [] as DeliveryArea[],
     revision: 'A'.repeat(64),
     updatedAt: null as string | null,
+    fixedFee: null as number | null,
     listStatus: 200,
     saveStatus: 200,
     writes: [] as SaveDeliverySettings[],
@@ -40,6 +41,7 @@ async function setup(page: Page, role = 'Administrator') {
       revision: state.revision,
       updatedAt: state.updatedAt,
       updatedBy: state.updatedAt ? profile.name : null,
+      fixedFee: state.fixedFee,
     });
     if (path === '/api/auth/login') {
       return json({
@@ -97,6 +99,62 @@ async function fill(page: Page, fee = '7.5') {
   await page.getByRole('combobox', { name: 'UF', exact: true }).selectOption('MG');
   await page.getByLabel('Taxa de entrega (R$)', { exact: true }).fill(fee);
 }
+
+test('regiões usam a taxa fixa configurada e não oferecem edição do valor', async ({ page }) => {
+  const state = await setup(page);
+  state.fixedFee = 5;
+  await open(page);
+  await expect(page.getByText('Taxa fixa de entrega:', { exact: false })).toContainText('5,00');
+  await page.getByRole('button', { name: 'Nova região' }).click();
+  const fee = page.getByLabel('Taxa de entrega (R$)', { exact: true });
+  await expect(fee).toHaveValue('5');
+  await expect(fee).toHaveAttribute('readonly', '');
+  await page.getByLabel('Bairro', { exact: true }).fill('Bairro de teste');
+  await page.getByLabel('Cidade', { exact: true }).fill('Cidade de teste');
+  await page.getByRole('combobox', { name: 'UF', exact: true }).selectOption('MG');
+  await page.getByRole('button', { name: 'Revisar alteração' }).click();
+  await page.getByRole('button', { name: 'Confirmar salvamento' }).click();
+  await expect(page.getByRole('status')).toContainText('Regiões de entrega atualizadas');
+  expect(state.writes[0].areas[0].fee).toBe(5);
+});
+
+test('cobertura de todos os bairros permanece ao editar, pausar e reativar a cidade', async ({
+  page,
+}) => {
+  const state = await setup(page);
+  state.fixedFee = 5;
+  state.areas = [
+    {
+      ...area,
+      id: 'whole-city',
+      neighborhood: 'Todos os bairros',
+      fee: 5,
+      coversAllNeighborhoods: true,
+    },
+  ];
+  await open(page);
+  await page.getByRole('button', { name: 'Editar Todos os bairros em Cidade de teste' }).click();
+  await expect(
+    page.getByRole('checkbox', { name: 'Todos os bairros desta cidade', exact: true }),
+  ).toBeChecked();
+  await expect(page.getByLabel('Bairro', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Revisar alteração' }).click();
+  await page.getByRole('button', { name: 'Confirmar salvamento' }).click();
+  await expect(page.getByRole('status')).toContainText('Regiões de entrega atualizadas');
+  expect(state.writes[0].areas[0]).toMatchObject({ coversAllNeighborhoods: true, fee: 5 });
+  await page.getByRole('button', { name: 'Pausar Todos os bairros em Cidade de teste' }).click();
+  await page.getByRole('button', { name: 'Confirmar salvamento' }).click();
+  await expect(
+    page.getByRole('button', { name: 'Ativar Todos os bairros em Cidade de teste' }),
+  ).toBeEnabled();
+  expect(state.writes[1].areas[0]).toMatchObject({ coversAllNeighborhoods: true, isActive: false });
+  await page.getByRole('button', { name: 'Ativar Todos os bairros em Cidade de teste' }).click();
+  await page.getByRole('button', { name: 'Confirmar salvamento' }).click();
+  await expect(
+    page.getByRole('button', { name: 'Pausar Todos os bairros em Cidade de teste' }),
+  ).toBeEnabled();
+  expect(state.writes[2].areas[0]).toMatchObject({ coversAllNeighborhoods: true, isActive: true });
+});
 
 test('entrega: cadastro revisado, edição, pausa e filtros preservam as regiões', async ({
   page,

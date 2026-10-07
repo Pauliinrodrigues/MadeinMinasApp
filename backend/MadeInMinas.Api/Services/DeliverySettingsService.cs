@@ -16,6 +16,9 @@ public sealed class DeliverySettingsService(AppDbContext database, IOptionsSnaps
     // Compartilhado com a criação do pedido: a taxa não muda entre a revisão final e o commit.
     private const long CoverageLock = 720264006001;
 
+    public PublicCheckoutOptionsResponse PublicOptions() => new(legacy.Value.FixedFee, 0,
+        string.IsNullOrWhiteSpace(legacy.Value.PickupAddress) ? null : legacy.Value.PickupAddress.Trim().Normalize());
+
     public Task LockForOrderAsync(CancellationToken cancellationToken) =>
         database.Database.ExecuteSqlInterpolatedAsync($"SELECT pg_advisory_xact_lock_shared({CoverageLock})", cancellationToken);
 
@@ -29,7 +32,8 @@ public sealed class DeliverySettingsService(AppDbContext database, IOptionsSnaps
         (await GetAsync(cancellationToken)).Areas.Where(area => area.IsActive)
         .OrderBy(area => area.State, StringComparer.Ordinal).ThenBy(area => area.City, StringComparer.Ordinal)
         .ThenBy(area => area.Neighborhood, StringComparer.Ordinal)
-        .Select(area => new PublicDeliveryAreaResponse(area.Id, area.Neighborhood, area.City, area.State, area.Fee)).ToArray();
+        .Select(area => new PublicDeliveryAreaResponse(area.Id, area.Neighborhood, area.City, area.State, area.Fee)
+        { CoversAllNeighborhoods = area.CoversAllNeighborhoods }).ToArray();
 
     public async Task<DeliverySettingsResponse> SaveAsync(Guid actorId, Guid actorStamp, SaveDeliverySettingsRequest request,
         CancellationToken cancellationToken)
@@ -40,8 +44,12 @@ public sealed class DeliverySettingsService(AppDbContext database, IOptionsSnaps
         await database.Database.ExecuteSqlInterpolatedAsync($"SELECT pg_advisory_xact_lock({CoverageLock})", cancellationToken);
         var stored = await database.DeliverySettings.SingleOrDefaultAsync(cancellationToken);
         var current = ToResponse(stored);
+        if (legacy.Value.FixedFee is { } fixedFee && request.Areas.Any(area => area.Fee != fixedFee))
+            throw new DeliverySettingsException(DeliverySettingsError.FixedDeliveryFeeRequired,
+                "Use a taxa fixa configurada para todas as regiões de entrega.");
         var areas = request.Areas.Select(area => new DeliveryAreaResponse(area.Id, area.Neighborhood.Trim().Normalize(),
-            area.City.Trim().Normalize(), area.State, area.Fee!.Value, area.IsActive!.Value)).OrderBy(area => area.Id, StringComparer.Ordinal).ToArray();
+            area.City.Trim().Normalize(), area.State, area.Fee!.Value, area.IsActive!.Value)
+        { CoversAllNeighborhoods = area.CoversAllNeighborhoods }).OrderBy(area => area.Id, StringComparer.Ordinal).ToArray();
         var json = Serialize(areas);
         // Uma resposta perdida pode ser recuperada sem regravar a mesma alteração.
         if (stored is not null && json == Serialize(current.Areas))
@@ -74,11 +82,17 @@ public sealed class DeliverySettingsService(AppDbContext database, IOptionsSnaps
     {
         var areas = stored is null
             ? legacy.Value.Areas.Select(area => new DeliveryAreaResponse(area.Id, area.Neighborhood.Trim().Normalize(),
-                area.City.Trim().Normalize(), area.State, area.Fee!.Value, true)).ToArray()
+                area.City.Trim().Normalize(), area.State, area.Fee!.Value, true)
+            { CoversAllNeighborhoods = area.CoversAllNeighborhoods }).ToArray()
             : JsonSerializer.Deserialize<DeliveryAreaResponse[]>(stored.AreasJson)!;
-        areas = areas.OrderBy(area => area.Id, StringComparer.Ordinal).ToArray();
-        var revision = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes($"{stored?.Version ?? 0}\n{Serialize(areas)}")));
-        return new DeliverySettingsResponse(areas, revision, stored?.UpdatedAt, stored?.UpdatedByName);
+        var fixedFee = legacy.Value.FixedFee;
+        areas = areas.Select(area => fixedFee is null ? area : area with { Fee = fixedFee.Value })
+            .OrderBy(area => area.Id, StringComparer.Ordinal).ToArray();
+        var content = $"{stored?.Version ?? 0}\n{Serialize(areas)}";
+        if (fixedFee is not null)
+            content += "\nFixedFee:" + fixedFee.Value.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
+        var revision = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(content)));
+        return new DeliverySettingsResponse(areas, revision, stored?.UpdatedAt, stored?.UpdatedByName) { FixedFee = fixedFee };
     }
 
     private static string Serialize(DeliveryAreaResponse[] areas) => JsonSerializer.Serialize(areas);

@@ -26,11 +26,13 @@ public sealed class DeliverySettingsTests(AuthenticationFactory factory) : IClas
 
     public async Task InitializeAsync()
     {
+        Configuration["PublicDelivery:FixedFee"] = null;
         Configuration[AreaKey + "Id"] = "legacy-center";
         Configuration[AreaKey + "Neighborhood"] = "Centro de teste";
         Configuration[AreaKey + "City"] = "Cidade de teste";
         Configuration[AreaKey + "State"] = "MG";
         Configuration[AreaKey + "Fee"] = "5.50";
+        Configuration[AreaKey + "CoversAllNeighborhoods"] = "false";
         await factory.WithDatabaseAsync(ClearAsync);
     }
 
@@ -69,7 +71,8 @@ public sealed class DeliverySettingsTests(AuthenticationFactory factory) : IClas
         return (await response.Content.ReadFromJsonAsync<DeliverySettingsResponse>())!;
     }
     private static SaveDeliverySettingsRequest Input(DeliverySettingsResponse current) => new(current.Revision,
-        current.Areas.Select(area => new DeliveryAreaRequest(area.Id, area.Neighborhood, area.City, area.State, area.Fee, area.IsActive)).ToArray());
+        current.Areas.Select(area => new DeliveryAreaRequest(area.Id, area.Neighborhood, area.City, area.State, area.Fee, area.IsActive)
+        { CoversAllNeighborhoods = area.CoversAllNeighborhoods }).ToArray());
     private static async Task<DeliverySettingsResponse> SaveAsync(HttpClient client, SaveDeliverySettingsRequest input)
     {
         var response = await client.PutAsJsonAsync("/api/delivery-settings", input);
@@ -80,6 +83,160 @@ public sealed class DeliverySettingsTests(AuthenticationFactory factory) : IClas
     {
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
         Assert.Equal(code, JsonNode.Parse(await response.Content.ReadAsStringAsync())!["code"]!.GetValue<string>());
+    }
+
+    [Fact]
+    public async Task PublicOptionsExposeFixedFeeAndPickupAddressWithoutLoginOrWrites()
+    {
+        Configuration["PublicDelivery:FixedFee"] = "5.00";
+        Configuration["PublicDelivery:PickupAddress"] = " Rua de teste, 68 — Bairro de teste ";
+        using var guest = factory.CreateStaffClient();
+        var response = await guest.GetAsync("/api/public-checkout/options");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.True(response.Headers.CacheControl?.NoStore);
+        var options = (await response.Content.ReadFromJsonAsync<PublicCheckoutOptionsResponse>())!;
+        Assert.Equal(5m, options.FixedDeliveryFee);
+        Assert.Equal(0m, options.PickupFee);
+        Assert.Equal("Rua de teste, 68 — Bairro de teste", options.PickupAddress);
+        await factory.WithDatabaseAsync(async database =>
+        {
+            Assert.False(await database.DeliverySettings.AnyAsync());
+            Assert.False(await database.Orders.AnyAsync());
+            Assert.False(await database.Customers.AnyAsync());
+        });
+    }
+
+    [Fact]
+    public async Task WholeCityCoveragePersistsAndCanBePausedWithoutLosingItsScope()
+    {
+        Configuration[AreaKey + "CoversAllNeighborhoods"] = "true";
+        Configuration[AreaKey + "Neighborhood"] = "Todos os bairros";
+        using var admin = await SignInAsync();
+        var current = await ReadAsync(admin);
+        Assert.True(Assert.Single(current.Areas).CoversAllNeighborhoods);
+        current = await SaveAsync(admin, Input(current));
+        Assert.True(Assert.Single(current.Areas).CoversAllNeighborhoods);
+        var paused = Input(current);
+        paused = paused with { Areas = paused.Areas.Select(area => area with { IsActive = false }).ToArray() };
+        current = await SaveAsync(admin, paused);
+        Assert.True(Assert.Single(current.Areas).CoversAllNeighborhoods);
+        using var guest = factory.CreateStaffClient();
+        Assert.Empty((await guest.GetFromJsonAsync<PublicDeliveryAreaResponse[]>("/api/public-checkout/delivery-areas"))!);
+        current = await SaveAsync(admin, Input(current) with { Areas = Input(current).Areas.Select(area => area with { IsActive = true }).ToArray() });
+        var active = Assert.Single((await guest.GetFromJsonAsync<PublicDeliveryAreaResponse[]>("/api/public-checkout/delivery-areas"))!);
+        Assert.True(active.CoversAllNeighborhoods);
+        await factory.WithDatabaseAsync(async database => Assert.False(await database.Orders.AnyAsync()));
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(8)]
+    public async Task FixedFeeCannotBeOverriddenByRegionEdits(decimal fee)
+    {
+        Configuration["PublicDelivery:FixedFee"] = "5.00";
+        using var admin = await SignInAsync();
+        var current = await ReadAsync(admin);
+        Assert.Equal(5m, current.FixedFee);
+        Assert.Equal(5m, Assert.Single(current.Areas).Fee);
+        var response = await admin.PutAsJsonAsync("/api/delivery-settings", Input(current) with
+        {
+            Areas = [Input(current).Areas[0] with { Fee = fee }]
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("FixedDeliveryFeeRequired", JsonNode.Parse(await response.Content.ReadAsStringAsync())!["code"]!.GetValue<string>());
+        Assert.Equal(current.Revision, (await ReadAsync(admin)).Revision);
+        await factory.WithDatabaseAsync(async database => Assert.False(await database.DeliverySettings.AnyAsync()));
+    }
+
+    [Fact]
+    public async Task FixedFeeOverridesLegacyAndStoredRatesWhilePreservingRecordedOrders()
+    {
+        using var admin = await SignInAsync();
+        var legacy = await ReadAsync(admin);
+        await SaveAsync(admin, Input(legacy)); // A saved legacy region still has its original 5.50 rate.
+        Configuration["PublicDelivery:FixedFee"] = "5.00";
+        var current = await ReadAsync(admin);
+        Assert.NotEqual(legacy.Revision, current.Revision);
+        Assert.Equal(5m, Assert.Single(current.Areas).Fee);
+        var saved = await SaveAsync(admin, Input(current));
+        using var guest = factory.CreateStaffClient();
+        Assert.Equal(5m, Assert.Single((await guest.GetFromJsonAsync<PublicDeliveryAreaResponse[]>("/api/public-checkout/delivery-areas"))!).Fee);
+        var product = new Product
+        {
+            Name = "Lanche de teste",
+            NormalizedName = "LANCHE DE TESTE",
+            Price = 23.90m,
+            IsActive = true,
+            IsAvailable = true,
+            Category = new Category { Name = "Lanches", NormalizedName = "LANCHES" }
+        };
+        await factory.WithDatabaseAsync(async database =>
+        {
+            database.Products.Add(product);
+            OrderStockFixture.AddRecipe(database, product);
+            await database.SaveChangesAsync();
+        });
+        var delivery = new PublicCheckoutRequest("Cliente teste", "31999991234", new([new(product.Id, 1)]))
+        { Fulfillment = "Delivery", Address = new("legacy-center", "Rua de teste", "10") };
+        var reviewResponse = await guest.PostAsJsonAsync("/api/public-checkout/review", delivery);
+        reviewResponse.EnsureSuccessStatusCode();
+        var review = (await reviewResponse.Content.ReadFromJsonAsync<PublicCheckoutReviewResponse>())!;
+        Assert.Equal(5m, review.DeliveryFee);
+        Assert.Equal(28.90m, review.Total);
+        var request = new PublicOrderRequest(Guid.NewGuid(), review.ReviewToken, delivery);
+        var creation = await guest.PostAsJsonAsync("/api/public-checkout/orders", request);
+        Assert.Equal(HttpStatusCode.Created, creation.StatusCode);
+        var receipt = (await creation.Content.ReadFromJsonAsync<PublicOrderReceipt>())!;
+        Configuration["PublicDelivery:FixedFee"] = "9.00";
+        var replay = await guest.PostAsJsonAsync("/api/public-checkout/orders", request);
+        Assert.Equal(HttpStatusCode.OK, replay.StatusCode);
+        var recovered = (await replay.Content.ReadFromJsonAsync<PublicOrderReceipt>())!;
+        Assert.Equal(receipt.Number, recovered.Number);
+        Assert.Equal(28.90m, recovered.Total);
+        var pickup = new PublicCheckoutRequest("Cliente teste", "31999991234", delivery.Cart);
+        var pickupResponse = await guest.PostAsJsonAsync("/api/public-checkout/review", pickup);
+        pickupResponse.EnsureSuccessStatusCode();
+        var pickupReview = (await pickupResponse.Content.ReadFromJsonAsync<PublicCheckoutReviewResponse>())!;
+        Assert.Equal(0m, pickupReview.DeliveryFee);
+        Assert.Equal(23.90m, pickupReview.Total);
+        Assert.Null(pickupReview.Address);
+        await factory.WithDatabaseAsync(async database => Assert.Equal(5m, (await database.Orders.SingleAsync()).DeliveryFee));
+        Assert.Equal(5m, Assert.Single(saved.Areas).Fee);
+    }
+
+    [Fact]
+    public async Task FixedFeeChangeAfterReviewRequiresNewReviewWithoutPartialOrder()
+    {
+        Configuration["PublicDelivery:FixedFee"] = "5.00";
+        var product = new Product
+        {
+            Name = "Lanche de teste",
+            NormalizedName = "LANCHE DE TESTE",
+            Price = 23.90m,
+            IsActive = true,
+            IsAvailable = true,
+            Category = new Category { Name = "Lanches", NormalizedName = "LANCHES" }
+        };
+        await factory.WithDatabaseAsync(async database =>
+        {
+            database.Products.Add(product);
+            OrderStockFixture.AddRecipe(database, product);
+            await database.SaveChangesAsync();
+        });
+        using var guest = factory.CreateStaffClient();
+        var checkout = new PublicCheckoutRequest("Cliente teste", "31999991234", new([new(product.Id, 1)]))
+        { Fulfillment = "Delivery", Address = new("legacy-center", "Rua de teste", "10") };
+        var reviewed = await guest.PostAsJsonAsync("/api/public-checkout/review", checkout);
+        reviewed.EnsureSuccessStatusCode();
+        var review = (await reviewed.Content.ReadFromJsonAsync<PublicCheckoutReviewResponse>())!;
+        Configuration["PublicDelivery:FixedFee"] = "6.00";
+        await AssertConflictAsync(await guest.PostAsJsonAsync("/api/public-checkout/orders",
+            new PublicOrderRequest(Guid.NewGuid(), review.ReviewToken, checkout)), "OrderReviewChanged");
+        await factory.WithDatabaseAsync(async database =>
+        {
+            Assert.False(await database.Orders.AnyAsync());
+            Assert.False(await database.Customers.AnyAsync());
+        });
     }
 
     [Theory]

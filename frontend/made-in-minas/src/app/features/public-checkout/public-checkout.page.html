@@ -20,6 +20,9 @@
         {{ receipt.fulfillment === 'Delivery' ? 'Entrega no endereço informado' : 'Retirada no
         balcão' }} · Total registrado: <strong>{{ price(receipt.total) }}</strong>
       </p>
+      @if (receipt.fulfillment === 'Pickup' && options()?.pickupAddress; as pickupAddress) {
+      <p class="pickup-location"><strong>Local de retirada</strong><br />{{ pickupAddress }}</p>
+      }
       <p>
         {{ receipt.fulfillment === 'Delivery' ? 'Combine a forma de pagamento com o atendimento.' :
         'Pagamento na retirada.' }} Nenhuma cobrança foi realizada pelo site.
@@ -84,10 +87,33 @@
         <fieldset [disabled]="busy()">
           <label for="checkout-fulfillment">Retirada ou entrega</label>
           <select id="checkout-fulfillment" [(ngModel)]="fulfillment" (ngModelChange)="change()">
-            <option value="Pickup">Retirada no balcão</option>
-            <option value="Delivery">Entrega</option>
+            <option value="Delivery">
+              Entrega{{ options()?.fixedDeliveryFee !== null && options()?.fixedDeliveryFee !==
+              undefined ? ' · ' + price(options()!.fixedDeliveryFee!) : '' }}
+            </option>
+            <option value="Pickup">Retirada no balcão · Grátis</option>
           </select>
-          @if (!loadingAreas() && !areasError() && !areas().length) {
+          <div class="fulfillment-summary" aria-live="polite">
+            @if (fulfillment === 'Delivery') {
+            <strong>Receber no seu endereço</strong>
+            @if (deliveryFee() !== null) {
+            <span>Taxa de entrega: {{ price(deliveryFee()!) }}</span>
+            }
+            <span>Escolha sua região e informe o endereço abaixo.</span>
+            } @else {
+            <strong>Retirada gratuita</strong>
+            @if (options()?.pickupAddress; as pickupAddress) {
+            <span>{{ pickupAddress }}</span>
+            }
+            <span>Aguarde a confirmação da equipe antes de buscar.</span>
+            }
+          </div>
+          @if (optionsError()) {
+          <p class="notice">Não foi possível consultar a taxa e o local de retirada.</p>
+          <button type="button" (click)="loadOptions()">
+            Atualizar informações de recebimento
+          </button>
+          } @if (!loadingAreas() && !areasError() && !areas().length) {
           <p class="notice">No momento, somente retirada está disponível pelo site.</p>
           }
           <h3>Contato para este pedido</h3>
@@ -124,10 +150,11 @@
           } @else if (!areas().length) {
           <p>Entrega pelo site ainda indisponível. Fale com o atendimento ou escolha retirada.</p>
           }
-          <label for="checkout-area">Bairro e cidade atendidos</label>
+          <label for="checkout-area">Região de entrega (bairro e cidade)</label>
           <select
             id="checkout-area"
             [(ngModel)]="address.areaId"
+            [disabled]="loadingAreas() || !!areasError() || !areas().length"
             (ngModelChange)="change()"
             [attr.aria-invalid]="fieldError('area') ? 'true' : null"
             aria-describedby="checkout-area-error"
@@ -135,7 +162,8 @@
             <option value="">Selecione a região</option>
             @for (area of areas(); track area.id) {
             <option [value]="area.id">
-              {{ area.neighborhood }} · {{ area.city }}/{{ area.state }} · {{ price(area.fee) }}
+              {{ area.coversAllNeighborhoods ? area.city + '/' + area.state + ' · Todos os bairros'
+              : area.neighborhood + ' · ' + area.city + '/' + area.state }} · {{ price(area.fee) }}
             </option>
             }
           </select>
@@ -143,7 +171,27 @@
           <button type="button" (click)="loadAreas(); change()" [disabled]="loadingAreas()">
             Atualizar regiões
           </button>
+          @if (selectedArea()?.coversAllNeighborhoods) {
+          <p class="notice">
+            Atendemos todos os bairros de {{ selectedArea()!.city }}/{{ selectedArea()!.state }}.
+            Informe seu bairro abaixo.
+          </p>
+          <label for="checkout-neighborhood">Seu bairro</label>
+          <input
+            id="checkout-neighborhood"
+            [attr.aria-invalid]="fieldError('neighborhood') ? 'true' : null"
+            aria-describedby="checkout-neighborhood-error"
+            autocomplete="address-level3"
+            maxlength="80"
+            [(ngModel)]="address.neighborhood"
+            (ngModelChange)="change()"
+          />
+          <span id="checkout-neighborhood-error" class="field-error"
+            >{{ fieldError('neighborhood') }}</span
+          >
+          } @else {
           <p class="notice">Seu bairro não aparece? Fale com o atendimento antes de enviar.</p>
+          }
           <label for="checkout-street">Rua ou avenida</label>
           <input
             id="checkout-street"
@@ -237,7 +285,9 @@
           </p>
           } @else {
           <p>Retirada no balcão · Sem taxa de entrega</p>
-          }
+          @if (options()?.pickupAddress; as pickupAddress) {
+          <p class="pickup-location"><strong>Local de retirada</strong><br />{{ pickupAddress }}</p>
+          } }
           <p class="total">Total <strong>{{ price(result.total) }}</strong></p>
           <p>
             O atendimento confirmará a disponibilidade e o preparo. {{ result.fulfillment ===

@@ -4,11 +4,13 @@ Continuação dos ajustes operacionais em 06/10/2026, na branch `feat/operationa
 
 ## Uso e regras
 
-Cadastrar bairro, cidade, UF e taxa explícita; revisar e confirmar antes de salvar. A taxa aceita de R$ 0 a R$ 9.999,99, com até duas casas decimais. Zero significa entrega gratuita e precisa ser informado expressamente. Campo novo começa vazio. Bairro/cidade têm até 80 caracteres; UF deve existir. São permitidas até 500 regiões, incluindo pausadas, sem duplicar bairro/cidade/UF. A comparação ignora espaços nas extremidades e maiúsculas/minúsculas.
+Cadastrar bairro, cidade e UF; revisar e confirmar antes de salvar. Desde 07/10/2026, `PublicDelivery:FixedFee=5.00` estabelece **R$ 5,00 para qualquer região atendida**, conforme informado pelo responsável. O valor aparece preenchido, sem edição por bairro; retirada permanece grátis. Se `FixedFee` for ausente/nulo em outro ambiente, a tela conserva o cadastro de taxa explícita de R$ 0 a R$ 9.999,99 com até duas casas decimais, começando vazio. Bairro/cidade têm até 80 caracteres; UF deve existir. São permitidas até 500 regiões, incluindo pausadas, sem duplicar bairro/cidade/UF. A comparação ignora espaços nas extremidades e maiúsculas/minúsculas.
 
 A lista permite busca, filtro de situação, edição, pausa e reativação. Pausar remove a região das novas compras pelo site. Não há exclusão: o identificador permanece estável. Mudanças afetam revisões e pedidos públicos novos; pedidos registrados mantêm endereço e taxa históricos. O carrinho manual da equipe conserva suas regras de taxa informada pelo funcionário.
 
-Nenhuma região ativa significa retirada disponível e entrega pública indisponível. Não há reinício da API após salvar pela tela. Regiões e valores reais precisam ser definidos pelo responsável; a ferramenta não estima distância, CEP, prazo ou capacidade de entrega.
+Nenhuma região ativa significa retirada disponível e entrega pública indisponível, mesmo com taxa fixa configurada. Não há reinício da API após salvar pela tela. O responsável confirmou atendimento em **todos os bairros de Corinto–MG**. A configuração inicial contém essa cobertura; o endereço de retirada é **Rua Esperança, 68 — Clarindo de Paiva, Corinto–MG**. A ferramenta não estima distância, CEP, prazo ou capacidade de entrega.
+
+Marcar **Todos os bairros desta cidade** define `coversAllNeighborhoods=true` e dispensa um nome de bairro no cadastro. O checkout solicita o bairro real do cliente e o preserva no pedido; o rótulo “Todos os bairros” descreve a cobertura. Editar, pausar e reativar mantêm essa opção. Regiões anteriores conservam a cobertura de um bairro específico.
 
 ## Persistência e compatibilidade
 
@@ -22,9 +24,9 @@ O Down recusa apagar uma configuração já salva. Exportar e migrar os dados an
 
 `GET /api/delivery-settings` e `PUT /api/delivery-settings` exigem JWT e `delivery.manage`, exclusiva de `Administrator`. Atendente, cozinha e expedição recebem 403; sem sessão, 401. Respostas usam `no-store` e o corpo de entrada tem limite de 524.288 bytes. A resposta pública de regiões conserva seu contrato e só inclui regiões ativas, sem autor ou revisão administrativa.
 
-GET retorna `{ areas, revision, updatedAt, updatedBy }`. Cada região contém `{ id, neighborhood, city, state, fee, isActive }`. PUT recebe `{ expectedRevision, areas }`, sempre com a lista completa. `id` tem até 60 caracteres, em letras minúsculas, números e hífen; a interface gera o ID de novas regiões e preserva os existentes. Campos desconhecidos e listas inválidas retornam 400.
+GET retorna `{ areas, revision, updatedAt, updatedBy, fixedFee }`. `fixedFee` é nulo quando não existe política de taxa única; quando configurado, prevalece sobre as taxas legadas ou salvas na resposta. Cada região contém `{ id, neighborhood, city, state, fee, isActive, coversAllNeighborhoods }`. A opção de toda a cidade começa falsa nas regiões anteriores e é preservada na lista JSONB existente, sem nova migration. PUT recebe `{ expectedRevision, areas }`, sempre com a lista completa; valores diferentes da taxa fixa retornam `400 FixedDeliveryFeeRequired`. `id` tem até 60 caracteres, em letras minúsculas, números e hífen; a interface gera o ID de novas regiões e preserva os existentes. Campos desconhecidos e listas inválidas retornam 400.
 
-A revisão combina versão e conteúdo normalizado. Uma edição desatualizada retorna `409 DeliverySettingsChanged`; remover um ID existente retorna `409 DeliveryAreaRemovalDenied`. A tela conserva os campos e exige recarregar antes de nova edição. Não mescla automaticamente alterações de administradores diferentes.
+A revisão combina versão, conteúdo normalizado e a política de taxa fixa, inclusive quando a lista estiver vazia. Uma edição desatualizada retorna `409 DeliverySettingsChanged`; remover um ID existente retorna `409 DeliveryAreaRemovalDenied`. A tela conserva os campos e exige recarregar antes de nova edição. Não mescla automaticamente alterações de administradores diferentes.
 
 Se a resposta de salvamento se perder, a tela mantém o mesmo corpo e bloqueia edição enquanto oferece repetição ou nova consulta. Se aquele conteúdo já for o atual, a API responde 200 sem incrementar versão/data. Se outra edição tiver sido salva, a revisão antiga é recusada. Recarregar explicitamente descarta a edição local. Não há rascunho persistente para esse formulário administrativo.
 

@@ -13,6 +13,7 @@ public sealed class OrderExceptionHandler(IProblemDetailsService problems) : IEx
         var status = failure.Error switch
         {
             OrderError.OrderNotFound => StatusCodes.Status404NotFound,
+            OrderError.InvalidPublicDeliveryAddress => StatusCodes.Status400BadRequest,
             OrderError.InvalidSession => StatusCodes.Status401Unauthorized,
             OrderError.PermissionDenied or OrderError.OrderCancellationDenied => StatusCodes.Status403Forbidden,
             _ => StatusCodes.Status409Conflict
