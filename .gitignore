@@ -24,3 +24,4 @@ TestResults/
 *.pfx
 *.p12
 .local/
+App_Data/

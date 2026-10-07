@@ -32,7 +32,9 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
     ? request.clone({ setHeaders: { Authorization: 'Bearer ' + token } })
     : request;
   return next(authenticated).pipe(
-    timeout(15000),
+    timeout(
+      target.pathname === apiPath + '/product-images' && request.method === 'POST' ? 60000 : 15000,
+    ),
     catchError((error: unknown) => {
       if (
         token &&

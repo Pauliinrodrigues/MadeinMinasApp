@@ -83,6 +83,24 @@
         ></textarea>
       </label>
       <label
+        >Foto do produto (opcional)<input
+          type="file"
+          accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+          (change)="selectImage($event)"
+          aria-describedby="product-photo-help"
+      /></label>
+      <p id="product-photo-help" class="hint">
+        Escolha uma foto JPG, PNG ou WebP de até 8 MB e 24 megapixels. Ela será enviada ao salvar o
+        produto.
+      </p>
+      @if (imageError()) {
+      <p class="error" role="alert">{{ imageError() }}</p>
+      } @if (selectedImage(); as file) {
+      <p class="hint" role="status">{{ file.name }} · Foto selecionada para envio.</p>
+      } @else if (managedImage(imageUrl)) {
+      <p class="hint">Foto salva no produto. Escolha outra para substituí-la.</p>
+      } @else {
+      <label
         >Link da imagem (opcional)<input
           name="imageUrl"
           [(ngModel)]="imageUrl"
@@ -92,24 +110,24 @@
           placeholder="https://"
           aria-describedby="product-image-help"
       /></label>
-      <p id="product-image-help" class="hint">
-        Use o endereço HTTPS de uma imagem. O envio de arquivos será uma melhoria futura.
-      </p>
+      <p id="product-image-help" class="hint">Se preferir, use o endereço HTTPS de uma imagem.</p>
       @if (!validImage(imageUrl)) {
       <p class="error" role="alert">Use um link HTTPS válido, sem usuário ou senha no endereço.</p>
-      } @if (imageUrl.trim() && validImage(imageUrl)) { @if (!imageFailed()) {
+      } } @if (previewImage()) { @if (!imageFailed()) {
       <img
         class="product-preview"
-        [src]="imageUrl.trim()"
+        [src]="previewImage()"
         alt="Prévia da imagem do produto"
         referrerpolicy="no-referrer"
         (error)="imageFailed.set(true)"
       />
       } @else {
       <p class="hint" role="status">
-        Não foi possível carregar a imagem. Confira o link; o cadastro pode ser salvo sem a prévia.
+        Não foi possível carregar a prévia. Confira a foto ou o link antes de salvar.
       </p>
-      } }
+      } } @if (selectedImage() || imageUrl.trim()) {
+      <button type="button" (click)="removeImage()">Remover foto</button>
+      }
       <label class="checkbox"
         ><input name="isActive" [(ngModel)]="isActive" type="checkbox" />Produto ativo</label
       >
@@ -125,7 +143,7 @@
         class="primary"
         [disabled]="form.invalid || !name.trim() || parsePrice(price) === null || !validCategory() || !validImage(imageUrl)"
       >
-        {{ busy() ? 'Salvando…' : 'Salvar produto' }}
+        {{ uploading() ? 'Enviando foto…' : busy() ? 'Salvando…' : 'Salvar produto' }}
       </button>
     </fieldset>
   </form>

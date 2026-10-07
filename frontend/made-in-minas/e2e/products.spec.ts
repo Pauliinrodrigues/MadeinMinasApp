@@ -1,5 +1,10 @@
 import { test as base, expect, Page } from '@playwright/test';
 
+const photo = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aDYsAAAAASUVORK5CYII=',
+  'base64',
+);
+
 const test = base.extend<{ browserErrors: void }>({
   browserErrors: [
     async ({ page }, use) => {
@@ -47,6 +52,9 @@ async function setup(page: Page, role = 'Administrator') {
     listStatus: 200,
     saveCode: '',
     writes: 0,
+    uploads: 0,
+    uploadStatus: 201,
+    uploadedUrl: '',
     lastInput: null as Record<string, unknown> | null,
   };
   const responseProduct = (product: typeof initialProduct) => {
@@ -72,7 +80,23 @@ async function setup(page: Page, role = 'Administrator') {
         user: profile,
       });
     }
+    if (path.startsWith('/api/product-images/') && request.method() === 'GET') {
+      expect(request.headers()['authorization']).toBeUndefined();
+      expect(url.origin).toBe('http://localhost:5080');
+      return route.fulfill({ contentType: 'image/png', body: photo });
+    }
     expect(request.headers()['authorization']).toBe('Bearer product-test-token');
+    if (path === '/api/product-images' && request.method() === 'POST') {
+      state.uploads++;
+      expect(request.headers()['content-type']).toContain('multipart/form-data; boundary=');
+      expect(request.postDataBuffer()!.includes(photo)).toBe(true);
+      if (state.uploadStatus !== 201) {
+        return json({ code: 'InvalidProductImage' }, state.uploadStatus);
+      }
+      state.uploadedUrl =
+        '/api/product-images/' + String(state.uploads).padStart(32, '0') + '.webp';
+      return json({ imageUrl: state.uploadedUrl }, 201);
+    }
     if (path === '/api/auth/me') {
       return json(profile);
     }
@@ -218,11 +242,120 @@ test('produtos: preço inválido e imagem insegura têm explicação; imagem que
   await expect(page.getByRole('button', { name: 'Salvar produto' })).toBeDisabled();
   await page.getByLabel('Link da imagem (opcional)').fill('https://images.example.test/photo.png');
   await expect(
-    page.getByText('Não foi possível carregar a imagem.', { exact: false }),
+    page.getByText('Não foi possível carregar a prévia.', { exact: false }),
   ).toBeVisible();
   await page.getByRole('button', { name: 'Salvar produto' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Produto criado.' })).toBeVisible();
   expect(state.lastInput?.['imageUrl']).toBe('https://images.example.test/photo.png');
+});
+
+test('fotos: prévia local, envio ao salvar, substituição e remoção persistem no produto', async ({
+  page,
+}, testInfo) => {
+  const state = await setup(page);
+  await login(page);
+  await navigate(page, '/equipe/produtos/product-1');
+  const picker = page.getByLabel('Foto do produto (opcional)');
+  const preview = page.getByRole('img', { name: 'Prévia da imagem do produto' });
+  await picker.setInputFiles({ name: 'lanche.png', mimeType: 'image/png', buffer: photo });
+  await expect(preview).toHaveAttribute('src', /^blob:/);
+  expect(state.uploads).toBe(0);
+  await page.getByRole('button', { name: 'Salvar produto' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Produto atualizado.' })).toBeVisible();
+  expect(state.lastInput?.['imageUrl']).toBe(state.uploadedUrl);
+  await expect(preview).toHaveAttribute('src', 'http://localhost:5080' + state.uploadedUrl);
+  await expect(preview).toBeVisible();
+  expect(await preview.evaluate((image) => (image as HTMLImageElement).naturalWidth)).toBe(1);
+  await page.getByRole('link', { name: 'Produtos', exact: true }).click();
+  await page.getByRole('link', { name: 'Editar Uai Sô' }).click();
+  await expect(preview).toHaveAttribute('src', 'http://localhost:5080' + state.uploadedUrl);
+  await picker.setInputFiles({ name: 'lanche-novo.png', mimeType: 'image/png', buffer: photo });
+  await page.getByRole('button', { name: 'Salvar produto' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Produto atualizado.' })).toBeVisible();
+  expect(state.uploads).toBe(2);
+  expect(state.lastInput?.['imageUrl']).toBe(state.uploadedUrl);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({
+    path: '../../.local/product-photo-' + testInfo.project.name + '.png',
+    fullPage: true,
+  });
+  await page.getByRole('button', { name: 'Remover foto' }).click();
+  await expect(preview).toHaveCount(0);
+  await page.getByRole('button', { name: 'Salvar produto' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Produto atualizado.' })).toBeVisible();
+  expect(state.lastInput?.['imageUrl']).toBeNull();
+  await expect(page.getByLabel('Link da imagem (opcional)')).toHaveValue('');
+});
+
+test('fotos: falha no envio preserva campos e arquivo para tentar novamente', async ({ page }) => {
+  const state = await setup(page);
+  state.uploadStatus = 400;
+  await login(page);
+  await navigate(page, '/equipe/produtos/product-1');
+  await page.getByLabel('Nome', { exact: true }).fill('Nome preservado');
+  await page.getByLabel('Descrição (opcional)').fill('Descrição preservada');
+  await page
+    .getByLabel('Foto do produto (opcional)')
+    .setInputFiles({ name: 'lanche.png', mimeType: 'image/png', buffer: photo });
+  await page.getByRole('button', { name: 'Salvar produto' }).click();
+  await expect(page.getByRole('alert')).toContainText('JPG, PNG ou WebP válida');
+  await expect(page.getByLabel('Nome', { exact: true })).toHaveValue('Nome preservado');
+  await expect(page.getByLabel('Descrição (opcional)')).toHaveValue('Descrição preservada');
+  await expect(page.getByRole('img', { name: 'Prévia da imagem do produto' })).toHaveAttribute(
+    'src',
+    /^blob:/,
+  );
+  expect(state.writes).toBe(0);
+  state.uploadStatus = 201;
+  await page.getByRole('button', { name: 'Salvar produto' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Produto atualizado.' })).toBeVisible();
+  expect(state.uploads).toBe(2);
+  expect(state.writes).toBe(1);
+});
+
+test('fotos: erro ao salvar produto permite repetir sem enviar a foto novamente', async ({
+  page,
+}) => {
+  const state = await setup(page);
+  state.saveCode = 'DuplicateProductName';
+  await login(page);
+  await navigate(page, '/equipe/produtos/product-1');
+  await page
+    .getByLabel('Foto do produto (opcional)')
+    .setInputFiles({ name: 'lanche.png', mimeType: 'image/png', buffer: photo });
+  await page.getByRole('button', { name: 'Salvar produto' }).click();
+  await expect(page.getByRole('alert')).toContainText('Já existe um produto');
+  expect(state.uploads).toBe(1);
+  const savedUrl = state.uploadedUrl;
+  state.saveCode = '';
+  await page.getByLabel('Nome', { exact: true }).fill('Outro nome');
+  await page.getByRole('button', { name: 'Salvar produto' }).click();
+  await expect(page.getByRole('status').filter({ hasText: 'Produto atualizado.' })).toBeVisible();
+  expect(state.uploads).toBe(1);
+  expect(state.lastInput?.['imageUrl']).toBe(savedUrl);
+});
+
+test('fotos: arquivo incompatível ou acima de 8 MB tem explicação e não é enviado', async ({
+  page,
+}) => {
+  const state = await setup(page);
+  await login(page);
+  await navigate(page, '/equipe/produtos/product-1');
+  const picker = page.getByLabel('Foto do produto (opcional)');
+  await picker.setInputFiles({
+    name: 'lanche.svg',
+    mimeType: 'image/svg+xml',
+    buffer: Buffer.from('<svg/>'),
+  });
+  await expect(page.getByRole('alert')).toContainText('JPG, PNG ou WebP');
+  await picker.setInputFiles({
+    name: 'grande.png',
+    mimeType: 'image/png',
+    buffer: Buffer.alloc(8 * 1024 * 1024 + 1),
+  });
+  await expect(page.getByRole('alert')).toContainText('até 8 MB');
+  expect(state.uploads).toBe(0);
+  await expect(page.getByRole('img', { name: 'Prévia da imagem do produto' })).toHaveCount(0);
 });
 
 test('produtos: pausa, ativação e confirmação preservam disponibilidade manual', async ({

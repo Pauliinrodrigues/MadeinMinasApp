@@ -106,7 +106,7 @@
         <div class="product-image">
           @if (product.imageUrl && !failedImages().has(product.id)) {
           <img
-            [src]="product.imageUrl"
+            [src]="imageSource(product.imageUrl)"
             [alt]="product.name"
             loading="lazy"
             referrerpolicy="no-referrer"

@@ -52,7 +52,7 @@ catalog.manage é exclusiva de Administrator e independente de users.manage. A s
 
 Produtos têm categoria obrigatória, preço decimal validado antes do numeric(8,2) e nome único dentro da categoria. Ativação e disponibilidade manual são independentes. A API calcula IsAvailableForSale combinando produto ativo, categoria ativa e disponibilidade manual; não considera estoque ou pedidos ainda inexistentes.
 
-Novos vínculos exigem categoria ativa, mas uma edição pode manter a categoria original inativa. Não há exclusão física. Imagens são links HTTPS opcionais, com prévia e tratamento de falha; uploads e armazenamento de mídia ficam para incremento próprio. Detalhes: [products.md](products.md).
+Novos vínculos exigem categoria ativa, mas uma edição pode manter a categoria original inativa. Não há exclusão física. Imagens aceitam links HTTPS opcionais e, desde o incremento de 07/10/2026, upload de fotos próprias com armazenamento persistente e otimização em WebP usando SkiaSharp. `ImageUrl` continua sendo o vínculo, sem migration adicional. Detalhes e limites: [products.md](products.md#imagens).
 
 ## 010 — Ingredientes com unidade-base estável
 

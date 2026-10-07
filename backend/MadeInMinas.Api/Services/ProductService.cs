@@ -8,7 +8,7 @@ using Npgsql;
 
 namespace MadeInMinas.Api.Services;
 
-public sealed class ProductService(AppDbContext database, TimeProvider clock, ILogger<ProductService> logger)
+public sealed class ProductService(AppDbContext database, TimeProvider clock, ILogger<ProductService> logger, ProductImageStorage images)
 {
     public async Task<ProductPageResponse> ListAsync(ProductListQuery request, CancellationToken cancellationToken)
     {
@@ -50,6 +50,7 @@ public sealed class ProductService(AppDbContext database, TimeProvider clock, IL
     {
         await using var transaction = await BeginWriteAsync(actorId, actorStamp, cancellationToken);
         var category = await RequireCategoryAsync(request.CategoryId!.Value, true, cancellationToken);
+        images.ValidateReference(request.ImageUrl);
         var now = UtcNow();
         var product = new Product { Category = category, CategoryId = category.Id, CreatedAt = now };
         Apply(product, request, now);
@@ -65,6 +66,7 @@ public sealed class ProductService(AppDbContext database, TimeProvider clock, IL
         await using var transaction = await BeginWriteAsync(actorId, actorStamp, cancellationToken);
         var product = await RequireForUpdateAsync(id, cancellationToken);
         var category = await RequireCategoryAsync(request.CategoryId!.Value, request.CategoryId != product.CategoryId, cancellationToken);
+        images.ValidateReference(request.ImageUrl);
         product.CategoryId = category.Id;
         product.Category = category;
         Apply(product, request, UtcNow());

@@ -75,6 +75,7 @@ builder.Services.AddRateLimiter(options => options.AddPolicy("public-checkout", 
         })));
 builder.Services.AddScoped<MadeInMinas.Api.Services.IngredientService>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.ProductService>();
+builder.Services.AddScoped<MadeInMinas.Api.Services.ProductImageStorage>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.CategoryService>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.UserService>();
 builder.Services.AddDbContext<AppDbContext>(options =>

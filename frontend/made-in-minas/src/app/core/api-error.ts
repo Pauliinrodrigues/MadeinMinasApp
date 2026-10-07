@@ -70,6 +70,10 @@ export function apiError(error: unknown, login = false): string {
     IngredientUnitImmutable:
       'A unidade não pode ser alterada após o cadastro. Reabra o ingrediente para conferir os dados.',
     ProductNotFound: 'Produto não encontrado.',
+    InvalidProductImage:
+      'Escolha uma foto JPG, PNG ou WebP válida, sem animação e com até 24 megapixels. Se a foto salva não estiver disponível, envie o arquivo novamente.',
+    ProductImageTooLarge: 'Escolha uma foto de até 8 MB.',
+    ProductImageNotFound: 'Foto não encontrada. Selecione o arquivo novamente.',
     DuplicateProductName:
       'Já existe um produto com esse nome nesta categoria. Verifique também os inativos.',
     InvalidProductCategory: 'A categoria não existe mais. Reabra o cadastro e selecione outra.',
@@ -113,6 +117,8 @@ export function apiError(error: unknown, login = false): string {
       return 'Registro não encontrado.';
     case 409:
       return 'Os dados entraram em conflito. Atualize a página e confira o cadastro.';
+    case 413:
+      return 'Escolha uma foto de até 8 MB.';
     case 429:
       return 'Muitas tentativas. Aguarde um minuto antes de tentar novamente.';
     default:

@@ -13,6 +13,8 @@ public sealed class ProductExceptionHandler(IProblemDetailsService problems) : I
         var status = failure.Error switch
         {
             ProductError.ProductNotFound => StatusCodes.Status404NotFound,
+            ProductError.ProductImageNotFound => StatusCodes.Status404NotFound,
+            ProductError.ProductImageTooLarge => StatusCodes.Status413PayloadTooLarge,
             ProductError.DuplicateProductName => StatusCodes.Status409Conflict,
             ProductError.InvalidSession => StatusCodes.Status401Unauthorized,
             ProductError.PermissionDenied => StatusCodes.Status403Forbidden,
@@ -33,4 +35,3 @@ public sealed class ProductExceptionHandler(IProblemDetailsService problems) : I
         });
     }
 }
-

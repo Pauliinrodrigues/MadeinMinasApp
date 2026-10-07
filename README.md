@@ -134,6 +134,7 @@ O GitHub Actions executa as verificações em pushes para `master` e pull reques
 - Nunca colocar chaves de IA ou credenciais no frontend.
 - CORS de desenvolvimento permite apenas `http://localhost:8101`, métodos GET, POST e PUT.
 - Em produção, o frontend usa `/api`: hospedar no mesmo domínio e encaminhar essa rota para o backend.
+- Fotos próprias: em **Produtos → Editar → Foto do produto**, escolha JPG, PNG ou WebP e salve. Os arquivos ficam em `backend/MadeInMinas.Api/App_Data/product-images`, fora do Git; configure `ProductImages__StoragePath` para um volume persistente e inclua-o no backup junto com o banco. [Regras de imagens](docs/products.md#imagens).
 - Configurar `AllowedHosts`, HTTPS e, se necessário, `Cors__AllowedOrigins__0` para o domínio real.
 - Há redirecionamento HTTPS/HSTS fora de Development. A hospedagem deve fornecer HTTPS; reverse proxy e forwarded headers precisarão ser configurados conforme a infraestrutura escolhida.
 - A base ainda não é uma entrega de produção. A autenticação do backend está descrita em [docs/authentication.md](docs/authentication.md).
