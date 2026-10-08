@@ -20,17 +20,30 @@
 
 @media print {
   @page {
+    size: auto;
     margin: 4mm;
   }
   html:has(body.print-view),
   body.print-view,
-  body.print-view ion-app {
+  body.print-view app-root,
+  body.print-view ion-app,
+  body.print-view app-print {
     position: static !important;
     display: block !important;
     height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    inset: auto !important;
     overflow: visible !important;
     contain: none !important;
+    transform: none !important;
     background: white !important;
     color: black !important;
+  }
+  body.print-view > :not(app-root),
+  body.print-view ion-app > :not(app-print) {
+    display: none !important;
   }
 }

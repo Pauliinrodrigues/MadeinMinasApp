@@ -79,6 +79,43 @@ const original: Order = {
   ],
 };
 
+type SoundWindow = Window & {
+  orderSound: { context: AudioContext; tones: number };
+};
+
+async function observeSound(page: Page, rejectResume = false) {
+  await page.addInitScript((rejectResume) => {
+    const NativeAudioContext = window.AudioContext;
+    window.AudioContext = class extends NativeAudioContext {
+      constructor(options?: AudioContextOptions) {
+        super(options);
+        (window as SoundWindow).orderSound = { context: this, tones: 0 };
+      }
+
+      override createOscillator(): OscillatorNode {
+        const tone = super.createOscillator();
+        const start = tone.start.bind(tone);
+        tone.start = (when?: number) => {
+          (window as SoundWindow).orderSound.tones++;
+          start(when);
+        };
+        return tone;
+      }
+
+      override resume(): Promise<void> {
+        return rejectResume ? Promise.reject(new Error('Audio blocked for test')) : super.resume();
+      }
+    };
+  }, rejectResume);
+}
+
+async function soundState(page: Page) {
+  return page.evaluate(() => {
+    const sound = (window as SoundWindow).orderSound;
+    return { state: sound.context.state, tones: sound.tones };
+  });
+}
+
 async function setup(page: Page, role = 'Attendant') {
   const state = {
     orders: [structuredClone(original)],
@@ -480,6 +517,147 @@ test('pedidos: fila detecta novos pedidos e pausa consultas com a aba oculta', a
     document.dispatchEvent(new Event('visibilitychange'));
   });
   await expect.poll(() => state.queries.length).toBeGreaterThan(queries);
+});
+
+test('pedidos: aviso sonoro toca para pedido público novo sem repetir e respeita desativação', async ({
+  page,
+}) => {
+  await page.clock.install();
+  await observeSound(page);
+  const state = await setup(page);
+  await login(page);
+  await page.getByRole('link', { name: 'Pedidos', exact: true }).click();
+  await expect(page.getByRole('link', { name: 'Abrir pedido 1542' })).toBeVisible();
+  await page.getByRole('button', { name: 'Ativar aviso sonoro', exact: true }).click();
+  await expect(
+    page.getByRole('button', { name: 'Desativar aviso sonoro', exact: true }),
+  ).toHaveAttribute('aria-pressed', 'true');
+  expect(await soundState(page)).toEqual({ state: 'running', tones: 1 });
+  await page.getByRole('button', { name: 'Prontos', exact: true }).click();
+  await expect(page.getByText('Nenhum pedido nesta página.', { exact: false })).toBeVisible();
+  state.orders.unshift({
+    ...structuredClone(original),
+    id: 'public-order',
+    number: 1543,
+    origin: 'DirectLink',
+  });
+  await page.clock.fastForward(10000);
+  await expect(
+    page.getByRole('button', { name: 'Aguardando confirmação (2)', exact: true }),
+  ).toBeVisible();
+  expect(await soundState(page)).toEqual({ state: 'running', tones: 2 });
+  const queries = state.queries.length;
+  await page.clock.fastForward(10000);
+  await expect.poll(() => state.queries.length).toBeGreaterThan(queries);
+  expect((await soundState(page)).tones).toBe(2);
+  await page.getByRole('button', { name: 'Desativar aviso sonoro', exact: true }).click();
+  state.orders.unshift({ ...structuredClone(original), id: 'muted-order', number: 1544 });
+  await page.clock.fastForward(10000);
+  await expect(
+    page.getByRole('button', { name: 'Aguardando confirmação (3)', exact: true }),
+  ).toBeVisible();
+  expect((await soundState(page)).tones).toBe(2);
+  await expect(
+    page.getByText('Chegou pedido novo. Confira a fila aguardando confirmação.'),
+  ).toBeVisible();
+});
+
+test('pedidos: aviso sonoro informa interrupção do navegador e permite reativar', async ({
+  page,
+}) => {
+  await observeSound(page);
+  await setup(page);
+  await login(page);
+  await page.getByRole('link', { name: 'Pedidos', exact: true }).click();
+  await page.getByRole('button', { name: 'Ativar aviso sonoro', exact: true }).click();
+  await expect(
+    page.getByRole('button', { name: 'Desativar aviso sonoro', exact: true }),
+  ).toBeVisible();
+  await page.evaluate(() => (window as SoundWindow).orderSound.context.suspend());
+  await expect(
+    page.getByRole('button', { name: 'Ativar aviso sonoro', exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText('O som foi interrompido pelo navegador.', { exact: false }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Ativar aviso sonoro', exact: true }).click();
+  await expect(
+    page.getByRole('button', { name: 'Desativar aviso sonoro', exact: true }),
+  ).toBeVisible();
+  expect((await soundState(page)).state).toBe('running');
+  await expect(
+    page.getByText('O som foi interrompido pelo navegador.', { exact: false }),
+  ).toHaveCount(0);
+});
+
+test('pedidos: aviso sonoro bloqueado mantém avisos visuais e não aparece como ativo', async ({
+  page,
+}) => {
+  await page.clock.install();
+  await observeSound(page, true);
+  const state = await setup(page);
+  await login(page);
+  await page.getByRole('link', { name: 'Pedidos', exact: true }).click();
+  await expect(page.getByRole('link', { name: 'Abrir pedido 1542' })).toBeVisible();
+  await page.getByRole('button', { name: 'Ativar aviso sonoro', exact: true }).click();
+  await expect(
+    page.getByText('O navegador não permitiu ativar o som.', { exact: false }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Ativar aviso sonoro', exact: true }),
+  ).toHaveAttribute('aria-pressed', 'false');
+  state.orders.unshift({ ...structuredClone(original), id: 'silent-order', number: 1543 });
+  await page.clock.fastForward(10000);
+  await expect(
+    page.getByRole('button', { name: 'Aguardando confirmação (2)', exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText('Chegou pedido novo. Confira a fila aguardando confirmação.'),
+  ).toBeVisible();
+  await expect(
+    page.getByText('O navegador não permitiu ativar o som.', { exact: false }),
+  ).toBeVisible();
+  expect((await soundState(page)).tones).toBe(0);
+});
+
+test('pedidos: aviso sonoro pausa na aba oculta e é encerrado ao sair da tela', async ({
+  page,
+}) => {
+  await page.clock.install();
+  await observeSound(page);
+  const state = await setup(page);
+  await login(page);
+  await page.getByRole('link', { name: 'Pedidos', exact: true }).click();
+  await expect(page.getByRole('link', { name: 'Abrir pedido 1542' })).toBeVisible();
+  await page.getByRole('button', { name: 'Ativar aviso sonoro', exact: true }).click();
+  await expect(
+    page.getByRole('button', { name: 'Desativar aviso sonoro', exact: true }),
+  ).toBeVisible();
+  const queries = state.queries.length;
+  await page.evaluate(() =>
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => true }),
+  );
+  state.orders.unshift({ ...structuredClone(original), id: 'hidden-order', number: 1543 });
+  await page.clock.fastForward(30000);
+  expect(state.queries.length).toBe(queries);
+  expect((await soundState(page)).tones).toBe(1);
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => false });
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  await expect(
+    page.getByRole('button', { name: 'Aguardando confirmação (2)', exact: true }),
+  ).toBeVisible();
+  expect((await soundState(page)).tones).toBe(2);
+  await page.getByRole('link', { name: 'Minha conta', exact: true }).click();
+  await expect.poll(async () => (await soundState(page)).state).toBe('closed');
+  const afterNavigation = state.queries.length;
+  await page.clock.fastForward(30000);
+  expect(state.queries.length).toBe(afterNavigation);
+  await page.getByRole('link', { name: 'Pedidos', exact: true }).click();
+  await expect(
+    page.getByRole('button', { name: 'Ativar aviso sonoro', exact: true }),
+  ).toBeVisible();
 });
 
 test('pedidos: falha incerta conserva tentativa e bloqueia edição até repetir', async ({

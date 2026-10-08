@@ -75,3 +75,16 @@ jobs:
         with:
           name: browser-test-results
           path: frontend/made-in-minas/test-results
+
+  printing-agent:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+      - run: dotnet restore printing/MadeInMinas.PrintAgent --locked-mode
+      - run: dotnet format whitespace printing/MadeInMinas.PrintAgent/MadeInMinas.PrintAgent.csproj --no-restore --verify-no-changes
+      - run: dotnet build printing/MadeInMinas.PrintAgent --configuration Release --no-restore
+      - run: .\printing\MadeInMinas.PrintAgent\bin\Release\net10.0-windows\MadeInMinas.PrintAgent.exe --verify .local\native-receipt-layout.png --store .local\print-agent-verification

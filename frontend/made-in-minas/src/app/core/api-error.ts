@@ -5,6 +5,8 @@ export function apiError(error: unknown, login = false): string {
     return 'Não foi possível concluir. Verifique a conexão e tente novamente.';
   }
   const codes: Record<string, string> = {
+    PrintingUnavailable:
+      error.error?.title ?? 'Não foi possível enviar a comanda. Confira a estação de impressão.',
     DeliverySettingsChanged:
       'Outro administrador alterou as regiões. Recarregue e confira os valores atuais.',
     DeliveryAreaRemovalDenied: 'Pause a região em vez de removê-la da lista.',

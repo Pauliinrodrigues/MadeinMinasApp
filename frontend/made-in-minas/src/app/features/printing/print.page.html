@@ -1,6 +1,17 @@
 <div class="print-tools staff-page">
   <h1>Comanda de {{ mode === 'kitchen' ? 'produção' : 'expedição' }}</h1>
   <div class="actions">
+    <button
+      type="button"
+      class="primary"
+      (click)="sendToPrinter()"
+      [disabled]="sending() || sent() || loading() || !document() || stale()"
+    >
+      {{ sending() ? 'Enviando…' : sent() ? 'Na fila de impressão' : 'Enviar à impressora' }}
+    </button>
+    @if (sent()) {
+    <button type="button" (click)="prepareCopy()">Preparar outra cópia</button>
+    }
     <a class="button" [routerLink]="returnPath">Voltar</a
     ><button type="button" (click)="load()" [disabled]="loading()">Atualizar comanda</button>
     <button
@@ -21,7 +32,18 @@
   >
   <p>
     Selecione o mesmo papel no diálogo/driver e confira a prévia. A comanda não é documento fiscal.
-    Cada impressão ou reimpressão exige ação explícita.
+    O envio direto usa a estação Windows configurada. O botão “Imprimir comanda” abre o diálogo do
+    navegador.
+  </p>
+  <p>
+    Para papel térmico, use bobina de 58 ou 80 mm, escala de 100%, sem margens nem cabeçalhos e
+    rodapés do navegador. Confira também as opções de avanço e corte no driver da impressora.
+  </p>
+  <p>
+    <strong>Diebold no Windows:</strong> no Chrome, escolha “Imprimir utilizando caixa de diálogo de
+    sistema” ou pressione <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>P</kbd>. Nas preferências,
+    selecione <strong>Bobina de Papel</strong>; para 80 mm, o formato validado é
+    <strong>IM4X3T/TSP143 76/80x500 mm</strong>.
   </p>
   @if (loading()) {
   <p role="status">Carregando comanda…</p>
@@ -35,6 +57,7 @@
 </div>
 @if (document(); as data) {
 <article
+  #receipt
   class="receipt"
   [class.narrow]="width() === '58'"
   [class.a4]="width() === 'A4'"

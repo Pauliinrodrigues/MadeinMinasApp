@@ -32,7 +32,9 @@ export class OrdersPage {
   readonly updatedAt = signal<Date | null>(null);
   readonly notification = signal('');
   readonly soundEnabled = signal(false);
+  readonly soundWarning = signal('');
   private audio?: AudioContext;
+  private notificationTone?: OscillatorNode;
   private latestNewNumber: number | null = null;
   readonly appliedFilters = signal({ search: '', status: '', origin: '', paymentStatus: '' });
   readonly statusLabel = orderStatusLabel;
@@ -72,6 +74,7 @@ export class OrdersPage {
     this.destroyRef.onDestroy(() => {
       clearInterval(timer);
       document.removeEventListener('visibilitychange', refresh);
+      this.stopNotification();
       void this.audio?.close();
     });
   }
@@ -79,14 +82,40 @@ export class OrdersPage {
   async toggleSound(): Promise<void> {
     if (this.soundEnabled()) {
       this.soundEnabled.set(false);
+      this.stopNotification();
       return;
     }
     try {
-      this.audio ??= new AudioContext();
+      if (!this.audio || this.audio.state === 'closed') {
+        const audio = new AudioContext();
+        this.audio = audio;
+        audio.addEventListener('statechange', () => {
+          if (this.destroyRef.destroyed || !this.soundEnabled() || audio.state === 'running') {
+            return;
+          }
+          this.soundEnabled.set(false);
+          this.stopNotification();
+          this.soundWarning.set(
+            'O som foi interrompido pelo navegador. Clique em Ativar aviso sonoro para reativá-lo.',
+          );
+        });
+      }
       await this.audio.resume();
+      if (this.destroyRef.destroyed) {
+        return;
+      }
+      if (this.audio.state !== 'running') {
+        throw new Error('Audio context did not resume.');
+      }
       this.soundEnabled.set(true);
+      this.soundWarning.set('');
+      this.playNotification();
     } catch {
-      this.notification.set(
+      if (this.destroyRef.destroyed) {
+        return;
+      }
+      this.soundEnabled.set(false);
+      this.soundWarning.set(
         'O navegador não permitiu ativar o som. Os avisos visuais continuam disponíveis.',
       );
     }
@@ -96,14 +125,36 @@ export class OrdersPage {
     if (!this.soundEnabled() || this.audio?.state !== 'running') {
       return;
     }
+    this.stopNotification();
     const tone = this.audio.createOscillator();
     const volume = this.audio.createGain();
-    volume.gain.setValueAtTime(0.08, this.audio.currentTime);
-    volume.gain.exponentialRampToValueAtTime(0.001, this.audio.currentTime + 0.25);
+    const start = this.audio.currentTime + 0.01;
+    const duration = 2.4;
+    volume.gain.setValueAtTime(0, start);
+    volume.gain.linearRampToValueAtTime(0.16, start + 0.03);
+    volume.gain.setValueAtTime(0.16, start + duration - 0.15);
+    volume.gain.linearRampToValueAtTime(0, start + duration);
     tone.connect(volume).connect(this.audio.destination);
-    tone.frequency.value = 660;
-    tone.start();
-    tone.stop(this.audio.currentTime + 0.25);
+    tone.frequency.setValueAtTime(600, start);
+    for (let cycle = 0; cycle < 3; cycle++) {
+      tone.frequency.linearRampToValueAtTime(1000, start + cycle * 0.8 + 0.4);
+      tone.frequency.linearRampToValueAtTime(600, start + (cycle + 1) * 0.8);
+    }
+    tone.addEventListener('ended', () => {
+      tone.disconnect();
+      volume.disconnect();
+      if (this.notificationTone === tone) {
+        this.notificationTone = undefined;
+      }
+    });
+    tone.start(start);
+    tone.stop(start + duration);
+    this.notificationTone = tone;
+  }
+
+  private stopNotification(): void {
+    this.notificationTone?.stop();
+    this.notificationTone = undefined;
   }
 
   quickFilter(status: string, paymentStatus = ''): void {

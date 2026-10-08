@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MadeInMinas.Api.Services;
 
-public sealed class OrderService(AppDbContext database, CartService cart, OrderStockService stock, TimeProvider clock, ILogger<OrderService> logger)
+public sealed class OrderService(AppDbContext database, CartService cart, OrderStockService stock, PrintQueueService printing, TimeProvider clock, ILogger<OrderService> logger)
 {
     public async Task<OrderPageResponse> ListAsync(OrderListQuery request, CancellationToken cancellationToken)
     {
@@ -201,6 +201,11 @@ public sealed class OrderService(AppDbContext database, CartService cart, OrderS
         };
         order.History.Add(history);
         database.OrderStatusHistory.Add(history);
+        await database.SaveChangesAsync(cancellationToken);
+        if (order.Status == "Confirmed")
+            await printing.AutomaticAsync(order.Id, "kitchen", order.Version, cancellationToken);
+        else if (order.Status == "Cancelled")
+            await printing.CancelQueuedAsync(order.Id, cancellationToken);
         await database.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         logger.LogInformation("Order {OrderId} status changed from {FromStatus} to {ToStatus} by {ActorId}.", id, previous, order.Status, actorId);

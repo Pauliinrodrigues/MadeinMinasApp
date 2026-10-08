@@ -37,7 +37,7 @@ try {
     & (Join-Path $PostgresBin 'createdb.exe') -h 127.0.0.1 -p 55433 -U auth_tests made_in_minas_auth_tests
     if ($LASTEXITCODE -ne 0) { throw 'Falha ao criar banco de testes.' }
     $env:AuthTests__ConnectionString = "Host=127.0.0.1;Port=55433;Database=made_in_minas_auth_tests;Username=auth_tests;Password=$password;Timeout=5"
-    $testArguments = @('test', (Join-Path $workspace 'backend\MadeInMinas.Api.Tests'), '--configuration', 'Release', '--artifacts-path', (Join-Path $artifactsRoot 'test-build'), '--logger', 'console;verbosity=normal')
+    $testArguments = @('test', (Join-Path $workspace 'backend\MadeInMinas.Api.Tests'), '--configuration', 'Release', '--artifacts-path', (Join-Path $artifactsRoot 'test-build'), '--logger', 'console;verbosity=normal', '--logger', 'trx;LogFileName=results.trx', '--results-directory', (Join-Path $artifactsRoot 'auth-test-results'))
     if ($Filter) { $testArguments += @('--filter', $Filter) }
     & dotnet @testArguments
     $testExitCode = $LASTEXITCODE
