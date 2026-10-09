@@ -189,6 +189,86 @@ async function advance(page: Page, action: string) {
   await page.getByRole('button', { name: 'Confirmar etapa', exact: true }).click();
   await expect(page.getByRole('article', { name: 'Pedido 1542' })).toHaveCount(0);
 }
+
+function pdfPages(document: Buffer) {
+  const source = document.toString('latin1');
+  return {
+    count: (source.match(/\/Type\s*\/Page\b/g) ?? []).length,
+    sizes: [...source.matchAll(/\/MediaBox\s*\[([^\]]+)\]/g)].map((match) => {
+      const points = match[1].trim().split(/\s+/).map(Number);
+      return {
+        width: ((points[2] - points[0]) * 25.4) / 72,
+        height: ((points[3] - points[1]) * 25.4) / 72,
+      };
+    }),
+  };
+}
+
+for (const [mode, count] of [
+  ['kitchen', 1],
+  ['dispatch', 18],
+] as const) {
+  test(`impressão: bobina tem somente a altura do conteúdo (${mode}, ${count} itens)`, async ({
+    page,
+  }, testInfo) => {
+    const state = await setup(page, mode === 'kitchen' ? 'Kitchen' : 'Dispatch');
+    const item = state.orders[0].items[0];
+    state.orders[0].items = Array.from({ length: count }, (_, index) => ({
+      ...item,
+      name: `Lanche de teste ${index + 1}`,
+      notes: count === 1 ? null : 'Sem cebola. Embalar separado e identificar o item.',
+    }));
+    await login(page);
+    await navigate(page, '/comanda/order-1542/' + mode);
+    const preview = page.getByRole('article', { name: 'Prévia da comanda' });
+    await expect(preview).toContainText(`Lanche de teste ${count}`);
+    for (const width of ['80', '58']) {
+      await page.getByLabel('Largura do papel').selectOption(width);
+      await page.emulateMedia({ media: 'print' });
+      const layout = await preview.evaluate((receipt) => ({
+        height: receipt.getBoundingClientRect().height,
+        top: receipt.getBoundingClientRect().top,
+        bodyHeight: document.body.getBoundingClientRect().height,
+        overflows: receipt.scrollWidth > receipt.clientWidth,
+      }));
+      expect(layout.top).toBe(0);
+      expect(layout.bodyHeight).toBeCloseTo(layout.height, 0);
+      expect(layout.overflows).toBe(false);
+      const pdf = pdfPages(
+        await page.pdf({
+          path: testInfo.outputPath(`receipt-${width}.pdf`),
+          preferCSSPageSize: true,
+          displayHeaderFooter: false,
+        }),
+      );
+      expect(pdf.count).toBe(1);
+      expect(pdf.sizes).toHaveLength(1);
+      expect(pdf.sizes[0].width).toBeCloseTo(Number(width), 0);
+      const contentHeight = (layout.height * 25.4) / 96;
+      expect(pdf.sizes[0].height).toBeGreaterThanOrEqual(contentHeight - 0.1);
+      expect(pdf.sizes[0].height - contentHeight).toBeLessThan(1.5);
+      await preview.screenshot({ path: testInfo.outputPath(`receipt-${width}.png`) });
+      await page.emulateMedia({ media: 'screen' });
+    }
+    await page.getByLabel('Largura do papel').selectOption('A4');
+    await page.emulateMedia({ media: 'print' });
+    const a4 = pdfPages(await page.pdf({ preferCSSPageSize: true, displayHeaderFooter: false }));
+    for (const size of a4.sizes) {
+      expect(size.width).toBeCloseTo(210, 0);
+      expect(size.height).toBeCloseTo(297, 0);
+    }
+    if (count > 1) {
+      expect(a4.count).toBeGreaterThan(1);
+    }
+    expect(state.changes).toHaveLength(0);
+    await page.emulateMedia({ media: 'screen' });
+    await navigate(page, '/equipe');
+    await expect(page.locator('app-print')).toHaveCount(0);
+    expect(await page.evaluate(() => document.body.classList.contains('print-view'))).toBe(false);
+    await expect(page.locator('style[data-receipt-page]')).toHaveCount(0);
+  });
+}
+
 for (const delivery of [true, false]) {
   test('expedição: fluxo completo ' + (delivery ? 'entrega' : 'retirada'), async ({ page }) => {
     const errors: string[] = [];

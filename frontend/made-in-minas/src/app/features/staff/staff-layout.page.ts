@@ -74,9 +74,17 @@ import { StaffApi } from '../../core/services/staff-api.service';
             }
           </div>
         }
-        @if (session.canViewDashboard() || session.canViewReports() || session.canManageCatalog()) {
+        @if (
+          session.canViewDashboard() ||
+          session.canViewReports() ||
+          session.canManageCatalog() ||
+          session.canManagePrinting()
+        ) {
           <div class="nav-group">
             <h2>Gestão</h2>
+            @if (session.canManagePrinting()) {
+              <a routerLink="/equipe/impressao" routerLinkActive="selected">Impressão automática</a>
+            }
             @if (session.canManageCatalog()) {
               <a routerLink="/equipe/reposicao" routerLinkActive="selected">Reposição</a>
             }

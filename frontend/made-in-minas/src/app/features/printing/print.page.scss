@@ -24,6 +24,15 @@
 .receipt.a4 {
   width: 190mm;
 }
+.receipt.measure-print {
+  max-width: none;
+}
+.receipt > :first-child {
+  margin-top: 0;
+}
+.receipt > :last-child {
+  margin-bottom: 0;
+}
 .receipt h2 {
   font-size: 20px;
 }
@@ -38,11 +47,14 @@
   :host {
     overflow: visible;
     height: auto;
+    min-height: 0;
+    max-height: none;
   }
   .print-tools {
     display: none;
   }
   .receipt {
     margin: 0 auto;
+    max-width: none;
   }
 }

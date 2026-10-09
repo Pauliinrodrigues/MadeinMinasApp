@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using MadeInMinas.Api.Services;
 
 namespace MadeInMinas.Api.DTOs.Products;
 
@@ -20,9 +21,10 @@ public sealed record ProductRequest(
         if (Price is not null && decimal.Round(Price.Value, 2) != Price.Value)
             yield return new ValidationResult("O preço deve ter até duas casas decimais.", [nameof(Price)]);
         if (!string.IsNullOrWhiteSpace(ImageUrl) &&
+            !ProductImageStorage.IsManagedUrl(ImageUrl.Trim()) &&
             (!Uri.TryCreate(ImageUrl.Trim(), UriKind.Absolute, out var uri) ||
              uri.Scheme != Uri.UriSchemeHttps || string.IsNullOrEmpty(uri.Host) || !string.IsNullOrEmpty(uri.UserInfo)))
-            yield return new ValidationResult("Informe uma URL HTTPS de imagem, sem credenciais.", [nameof(ImageUrl)]);
+            yield return new ValidationResult("Envie uma foto ou informe uma URL HTTPS de imagem, sem credenciais.", [nameof(ImageUrl)]);
     }
 }
 

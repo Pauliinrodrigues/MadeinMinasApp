@@ -21,6 +21,7 @@ public sealed class AuthenticationFactory : WebApplicationFactory<Program>, IAsy
     public string Password { get; } = "Test-only phrase " + Guid.NewGuid().ToString("N");
     private int clientNumber;
     private readonly string connectionString = GetTestConnection();
+    public string ProductImagesPath { get; } = Path.Combine(AppContext.BaseDirectory, "product-images-tests", Guid.NewGuid().ToString("N"));
 
     private static string GetTestConnection()
     {
@@ -43,7 +44,10 @@ public sealed class AuthenticationFactory : WebApplicationFactory<Program>, IAsy
                 ["Jwt:Audience"] = "MadeInMinas.Tests.Staff",
                 ["Jwt:SigningKey"] = SigningKey,
                 ["Jwt:AccessTokenMinutes"] = "15",
-                ["Logging:LogLevel:Default"] = "Warning"
+                ["Logging:LogLevel:Default"] = "Warning",
+                ["ProductImages:StoragePath"] = ProductImagesPath,
+                ["PublicDelivery:FixedFee"] = null,
+                ["PublicDelivery:Areas:0:CoversAllNeighborhoods"] = "false"
             }));
         builder.ConfigureTestServices(services =>
         {
@@ -66,7 +70,16 @@ public sealed class AuthenticationFactory : WebApplicationFactory<Program>, IAsy
     public async Task InitializeAsync() => await WithDatabaseAsync(async database =>
         await database.Database.MigrateAsync());
 
-    async Task IAsyncLifetime.DisposeAsync() => await DisposeAsync();
+    async Task IAsyncLifetime.DisposeAsync()
+    {
+        await DisposeAsync();
+        var path = Path.GetFullPath(ProductImagesPath);
+        var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "product-images-tests")) + Path.DirectorySeparatorChar;
+        if (!path.StartsWith(root, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Diretório de fotos de teste fora da pasta isolada.");
+        if (Directory.Exists(path))
+            Directory.Delete(path, recursive: true);
+    }
 
     public async Task WithDatabaseAsync(Func<AppDbContext, Task> action)
     {

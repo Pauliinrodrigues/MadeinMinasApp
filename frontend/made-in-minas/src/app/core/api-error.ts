@@ -5,9 +5,12 @@ export function apiError(error: unknown, login = false): string {
     return 'Não foi possível concluir. Verifique a conexão e tente novamente.';
   }
   const codes: Record<string, string> = {
+    PrintingUnavailable:
+      error.error?.title ?? 'Não foi possível enviar a comanda. Confira a estação de impressão.',
     DeliverySettingsChanged:
       'Outro administrador alterou as regiões. Recarregue e confira os valores atuais.',
     DeliveryAreaRemovalDenied: 'Pause a região em vez de removê-la da lista.',
+    FixedDeliveryFeeRequired: 'Use a taxa fixa configurada para todas as regiões de entrega.',
     OrderRecipeRequired:
       'Cadastre a ficha técnica de todos os produtos antes de confirmar o pedido.',
     OrderIngredientInactive: 'A ficha contém ingrediente inativo. Solicite a revisão do cadastro.',
@@ -70,6 +73,10 @@ export function apiError(error: unknown, login = false): string {
     IngredientUnitImmutable:
       'A unidade não pode ser alterada após o cadastro. Reabra o ingrediente para conferir os dados.',
     ProductNotFound: 'Produto não encontrado.',
+    InvalidProductImage:
+      'Escolha uma foto JPG, PNG ou WebP válida, sem animação e com até 24 megapixels. Se a foto salva não estiver disponível, envie o arquivo novamente.',
+    ProductImageTooLarge: 'Escolha uma foto de até 8 MB.',
+    ProductImageNotFound: 'Foto não encontrada. Selecione o arquivo novamente.',
     DuplicateProductName:
       'Já existe um produto com esse nome nesta categoria. Verifique também os inativos.',
     InvalidProductCategory: 'A categoria não existe mais. Reabra o cadastro e selecione outra.',
@@ -113,6 +120,8 @@ export function apiError(error: unknown, login = false): string {
       return 'Registro não encontrado.';
     case 409:
       return 'Os dados entraram em conflito. Atualize a página e confira o cadastro.';
+    case 413:
+      return 'Escolha uma foto de até 8 MB.';
     case 429:
       return 'Muitas tentativas. Aguarde um minuto antes de tentar novamente.';
     default:

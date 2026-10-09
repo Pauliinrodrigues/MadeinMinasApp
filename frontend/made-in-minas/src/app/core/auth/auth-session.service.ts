@@ -38,6 +38,9 @@ export class AuthSession {
   readonly canPrintDispatch = computed(
     () => this.profile()?.permissions.includes('printing.dispatch') ?? false,
   );
+  readonly canManagePrinting = computed(
+    () => this.profile()?.permissions.includes('printing.manage') ?? false,
+  );
   readonly canWorkKitchen = computed(
     () => this.profile()?.permissions.includes('kitchen.work') ?? false,
   );

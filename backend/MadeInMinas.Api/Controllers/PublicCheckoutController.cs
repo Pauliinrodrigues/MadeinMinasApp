@@ -17,6 +17,9 @@ public sealed class PublicCheckoutController(PublicCheckoutService checkout) : C
     [HttpGet("delivery-areas")]
     public Task<PublicDeliveryAreaResponse[]> DeliveryAreas() => checkout.DeliveryAreasAsync(HttpContext.RequestAborted);
 
+    [HttpGet("options")]
+    public PublicCheckoutOptionsResponse Options() => checkout.Options();
+
     [HttpPost("review")]
     public Task<PublicCheckoutReviewResponse> Review(PublicCheckoutRequest request, CancellationToken cancellationToken) =>
         checkout.ReviewAsync(request, cancellationToken);

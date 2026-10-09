@@ -4,6 +4,7 @@ import { environment } from '../../../environments/environment';
 
 export interface DeliveryArea {
   id: string;
+  coversAllNeighborhoods?: boolean;
   neighborhood: string;
   city: string;
   state: string;
@@ -11,6 +12,7 @@ export interface DeliveryArea {
   isActive: boolean;
 }
 export interface DeliverySettings {
+  fixedFee?: number | null;
   areas: DeliveryArea[];
   revision: string;
   updatedAt: string | null;

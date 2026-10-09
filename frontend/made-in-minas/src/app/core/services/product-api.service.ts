@@ -48,7 +48,7 @@ export function parseProductPrice(value: string): number | null {
 }
 
 export function validProductImage(value: string): boolean {
-  if (!value.trim()) {
+  if (!value.trim() || isManagedProductImage(value.trim())) {
     return true;
   }
   try {
@@ -57,6 +57,16 @@ export function validProductImage(value: string): boolean {
   } catch {
     return false;
   }
+}
+
+export const maxProductImageBytes = 8 * 1024 * 1024;
+export const isManagedProductImage = (value: string): boolean =>
+  /^\/api\/product-images\/[a-f0-9]{32}\.webp$/.test(value);
+
+export function productImageSource(value: string): string {
+  return isManagedProductImage(value)
+    ? environment.apiBaseUrl.replace(/\/api\/?$/, '') + value
+    : value;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -85,6 +95,11 @@ export class ProductApi {
   }
   create(input: ProductInput) {
     return this.http.post<Product>(this.url, input);
+  }
+  uploadImage(file: File) {
+    const data = new FormData();
+    data.append('file', file);
+    return this.http.post<{ imageUrl: string }>(environment.apiBaseUrl + '/product-images', data);
   }
   update(id: string, input: ProductInput) {
     return this.http.put<Product>(this.url + '/' + encodeURIComponent(id), input);

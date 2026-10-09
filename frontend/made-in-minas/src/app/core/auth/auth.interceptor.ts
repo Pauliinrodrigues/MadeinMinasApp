@@ -21,6 +21,7 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
     target.pathname === apiPath + '/public-chat' ||
     target.pathname === apiPath + '/public-chat/messages';
   const isPublicCheckout =
+    target.pathname === apiPath + '/public-checkout/options' ||
     target.pathname === apiPath + '/public-checkout/delivery-areas' ||
     target.pathname === apiPath + '/public-checkout/review' ||
     target.pathname === apiPath + '/public-checkout/orders';
@@ -32,7 +33,9 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
     ? request.clone({ setHeaders: { Authorization: 'Bearer ' + token } })
     : request;
   return next(authenticated).pipe(
-    timeout(15000),
+    timeout(
+      target.pathname === apiPath + '/product-images' && request.method === 'POST' ? 60000 : 15000,
+    ),
     catchError((error: unknown) => {
       if (
         token &&

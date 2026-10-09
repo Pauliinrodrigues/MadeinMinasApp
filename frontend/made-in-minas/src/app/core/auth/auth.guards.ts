@@ -30,6 +30,9 @@ export const administratorGuard: CanActivateFn = () => {
 export const deliveryGuard: CanActivateFn = () =>
   inject(AuthSession).canManageDelivery() ? true : inject(Router).createUrlTree(['/equipe']);
 
+export const printingSettingsGuard: CanActivateFn = () =>
+  inject(AuthSession).canManagePrinting() ? true : inject(Router).createUrlTree(['/equipe']);
+
 export const dashboardGuard: CanActivateFn = () => {
   const session = inject(AuthSession);
   const router = inject(Router);

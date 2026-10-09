@@ -11,7 +11,10 @@ public sealed record DeliveryAreaRequest(
     [Required, StringLength(80)] string City,
     [Required, StringLength(2)] string State,
     [Required, Range(typeof(decimal), "0", "9999.99", ParseLimitsInInvariantCulture = true)] decimal? Fee,
-    [Required] bool? IsActive);
+    [Required] bool? IsActive)
+{
+    public bool CoversAllNeighborhoods { get; init; }
+}
 
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record SaveDeliverySettingsRequest(
@@ -33,7 +36,8 @@ public sealed record SaveDeliverySettingsRequest(
                 Neighborhood = area.Neighborhood,
                 City = area.City,
                 State = area.State,
-                Fee = area.Fee
+                Fee = area.Fee,
+                CoversAllNeighborhoods = area.CoversAllNeighborhoods
             }).ToArray()
         };
         if (!options.IsValid())
@@ -41,5 +45,11 @@ public sealed record SaveDeliverySettingsRequest(
     }
 }
 
-public sealed record DeliveryAreaResponse(string Id, string Neighborhood, string City, string State, decimal Fee, bool IsActive);
-public sealed record DeliverySettingsResponse(DeliveryAreaResponse[] Areas, string Revision, DateTimeOffset? UpdatedAt, string? UpdatedBy);
+public sealed record DeliveryAreaResponse(string Id, string Neighborhood, string City, string State, decimal Fee, bool IsActive)
+{
+    public bool CoversAllNeighborhoods { get; init; }
+}
+public sealed record DeliverySettingsResponse(DeliveryAreaResponse[] Areas, string Revision, DateTimeOffset? UpdatedAt, string? UpdatedBy)
+{
+    public decimal? FixedFee { get; init; }
+}

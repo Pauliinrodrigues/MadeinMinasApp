@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import {
   administratorGuard,
+  printingSettingsGuard,
   deliveryGuard,
   dashboardGuard,
   reportsGuard,
@@ -65,6 +66,14 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/staff/staff-layout.page').then((page) => page.StaffLayoutPage),
     children: [
+      {
+        path: 'impressao',
+        canActivate: [printingSettingsGuard],
+        loadComponent: () =>
+          import('./features/printing/printing-settings.page').then(
+            (page) => page.PrintingSettingsPage,
+          ),
+      },
       {
         path: 'reposicao',
         canActivate: [catalogGuard],

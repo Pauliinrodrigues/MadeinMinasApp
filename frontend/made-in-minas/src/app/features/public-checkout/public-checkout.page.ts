@@ -14,6 +14,7 @@ import {
   PublicCheckoutReview,
   PublicDeliveryAddress,
   PublicDeliveryArea,
+  PublicCheckoutOptions,
 } from '../../core/services/public-checkout-api.service';
 import { PublicCheckoutState } from '../../core/services/public-checkout-state.service';
 
@@ -39,15 +40,37 @@ export class PublicCheckoutPage {
   private reviewedInput: PublicCheckoutInput | null = null;
   name = '';
   phone = '';
-  fulfillment: 'Pickup' | 'Delivery' = 'Pickup';
+  fulfillment: 'Pickup' | 'Delivery' = 'Delivery';
   address: PublicDeliveryAddress = this.emptyAddress();
   readonly areas = signal<PublicDeliveryArea[]>([]);
   readonly loadingAreas = signal(false);
   readonly areasError = signal('');
+  readonly options = signal<PublicCheckoutOptions | null>(null);
+  readonly optionsError = signal(false);
   recoveryAcknowledged = false;
 
   constructor() {
     this.loadAreas();
+    this.loadOptions();
+  }
+
+  loadOptions(): void {
+    this.optionsError.set(false);
+    this.api
+      .options()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (options) => this.options.set(options),
+        error: () => this.optionsError.set(true),
+      });
+  }
+
+  deliveryFee(): number | null {
+    return (
+      this.options()?.fixedDeliveryFee ??
+      this.areas().find((area) => area.id === this.address.areaId)?.fee ??
+      null
+    );
   }
 
   private emptyAddress(): PublicDeliveryAddress {
@@ -74,7 +97,12 @@ export class PublicCheckoutPage {
         finalize(() => this.loadingAreas.set(false)),
       )
       .subscribe({
-        next: (areas) => this.areas.set(areas),
+        next: (areas) => {
+          this.areas.set(areas);
+          if (!this.address.areaId && areas.length === 1 && areas[0].coversAllNeighborhoods) {
+            this.address.areaId = areas[0].id;
+          }
+        },
         error: () =>
           this.areasError.set(
             'Não foi possível consultar as regiões atendidas. Tente novamente ou fale com o atendimento.',
@@ -87,6 +115,10 @@ export class PublicCheckoutPage {
     this.reviewedInput = null;
     this.error.set('');
     this.attempted.set(false);
+  }
+
+  selectedArea(): PublicDeliveryArea | undefined {
+    return this.areas().find((area) => area.id === this.address.areaId);
   }
 
   fieldError(field: string): string {
@@ -105,6 +137,13 @@ export class PublicCheckoutPage {
     if (field === 'area' && !this.areas().some((area) => area.id === this.address.areaId)) {
       return 'Selecione uma região atendida.';
     }
+    if (
+      field === 'neighborhood' &&
+      this.selectedArea()?.coversAllNeighborhoods &&
+      !this.address.neighborhood?.trim()
+    ) {
+      return 'Informe seu bairro.';
+    }
     if (field === 'street' && !this.address.street.trim()) {
       return 'Informe a rua ou avenida.';
     }
@@ -122,8 +161,8 @@ export class PublicCheckoutPage {
   }
 
   private focusInvalidField(): void {
-    const field = ['name', 'phone', 'area', 'street', 'number', 'postal'].find((field) =>
-      this.fieldError(field),
+    const field = ['name', 'phone', 'area', 'neighborhood', 'street', 'number', 'postal'].find(
+      (field) => this.fieldError(field),
     );
     if (field) {
       setTimeout(() => document.getElementById('checkout-' + field)?.focus());
@@ -150,13 +189,14 @@ export class PublicCheckoutPage {
     if (
       this.fulfillment === 'Delivery' &&
       (!this.areas().some((area) => area.id === this.address.areaId) ||
+        (this.selectedArea()?.coversAllNeighborhoods && !this.address.neighborhood?.trim()) ||
         !this.address.street.trim() ||
         !this.address.number.trim() ||
         (this.address.postalCode?.trim() &&
           !/^[0-9]{5}-?[0-9]{3}$/.test(this.address.postalCode.trim())))
     ) {
       this.error.set(
-        'Selecione uma região atendida e informe rua e número (ou s/n). Se informar CEP, use oito dígitos.',
+        'Selecione uma região atendida e informe o endereço completo, incluindo bairro quando solicitado, rua e número (ou s/n). Se informar CEP, use oito dígitos.',
       );
       this.focusInvalidField();
       return;
@@ -168,7 +208,10 @@ export class PublicCheckoutPage {
     };
     if (this.fulfillment === 'Delivery') {
       input.fulfillment = 'Delivery';
-      input.address = { ...this.address };
+      const { neighborhood, ...address } = this.address;
+      input.address = this.selectedArea()?.coversAllNeighborhoods
+        ? { ...address, neighborhood }
+        : address;
     }
     this.busy.set(true);
     this.api

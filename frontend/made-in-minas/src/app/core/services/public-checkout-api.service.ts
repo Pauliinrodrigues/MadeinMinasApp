@@ -13,6 +13,7 @@ export interface PublicCheckoutInput {
 }
 export interface PublicDeliveryAddress {
   areaId: string;
+  neighborhood?: string | null;
   street: string;
   number: string;
   complement: string | null;
@@ -21,10 +22,16 @@ export interface PublicDeliveryAddress {
 }
 export interface PublicDeliveryArea {
   id: string;
+  coversAllNeighborhoods?: boolean;
   neighborhood: string;
   city: string;
   state: string;
   fee: number;
+}
+export interface PublicCheckoutOptions {
+  fixedDeliveryFee: number | null;
+  pickupFee: number;
+  pickupAddress: string | null;
 }
 export interface PublicCheckoutReview extends PublicCartQuote {
   name: string;
@@ -59,6 +66,9 @@ export class PublicCheckoutApi {
 
   deliveryAreas() {
     return this.http.get<PublicDeliveryArea[]>(this.url + '/delivery-areas').pipe(timeout(15000));
+  }
+  options() {
+    return this.http.get<PublicCheckoutOptions>(this.url + '/options').pipe(timeout(15000));
   }
 
   review(input: PublicCheckoutInput) {

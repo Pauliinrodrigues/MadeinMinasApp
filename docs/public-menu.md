@@ -12,7 +12,7 @@ Continuidade em 05/10/2026: a 8A foi preservada no commit local `4bcd978`. A [Fa
 - Nome, descrição, preço e imagem vêm do cadastro existente. A descrição comercial não é montada a partir da ficha técnica e deve ser revisada pela equipe.
 - Categorias seguem DisplayOrder, nome normalizado e ID. Produtos seguem a ordem das categorias, nome normalizado e ID. O filtro conserva todas as categorias públicas para navegação.
 - Preços são lidos em decimal e apenas formatados no frontend. Não há preço demonstrativo, cálculo comercial no navegador, custo, saldo, fornecedor ou instrução de preparo na resposta pública.
-- As imagens usam a URL HTTPS cadastrada. Enquanto a imagem carrega, quando está ausente ou em falha, aparece uma apresentação tipográfica da marca. Não há upload ou busca de imagens nesta etapa; o navegador carrega a imagem diretamente e não envia Referer.
+- As imagens usam a foto própria enviada no [cadastro de produtos](products.md#imagens) ou a URL HTTPS cadastrada. Endereços `/api/product-images/...` são resolvidos na origem da API e carregados sem login. Enquanto a imagem carrega, quando está ausente ou em falha, aparece uma apresentação tipográfica da marca. O navegador não envia Referer.
 - Atualização é manual. Durante consulta/falha, os produtos anteriores são removidos. Filtro e atualização ficam bloqueados durante a requisição; timeout de 15 segundos permite tentar novamente.
 - O menu funciona sem JWT. O interceptor não anexa o token da equipe à consulta do menu; uma falha pública não encerra a sessão do funcionário. As APIs administrativas mantêm a autorização existente.
 

@@ -67,6 +67,17 @@ async function setup(page: Page) {
   await page.route('**/api/**', async (route) => {
     const request = route.request();
     const url = new URL(request.url());
+    if (url.pathname.startsWith('/api/product-images/')) {
+      expect(request.headers()['authorization']).toBeUndefined();
+      expect(url.origin).toBe('http://localhost:5080');
+      return route.fulfill({
+        contentType: 'image/png',
+        body: Buffer.from(
+          'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aDYsAAAAASUVORK5CYII=',
+          'base64',
+        ),
+      });
+    }
     if (url.pathname === '/api/menu') {
       expect(request.headers()['authorization']).toBeUndefined();
       expect(request.method()).toBe('GET');
@@ -121,6 +132,22 @@ test('visitante abre o cardápio pelo início, sem login nem gravações', async
   expect(state.writes).toEqual([]);
   await page.reload();
   await expect(page.getByRole('article', { name: 'Uai Sô' })).toBeVisible();
+});
+
+test('foto própria aparece no cardápio público pela API sem login', async ({ page }) => {
+  const state = await setup(page);
+  const imageUrl = '/api/product-images/00000000000000000000000000000001.webp';
+  state.menu.items[0].imageUrl = imageUrl;
+  await page.goto('/pedido');
+  const image = page
+    .getByRole('article', { name: 'Uai Sô' })
+    .getByRole('img', { name: 'Uai Sô', exact: true });
+  await expect(image).toHaveAttribute('src', 'http://localhost:5080' + imageUrl);
+  await expect(image).toBeVisible();
+  await expect
+    .poll(() => image.evaluate((element) => (element as HTMLImageElement).naturalWidth))
+    .toBe(1);
+  expect(state.writes).toEqual([]);
 });
 
 test('categoria e paginação usam filtros da API e retornam à primeira página', async ({ page }) => {

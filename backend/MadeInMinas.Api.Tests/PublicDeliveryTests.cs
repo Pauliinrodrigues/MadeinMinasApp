@@ -35,6 +35,7 @@ public sealed class PublicDeliveryTests(AuthenticationFactory factory) : IClassF
         Configuration[AreaKey + "City"] = "Cidade de teste";
         Configuration[AreaKey + "State"] = "MG";
         Configuration[AreaKey + "Fee"] = "5.50";
+        Configuration[AreaKey + "CoversAllNeighborhoods"] = "false";
         await factory.WithDatabaseAsync(async database =>
         {
             await ClearAsync(database);
@@ -109,6 +110,79 @@ public sealed class PublicDeliveryTests(AuthenticationFactory factory) : IClassF
             Assert.False(await database.Orders.AnyAsync());
             Assert.False(await database.Customers.AnyAsync());
             Assert.False(await database.Addresses.AnyAsync());
+        });
+    }
+
+    [Theory]
+    [InlineData("Bairro informado A")]
+    [InlineData("Bairro informado B")]
+    public async Task WholeCityCoverageSavesActualNeighborhoodAndReplaysWithoutDuplicates(string neighborhood)
+    {
+        Configuration[AreaKey + "CoversAllNeighborhoods"] = "true";
+        Configuration[AreaKey + "Neighborhood"] = "Todos os bairros";
+        using var client = factory.CreateStaffClient();
+        var areas = (await client.GetFromJsonAsync<PublicDeliveryAreaResponse[]>("/api/public-checkout/delivery-areas"))!;
+        Assert.True(Assert.Single(areas).CoversAllNeighborhoods);
+        var input = Input() with { Address = Input().Address! with { Neighborhood = " " + neighborhood + " " } };
+        var reviewResponse = await client.PostAsJsonAsync("/api/public-checkout/review", input);
+        reviewResponse.EnsureSuccessStatusCode();
+        var review = (await reviewResponse.Content.ReadFromJsonAsync<PublicCheckoutReviewResponse>())!;
+        Assert.Equal(neighborhood, review.Address!.Neighborhood);
+        Assert.Equal("Cidade de teste", review.Address.City);
+        Assert.Equal("MG", review.Address.State);
+        Assert.Equal(5.50m, review.DeliveryFee);
+        var request = new PublicOrderRequest(Guid.NewGuid(), review.ReviewToken, input);
+        var created = await client.PostAsJsonAsync("/api/public-checkout/orders", request);
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        var receipt = (await created.Content.ReadFromJsonAsync<PublicOrderReceipt>())!;
+        Configuration[AreaKey + "CoversAllNeighborhoods"] = "false";
+        var replay = await client.PostAsJsonAsync("/api/public-checkout/orders", request);
+        Assert.Equal(HttpStatusCode.OK, replay.StatusCode);
+        Assert.Equal(receipt.Number, (await replay.Content.ReadFromJsonAsync<PublicOrderReceipt>())!.Number);
+        var changed = request with { Checkout = input with { Address = input.Address! with { Neighborhood = "Outro bairro" } } };
+        await ProblemAsync(await client.PostAsJsonAsync("/api/public-checkout/orders", changed), "OrderRequestConflict");
+        await factory.WithDatabaseAsync(async database =>
+        {
+            var order = await database.Orders.SingleAsync();
+            Assert.Equal(neighborhood, order.AddressNeighborhood);
+            Assert.Equal("Cidade de teste", order.AddressCity);
+            Assert.False(await database.Addresses.AnyAsync());
+        });
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task WholeCityRequiresNeighborhoodAndDoesNotPartiallyCreateOrder(string? neighborhood)
+    {
+        Configuration[AreaKey + "CoversAllNeighborhoods"] = "true";
+        using var client = factory.CreateStaffClient();
+        var input = Input() with { Address = Input().Address! with { Neighborhood = neighborhood } };
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/public-checkout/review", input)).StatusCode);
+        var request = new PublicOrderRequest(Guid.NewGuid(), new string('A', 64), input);
+        Assert.Equal(neighborhood is null ? HttpStatusCode.Conflict : HttpStatusCode.BadRequest,
+            (await client.PostAsJsonAsync("/api/public-checkout/orders", request)).StatusCode);
+        await factory.WithDatabaseAsync(async database =>
+        {
+            Assert.False(await database.Orders.AnyAsync());
+            Assert.False(await database.Customers.AnyAsync());
+        });
+    }
+
+    [Fact]
+    public async Task NeighborhoodDoesNotExpandASpecificRegionAndCoverageChangeRequiresNewReview()
+    {
+        using var client = factory.CreateStaffClient();
+        var forged = Input() with { Address = Input().Address! with { Neighborhood = "Fora da região" } };
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/public-checkout/review", forged)).StatusCode);
+        var request = await ReviewAsync(client);
+        Configuration[AreaKey + "CoversAllNeighborhoods"] = "true";
+        await ProblemAsync(await client.PostAsJsonAsync("/api/public-checkout/orders", request), "OrderReviewChanged");
+        await factory.WithDatabaseAsync(async database =>
+        {
+            Assert.False(await database.Customers.AnyAsync());
+            Assert.False(await database.Orders.AnyAsync());
         });
     }
 

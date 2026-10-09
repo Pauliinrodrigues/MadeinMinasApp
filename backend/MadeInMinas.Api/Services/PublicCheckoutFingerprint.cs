@@ -49,7 +49,7 @@ internal static class PublicCheckoutFingerprint
         if (request.Checkout.Fulfillment == "Pickup")
             return original;
         var address = request.Checkout.Address!;
-        return Hash(new
+        var delivery = Hash(new
         {
             Original = original,
             request.Checkout.Fulfillment,
@@ -60,6 +60,9 @@ internal static class PublicCheckoutFingerprint
             PostalCode = Clean(address.PostalCode)?.Replace("-", "", StringComparison.Ordinal),
             Reference = Clean(address.Reference)
         });
+        // Endereços anteriores, sem bairro livre, conservam o hash de recuperação.
+        return address.Neighborhood is null ? delivery
+            : Hash(new { Original = delivery, Neighborhood = Clean(address.Neighborhood) });
     }
 
     private static string Money(decimal value) => value.ToString("F2", CultureInfo.InvariantCulture);

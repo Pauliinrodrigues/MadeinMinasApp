@@ -14,6 +14,7 @@ public sealed class DeliverySettingsExceptionHandler(IProblemDetailsService prob
         {
             DeliverySettingsError.InvalidSession => StatusCodes.Status401Unauthorized,
             DeliverySettingsError.PermissionDenied => StatusCodes.Status403Forbidden,
+            DeliverySettingsError.FixedDeliveryFeeRequired => StatusCodes.Status400BadRequest,
             _ => StatusCodes.Status409Conflict
         };
         context.Response.StatusCode = status;

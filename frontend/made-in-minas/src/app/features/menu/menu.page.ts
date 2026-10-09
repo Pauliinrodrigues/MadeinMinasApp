@@ -6,7 +6,7 @@ import { IonContent } from '@ionic/angular/ion-content';
 import { finalize } from 'rxjs';
 import { MenuApi, MenuProduct, PublicMenu } from '../../core/services/menu-api.service';
 import { PublicCartState } from '../../core/services/public-cart-state.service';
-import { formatProductPrice } from '../../core/services/product-api.service';
+import { formatProductPrice, productImageSource } from '../../core/services/product-api.service';
 import {
   PublicCheckoutApi,
   PublicDeliveryArea,
@@ -35,6 +35,7 @@ export class MenuPage {
   readonly failedImages = signal<Set<string>>(new Set());
   readonly loadedImages = signal<Set<string>>(new Set());
   readonly price = formatProductPrice;
+  readonly imageSource = productImageSource;
   categoryId = '';
   search = '';
   page = 1;

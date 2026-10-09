@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.RateLimiting;
 
-var builder = WebApplication.CreateBuilder(args.Where(arg => arg != "--create-admin").ToArray());
+var builder = WebApplication.CreateBuilder(args.Where(arg => arg is not ("--create-admin" or "--create-print-station")).ToArray());
 builder.Services.AddControllers(options => options.Filters.Add(new AuthorizeFilter()));
 builder.Services.AddStaffAuthentication();
 builder.Services.AddOpenApi();
@@ -24,11 +24,15 @@ builder.Services.AddExceptionHandler<RecipeExceptionHandler>();
 builder.Services.AddExceptionHandler<CustomerExceptionHandler>();
 builder.Services.AddExceptionHandler<CartExceptionHandler>();
 builder.Services.AddExceptionHandler<OrderExceptionHandler>();
+builder.Services.AddExceptionHandler<PrintingExceptionHandler>();
+builder.Services.AddScoped<MadeInMinas.Api.Services.PrintQueueService>();
 builder.Services.AddExceptionHandler<ChatExceptionHandler>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.HumanChatService>();
 builder.Services.AddSingleton<PublicChatAccess>();
 builder.Services.AddRateLimiter(options =>
 {
+    options.AddPolicy("print-agent", context => RateLimitPartition.GetFixedWindowLimiter(context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 120, Window = TimeSpan.FromMinutes(1), QueueLimit = 0, AutoReplenishment = true }));
     foreach (var (policy, limit) in new[] { ("chat-start", 5), ("chat-send", 20), ("chat-read", 120) })
         options.AddPolicy(policy, context => RateLimitPartition.GetFixedWindowLimiter(context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
             _ => new FixedWindowRateLimiterOptions { PermitLimit = limit, Window = TimeSpan.FromMinutes(1), QueueLimit = 0, AutoReplenishment = true }));
@@ -75,6 +79,7 @@ builder.Services.AddRateLimiter(options => options.AddPolicy("public-checkout", 
         })));
 builder.Services.AddScoped<MadeInMinas.Api.Services.IngredientService>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.ProductService>();
+builder.Services.AddScoped<MadeInMinas.Api.Services.ProductImageStorage>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.CategoryService>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.UserService>();
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -92,6 +97,11 @@ builder.Services.AddCors(options => options.AddDefaultPolicy(policy =>
 }));
 
 var app = builder.Build();
+if (args.Contains("--create-print-station"))
+{
+    await PrintStationCommand.RunAsync(app.Services, app.Environment, app.Configuration);
+    return;
+}
 if (args.Contains("--create-admin"))
 {
     await AdministratorCommand.RunAsync(app.Services);

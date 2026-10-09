@@ -28,9 +28,15 @@ A interface oferece confirmação antes das mudanças de status e disponibilidad
 
 ## Imagens
 
-O incremento armazena um link HTTPS opcional, sem credenciais no endereço. Não há upload, armazenamento de arquivos nem download/proxy pelo backend. A prévia no navegador usa referrerpolicy=no-referrer e apresenta mensagem quando a imagem não carrega. Uma falha no carregamento não impede salvar o cadastro. Informe um endereço de imagem que você esteja autorizado a utilizar.
+Em **Foto do produto**, selecione JPG/JPEG, PNG ou WebP de até 8 MB e 24 megapixels, sem animação. A seleção mostra uma prévia local; o arquivo só é enviado ao clicar em **Salvar produto**. Para substituir, escolha outra foto. **Remover foto** limpa o formulário e precisa ser confirmado salvando o produto. Falhas de envio preservam os campos e o arquivo selecionado; se o upload terminar e a gravação do produto falhar, a próxima tentativa reutiliza a foto enviada.
 
-O backend valida o formato do link, mas não confirma existência, tipo de conteúdo, tamanho ou disponibilidade do arquivo remoto. Gestão de uploads será uma melhoria própria.
+Somente administradores enviam arquivos. A API confere o formato pelo conteúdo, decodifica o arquivo completo, corrige a orientação do celular e gera WebP com qualidade 85 e lado maior de até 1600 pixels, preservando a proporção. A nova codificação remove metadados do original. Nomes são UUIDs gerados pelo servidor, sem aproveitar nomes/caminhos recebidos. `ImageUrl` guarda `/api/product-images/<UUID sem hífens>.webp`; o frontend resolve esse endereço na origem da API. A leitura é pública para o cardápio, com cache imutável de um ano e `nosniff`.
+
+As fotos ficam em `backend/MadeInMinas.Api/App_Data/product-images`, fora do Git. O diretório é criado no primeiro envio. Para usar um disco persistente, configure `ProductImages__StoragePath` (caminho absoluto ou relativo à raiz da API). Em hospedagem com múltiplas instâncias, todas precisam acessar o mesmo armazenamento. Inclua esse diretório no backup junto com o banco; apenas buscar o código em outro computador não transfere as fotos já enviadas. Não é necessária migration para este incremento.
+
+Substituir/remover desvincula a foto do produto; arquivos antigos ou enviados antes de um cadastro abandonado permanecem no armazenamento, preservando outras referências e caches. Limpeza de arquivos sem uso e armazenamento externo ficam para uma evolução posterior.
+
+Links HTTPS sem credenciais continuam opcionais como alternativa quando não há foto própria selecionada. O navegador usa `referrerpolicy=no-referrer` e trata falhas de prévia. A API valida o endereço remoto, sem baixar nem conferir o conteúdo remoto.
 
 ## API
 
@@ -44,6 +50,8 @@ Todas as rotas exigem catalog.manage e respostas no-store.
 | PUT | /api/products/{id} | Atualização completa |
 | PUT | /api/products/{id}/status | Define IsActive |
 | PUT | /api/products/{id}/availability | Define IsAvailable |
+
+Fotos: `POST /api/product-images` exige `catalog.manage` e recebe `multipart/form-data` com o campo `file`; retorna 201, `Location` e `{ "imageUrl": "/api/product-images/<UUID>.webp" }`. `GET /api/product-images/{fileName}` é público e retorna `image/webp`; arquivos inexistentes ou nomes fora do padrão retornam 404. O cadastro aceita apenas referências próprias que existam no armazenamento. Envio inválido: 400/`InvalidProductImage`; arquivo acima de 8 MB: 413/`ProductImageTooLarge`; arquivo ausente na leitura: 404/`ProductImageNotFound`. O limite do corpo inclui 64 KB adicionais para o formulário; o proxy de hospedagem precisa permitir esse limite.
 
 POST e PUT recebem o mesmo contrato:
 
@@ -93,7 +101,7 @@ Na raiz, com PostgreSQL 17 instalado:
 powershell -NoProfile -File scripts/Test-Authentication.ps1
 ```
 
-Inclui autenticação, funcionários, categorias e produtos, em PostgreSQL isolado. Somente produtos: acrescente -Filter FullyQualifiedName~ProductTests. A limpeza dos fixtures respeita a FK, removendo produtos antes de categorias apenas no banco de testes guardado.
+Inclui autenticação, funcionários, categorias, produtos e fotos, em PostgreSQL isolado. Somente catálogo/fotos: acrescente `-Filter 'FullyQualifiedName~ProductTests|FullyQualifiedName~ProductImageTests|FullyQualifiedName~PublicMenuTests'`. As fotos de teste também usam diretórios isolados e são removidas ao encerrar o fixture.
 
 No frontend:
 

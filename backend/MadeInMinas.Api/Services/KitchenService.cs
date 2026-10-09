@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MadeInMinas.Api.Services;
 
-public sealed class KitchenService(AppDbContext database, TimeProvider clock, ILogger<KitchenService> logger)
+public sealed class KitchenService(AppDbContext database, PrintQueueService printing, TimeProvider clock, ILogger<KitchenService> logger)
 {
     public async Task<KitchenOrderResponse> GetAsync(Guid id, CancellationToken cancellationToken) =>
         await database.Orders.AsNoTracking().Where(order => order.Id == id).Select(Projection).SingleOrDefaultAsync(cancellationToken)
@@ -79,6 +79,9 @@ public sealed class KitchenService(AppDbContext database, TimeProvider clock, IL
             ActorName = actor.Name,
             OccurredAt = order.UpdatedAt
         });
+        await database.SaveChangesAsync(cancellationToken);
+        if (order.Status == "Ready")
+            await printing.AutomaticAsync(order.Id, "dispatch", order.Version, cancellationToken);
         await database.SaveChangesAsync(cancellationToken);
         var result = await ReadAsync(id, cancellationToken);
         await transaction.CommitAsync(cancellationToken);

@@ -16,6 +16,7 @@ public static class AccessPolicies
     public const string WorkDispatch = "dispatch.work";
     public const string PrintKitchen = "printing.kitchen";
     public const string PrintDispatch = "printing.dispatch";
+    public const string ManagePrinting = "printing.manage";
 
     public static IReadOnlyDictionary<string, string[]> RolesByPermission
     {
@@ -36,7 +37,8 @@ public static class AccessPolicies
             [WorkKitchen] = ["Administrator", "Kitchen"],
             [WorkDispatch] = ["Administrator", "Dispatch"],
             [PrintKitchen] = ["Administrator", "Attendant", "Kitchen"],
-            [PrintDispatch] = ["Administrator", "Attendant", "Dispatch"]
+            [PrintDispatch] = ["Administrator", "Attendant", "Dispatch"],
+            [ManagePrinting] = ["Administrator"]
         };
 
     public static string[] ForRole(string role) => RolesByPermission
