@@ -1,3 +1,4 @@
+import { publicAttendanceFixture } from './fixtures/store-attendance';
 import { expect, Page, test } from '@playwright/test';
 import type {
   PublicCheckoutInput,
@@ -10,6 +11,8 @@ const recoveryKey = 'made-in-minas.public-checkout.v1';
 
 async function setup(page: Page) {
   const state = {
+    attendance: publicAttendanceFixture(),
+    attendanceStatus: 200,
     reviews: [] as PublicCheckoutInput[],
     orders: [] as PublicOrderInput[],
     price: 29.9,
@@ -43,6 +46,10 @@ async function setup(page: Page) {
   await page.route('**/api/**', async (route) => {
     const request = route.request();
     const path = new URL(request.url()).pathname;
+    if (path === '/api/store-attendance/public') {
+      expect(request.headers()['authorization']).toBeUndefined();
+      return route.fulfill({ status: state.attendanceStatus, json: state.attendance });
+    }
     if (path === '/api/public-checkout/options') {
       expect(request.headers()['authorization']).toBeUndefined();
       return route.fulfill({
@@ -143,7 +150,16 @@ async function setup(page: Page) {
         await state.gate;
       }
       if (state.orderStatus >= 400) {
-        return route.fulfill({ status: state.orderStatus, json: { code: state.code } });
+        return route.fulfill({
+          status: state.orderStatus,
+          json: {
+            code: state.code,
+            title:
+              state.code === 'StoreNotAcceptingOrders'
+                ? 'Estamos fora do horário de funcionamento. Seu carrinho foi preservado.'
+                : undefined,
+          },
+        });
       }
       const existing = state.receipts.get(input.requestId);
       const receipt = existing ?? {
@@ -199,6 +215,67 @@ async function review(page: Page) {
   await page.getByRole('button', { name: 'Revisar pedido para retirada', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Pedido revisado' })).toBeVisible();
 }
+
+test('atendimento: loja fechada mantém o carrinho e impede envio até reabrir', async ({ page }) => {
+  await page.clock.install();
+  const state = await setup(page);
+  state.attendance.isOpen = false;
+  state.attendance.acceptingOrders = false;
+  await start(page);
+  const info = page.getByRole('region', { name: 'Horários e atendimento' });
+  await expect(info).toContainText('Estamos fora do horário de funcionamento');
+  await expect(info).toContainText('O prazo de entrega pode variar de acordo com a demanda.');
+  await expect(info).toContainText('Cartão, Dinheiro, Pix');
+  await info.getByText('Horários de funcionamento', { exact: false }).click();
+  await expect(info).toContainText('Sexta-feira: 18:30 às 00:00 (meia-noite)');
+  await expect(
+    page.getByRole('button', { name: 'Revisar pedido para retirada', exact: true }),
+  ).toBeDisabled();
+  expect(state.orders).toHaveLength(0);
+  state.attendance.isOpen = true;
+  state.attendance.acceptingOrders = true;
+  await page.clock.fastForward(30000);
+  await expect(
+    page.getByRole('button', { name: 'Revisar pedido para retirada', exact: true }),
+  ).toBeEnabled();
+  await review(page);
+  await expect(page.getByRole('region', { name: 'Pedido revisado' })).toContainText('Sem cebola');
+  expect(state.reviews[0].cart.items[0].quantity).toBe(2);
+});
+
+test('atendimento: falha de consulta impede revisão e permite recuperar o atendimento', async ({
+  page,
+}) => {
+  const state = await setup(page);
+  state.attendanceStatus = 503;
+  await start(page);
+  await expect(
+    page.getByRole('button', { name: 'Revisar pedido para retirada', exact: true }),
+  ).toBeDisabled();
+  state.attendanceStatus = 200;
+  await page.getByRole('button', { name: 'Atualizar atendimento', exact: true }).click();
+  await expect(
+    page.getByRole('button', { name: 'Revisar pedido para retirada', exact: true }),
+  ).toBeEnabled();
+  await review(page);
+});
+
+test('atendimento: fechamento após revisão rejeita envio e preserva itens e contato', async ({
+  page,
+}) => {
+  const state = await setup(page);
+  await start(page);
+  await review(page);
+  state.orderStatus = 409;
+  state.code = 'StoreNotAcceptingOrders';
+  await page.getByRole('button', { name: 'Enviar pedido para retirada', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('Seu carrinho foi preservado');
+  await expect(page.getByLabel('Seu nome', { exact: true })).toHaveValue('Maria');
+  await expect(page.getByRole('region', { name: 'Pedido revisado' })).toHaveCount(0);
+  await page.getByRole('link', { name: 'Voltar ao carrinho', exact: true }).click();
+  await expect(page.getByLabel('Quantidade do item 1', { exact: true })).toHaveValue('2');
+  await expect(page.getByLabel('Observações do item 1', { exact: true })).toHaveValue('Sem cebola');
+});
 
 test('entrega é a opção inicial, região fica visível e taxa fixa compõe o total', async ({
   page,

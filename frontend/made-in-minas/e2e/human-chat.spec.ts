@@ -1,3 +1,4 @@
+import { publicAttendanceFixture } from './fixtures/store-attendance';
 import { expect, Page, test } from '@playwright/test';
 import type {
   ChatMessage,
@@ -55,6 +56,10 @@ async function setup(page: Page, role = 'Attendant') {
     return message;
   };
   await page.route('**/api/**', async (route) => {
+    if (new URL(route.request().url()).pathname === '/api/store-attendance/public') {
+      expect(route.request().headers()['authorization']).toBeUndefined();
+      return route.fulfill({ json: publicAttendanceFixture() });
+    }
     const request = route.request();
     const url = new URL(request.url());
     const path = url.pathname;

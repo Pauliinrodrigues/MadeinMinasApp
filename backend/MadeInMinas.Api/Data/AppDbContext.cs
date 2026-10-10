@@ -5,6 +5,7 @@ namespace MadeInMinas.Api.Data;
 
 public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
+    public DbSet<StoreAttendanceSettings> StoreAttendanceSettings => Set<StoreAttendanceSettings>();
     public DbSet<PrintStation> PrintStations => Set<PrintStation>();
     public DbSet<PrintJob> PrintJobs => Set<PrintJob>();
     public DbSet<DeliverySettings> DeliverySettings => Set<DeliverySettings>();

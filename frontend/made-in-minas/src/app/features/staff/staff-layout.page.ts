@@ -80,10 +80,16 @@ import { StaffApi } from '../../core/services/staff-api.service';
           session.canViewDashboard() ||
           session.canViewReports() ||
           session.canManageCatalog() ||
-          session.canManagePrinting()
+          session.canManagePrinting() ||
+          session.canManageDelivery()
         ) {
           <div class="nav-group">
             <h2>Gestão</h2>
+            @if (session.canManageDelivery()) {
+              <a routerLink="/equipe/configuracoes-atendimento" routerLinkActive="selected"
+                >Atendimento da loja</a
+              >
+            }
             @if (session.canManagePrinting()) {
               <a routerLink="/equipe/impressao" routerLinkActive="selected">Impressão automática</a>
             }

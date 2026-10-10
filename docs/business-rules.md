@@ -1,5 +1,17 @@
 # Regras de negócio acordadas
 
+## Atendimento da loja — primeiro incremento da Fase 9A
+
+Configuração informada pelo responsável em 10/10/2026: segunda a quinta, das 18:30 às 23:30; sexta, sábado e domingo, das 18:30 até 00:00 (meia-noite ao final do dia). O backend usa `America/Sao_Paulo`: a abertura é inclusiva e o fechamento exclusivo. Pagamentos aceitos: cartão, dinheiro e Pix. Orientação comercial: “O prazo de entrega pode variar de acordo com a demanda.” Não há promessa automática de minutos ou agendamento.
+
+Em **Gestão → Atendimento da loja**, somente o administrador edita os sete dias, dias fechados, pagamentos, orientação de prazo, pausa manual e recebimento fora do horário. A revisão precede o salvamento. Edição concorrente exige recarga; repetir o mesmo conteúdo após perda de resposta recupera o resultado. Autor, data e versão da última alteração ficam no registro administrativo.
+
+Sem uma configuração salva, os valores confirmados vêm de `StoreAttendance` em `appsettings.json`. A migration `AddStoreAttendanceSettings` cria apenas a tabela de configuração, sem alterar pedidos, clientes, pagamentos ou estoque. A consulta pública devolve horários, pagamentos e estado calculado, sem autor ou revisão administrativa; cardápio e checkout usam a mesma fonte.
+
+Como padrão, fora do horário o cliente consulta o cardápio e monta o carrinho, mas não envia novas compras. O administrador pode permitir recebimento fora do horário; a pausa manual sempre prevalece. O backend verifica o atendimento na revisão e novamente na criação transacional. Fechamento ou pausa preservam a seleção no navegador. A recuperação idempotente de pedido já recebido continua disponível, mesmo com a loja fechada. Pedidos manuais e comandas já recebidas seguem o fluxo da equipe.
+
+Os pagamentos são informações de atendimento; a escolha da forma pelo cliente e a cobrança online não foram acrescentadas neste incremento. A IA ainda não foi conectada; autoria do assistente e transferência IA/humano são os próximos passos.
+
 Regra do bloco operacional F: a [central de reposição](stock-replenishment.md) alerta inclusive quando saldo é igual ao mínimo e informa somente a diferença até esse mínimo. Não cria movimentos, compras ou despesas. Ausência de movimentação exige conferência física; uma movimentação anterior não comprova inventário.
 
 Estas regras orientam os módulos futuros; ainda não estão implementadas.

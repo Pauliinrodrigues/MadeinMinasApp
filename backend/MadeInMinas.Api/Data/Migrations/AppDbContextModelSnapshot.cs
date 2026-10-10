@@ -1173,6 +1173,39 @@ namespace MadeInMinas.Api.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("MadeInMinas.Api.Models.StoreAttendanceSettings", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SettingsJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UpdatedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("UpdatedByName")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<long>("Version")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("StoreAttendanceSettings", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_StoreAttendanceSettings_Settings", "jsonb_typeof(\"SettingsJson\") = 'object'");
+
+                            t.HasCheckConstraint("CK_StoreAttendanceSettings_Singleton", "\"Id\" = 1 AND \"Version\" > 0");
+                        });
+                });
+
             modelBuilder.Entity("MadeInMinas.Api.Models.User", b =>
                 {
                     b.Property<Guid>("Id")

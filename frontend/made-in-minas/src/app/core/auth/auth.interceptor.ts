@@ -14,7 +14,9 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
 
   const session = inject(AuthSession);
   const isLogin = target.pathname === apiPath + '/auth/login';
-  const isPublicMenu = target.pathname === apiPath + '/menu';
+  const isPublicMenu =
+    target.pathname === apiPath + '/menu' ||
+    target.pathname === apiPath + '/store-attendance/public';
   const isPublicCart = target.pathname === apiPath + '/public-cart/quote';
   const isPublicTracking = target.pathname === apiPath + '/public-orders/tracking';
   const isPublicChat =

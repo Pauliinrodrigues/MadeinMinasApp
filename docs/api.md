@@ -4,6 +4,8 @@ Na listagem administrativa `GET /api/products`, `hasRecipe` e `hasMissingCosts` 
 
 Base local: `http://localhost:5080`.
 
+Configurações comerciais: `GET /api/store-attendance/public` é anônimo e sem cache; retorna `hours` (dias ISO 1 a 7), `paymentMethods` (`Card`, `Cash`, `Pix`), `deliveryEstimateMessage`, `timeZone`, `isOpen`, `isPaused`, `acceptingOrders`, `checkedAt` e `nextChangeAt`. `GET /api/store-attendance` e `PUT /api/store-attendance` são administrativos (`delivery.manage`). A escrita recebe `{ expectedRevision, settings }` e rejeita campos desconhecidos, dias repetidos, horários inválidos e pagamentos sem suporte. `StoreSettingsChanged` e `StoreNotAcceptingOrders` retornam 409. Regras e valores acordados: [atendimento da loja](business-rules.md).
+
 | Método | Rota | Resposta |
 | --- | --- | --- |
 | GET | /api/system/status | 200, `{"status":"available"}` |

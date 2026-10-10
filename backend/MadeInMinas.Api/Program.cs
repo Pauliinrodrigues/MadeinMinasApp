@@ -16,6 +16,11 @@ builder.Services.AddExceptionHandler<UserManagementExceptionHandler>();
 builder.Services.AddExceptionHandler<CategoryExceptionHandler>();
 builder.Services.AddExceptionHandler<DeliverySettingsExceptionHandler>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.DeliverySettingsService>();
+builder.Services.AddScoped<MadeInMinas.Api.Services.StoreAttendanceService>();
+builder.Services.AddOptions<MadeInMinas.Api.Services.StoreAttendanceOptions>()
+    .BindConfiguration("StoreAttendance")
+    .Validate(options => options.IsValid(), "Configure os sete dias da semana, horários válidos e formas de pagamento aceitas.")
+    .ValidateOnStart();
 builder.Services.AddExceptionHandler<ProductExceptionHandler>();
 builder.Services.AddExceptionHandler<IngredientExceptionHandler>();
 builder.Services.AddExceptionHandler<StockExceptionHandler>();

@@ -674,3 +674,12 @@ Implementação local autorizada pelo responsável, preservando as correções t
 - Build de produção, lint sem avisos, Prettier dos arquivos alterados e `git diff --check` aprovados. A primeira compilação foi impedida pelas permissões do ambiente restrito; a repetição autorizada compilou sem erros. Sem mudança no backend ou repetição da suíte inteira.
 - O aviso permanece restrito à tela **Pedidos**, com atualização a cada 10 segundos enquanto a aba está visível. Sair dessa tela ou recarregar exige ativar novamente; cozinha e expedição não executam esse aviso. Som independente da impressão automática.
 - A pedido do responsável, o aviso curto foi substituído por uma sirene padrão de **2,4 segundos**, com três subidas/descidas de frequência e entrada/saída suave do volume. Ativar o aviso toca uma amostra; desativar interrompe a sirene atual, e novos avisos substituem o som anterior para evitar sobreposição. Nós de áudio são desconectados ao terminar. **8/8 cenários de aviso sonoro repetidos e aprovados** em computador/celular, com pedidos simulados e AudioContext nativo; são parte dos dez casos acima. Build de produção, lint e formatação dos arquivos alterados aprovados novamente.
+
+
+## Atendimento da loja — 10/10/2026
+
+- **612/612 testes da API aprovados**, em PostgreSQL isolado, incluindo limites de horário de Brasília, meia-noite, pausa, autorização administrativa, salvamento idempotente, edição concorrente e recuperação de pedido já recebido após a pausa.
+- **86/86 testes de interface aprovados**, computador e celular, para cardápio, checkout e configurações da loja, com APIs simuladas. A seleção não representa toda a suíte frontend.
+- Build Angular, lint, Prettier dos arquivos alterados, compilação da API sem avisos e formatação .NET aprovados. As nove verificações de fundação passaram após reiniciar a API em 5080; frontend disponível em 8101.
+- Migration aditiva `20261010142620_AddStoreAttendanceSettings` aplicada apenas ao banco local `made_in_minas`, após backup com índice legível em `.local/backups/made_in_minas-before-store-attendance-20261010-114733.dump`. Contagens preservadas: 12 pedidos, dois pagamentos, três clientes e nove movimentos de estoque. Nenhum pedido real foi criado para testes.
+- Consulta pública local confirmou os sete dias, cartão/dinheiro/Pix, prazo variável e estado fechado antes de 18:30. Consulta administrativa sem login retornou 401. As regras comerciais estão em [business-rules.md](business-rules.md).

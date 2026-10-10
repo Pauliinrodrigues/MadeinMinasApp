@@ -1,3 +1,4 @@
+import { publicAttendanceFixture } from './fixtures/store-attendance';
 import { expect, Page, test } from '@playwright/test';
 import type { PublicOrderReceipt } from '../src/app/core/services/public-checkout-api.service';
 import type { PublicOrderTracking } from '../src/app/core/services/public-order-tracking-api.service';
@@ -43,6 +44,10 @@ async function setup(page: Page, saved: PublicOrderReceipt | null = receipt) {
     permissions: ['orders.manage'],
   };
   await page.route('**/api/**', async (route) => {
+    if (new URL(route.request().url()).pathname === '/api/store-attendance/public') {
+      expect(route.request().headers()['authorization']).toBeUndefined();
+      return route.fulfill({ json: publicAttendanceFixture() });
+    }
     const request = route.request();
     const url = new URL(request.url());
     if (url.pathname === '/api/public-orders/tracking') {

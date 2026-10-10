@@ -1,3 +1,4 @@
+import { publicAttendanceFixture } from './fixtures/store-attendance';
 import { expect, Page, test } from '@playwright/test';
 import type { PublicCartInput } from '../src/app/core/services/public-cart-api.service';
 
@@ -46,6 +47,10 @@ async function setup(page: Page) {
     permissions: ['users.manage'],
   };
   await page.route('**/api/**', async (route) => {
+    if (new URL(route.request().url()).pathname === '/api/store-attendance/public') {
+      expect(route.request().headers()['authorization']).toBeUndefined();
+      return route.fulfill({ json: publicAttendanceFixture() });
+    }
     const request = route.request();
     const path = new URL(request.url()).pathname;
     if (path === '/api/menu') {

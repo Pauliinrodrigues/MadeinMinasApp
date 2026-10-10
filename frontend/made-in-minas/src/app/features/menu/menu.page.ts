@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { StoreAttendanceStatus } from '../../core/services/store-attendance-status.service';
+import { StoreAttendanceNotice } from '../../shared/store-attendance-notice.component';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { IonContent } from '@ionic/angular/ion-content';
@@ -15,12 +17,14 @@ import {
 @Component({
   selector: 'app-menu',
   host: { class: 'ion-page' },
-  imports: [FormsModule, RouterLink, IonContent],
+  imports: [FormsModule, RouterLink, IonContent, StoreAttendanceNotice],
+  providers: [StoreAttendanceStatus],
   templateUrl: './menu.page.html',
   styleUrl: './menu.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MenuPage {
+  readonly attendance = inject(StoreAttendanceStatus);
   readonly cart = inject(PublicCartState);
   readonly cartNotice = signal('');
   private readonly api = inject(MenuApi);

@@ -8,6 +8,8 @@ Diagnóstico de 08/10/2026, baseado no código da branch `fix/thermal-print-heig
 
 ## Situação das funcionalidades
 
+Atualização de 10/10/2026: o primeiro incremento da Fase 9A implementa a [configuração de atendimento](business-rules.md), com horários de Brasília, pausa, pagamentos e prazo variável, disponível à equipe e ao site. A integração do modelo, autoria do assistente e transferência IA/humano continuam pendentes. O quadro abaixo preserva o diagnóstico de 08/10.
+
 “Implementado” descreve o escopo presente no código. Aceite de uma funcionalidade não comprova toda a operação em produção.
 
 | Área                        | Implementação atual                                                                                                       | Preparação para IA e pendências                                                                                                                            |

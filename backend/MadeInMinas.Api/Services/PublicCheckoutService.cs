@@ -17,10 +17,12 @@ public sealed class PublicCheckoutService(
     TimeProvider clock,
     ILogger<PublicCheckoutService> logger,
     PublicOrderAccess access,
-    DeliverySettingsService settings)
+    DeliverySettingsService settings,
+    StoreAttendanceService attendance)
 {
     public async Task<PublicCheckoutReviewResponse> ReviewAsync(PublicCheckoutRequest request, CancellationToken cancellationToken)
     {
+        await attendance.EnsureAcceptingOrdersAsync(cancellationToken);
         var area = request.Fulfillment == "Delivery"
             ? (await DeliveryAreasAsync(cancellationToken)).SingleOrDefault(area => area.Id == request.Address!.AreaId)
                 ?? throw new OrderException(OrderError.PublicDeliveryUnavailable, "A região selecionada não está disponível para entrega. Confira as regiões atendidas ou escolha retirada.")
@@ -66,6 +68,8 @@ public sealed class PublicCheckoutService(
             return new PublicOrderCreationResult(Receipt(existing), false);
         }
 
+        await attendance.LockForOrderAsync(cancellationToken);
+        await attendance.EnsureAcceptingOrdersAsync(cancellationToken);
         if (request.Checkout.Fulfillment == "Delivery")
             await settings.LockForOrderAsync(cancellationToken);
         var now = DateTimeOffset.FromUnixTimeMilliseconds(clock.GetUtcNow().ToUnixTimeMilliseconds());

@@ -7,6 +7,7 @@ using MadeInMinas.Api.Data;
 using MadeInMinas.Api.DTOs.Auth;
 using MadeInMinas.Api.DTOs.Orders;
 using MadeInMinas.Api.DTOs.PublicCheckout;
+using MadeInMinas.Api.DTOs.StoreAttendance;
 using MadeInMinas.Api.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -24,6 +25,7 @@ public sealed class PublicCheckoutTests(AuthenticationFactory factory) : IClassF
 
     private static async Task ClearAsync(AppDbContext database)
     {
+        await database.StoreAttendanceSettings.ExecuteDeleteAsync();
         await database.StockMovements.ExecuteDeleteAsync();
         await database.Payments.ExecuteDeleteAsync();
         await database.Orders.ExecuteDeleteAsync();
@@ -74,6 +76,27 @@ public sealed class PublicCheckoutTests(AuthenticationFactory factory) : IClassF
         Assert.True(response.Headers.CacheControl?.NoStore);
         using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         Assert.Equal(code, json.RootElement.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task PauseAfterSubmissionStillAllowsReceiptRecoveryButRejectsAnotherOrder()
+    {
+        using var guest = factory.CreateStaffClient();
+        var request = await ReviewAsync(guest);
+        var created = await guest.PostAsJsonAsync(OrdersPath, request);
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        var receipt = (await created.Content.ReadFromJsonAsync<PublicOrderReceipt>())!;
+        var user = await factory.CreateUserAsync();
+        using var admin = factory.CreateStaffClient();
+        var login = (await (await admin.PostAsJsonAsync("/api/auth/login", new LoginRequest(user.Username, factory.Password))).Content.ReadFromJsonAsync<LoginResponse>())!;
+        admin.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", login.AccessToken);
+        var settings = (await admin.GetFromJsonAsync<StoreAttendanceResponse>("/api/store-attendance"))!;
+        (await admin.PutAsJsonAsync("/api/store-attendance", new SaveStoreAttendanceRequest(settings.Revision, settings.Settings with { IsPaused = true }))).EnsureSuccessStatusCode();
+        var recovered = await guest.PostAsJsonAsync(OrdersPath, request);
+        Assert.Equal(HttpStatusCode.OK, recovered.StatusCode);
+        Assert.Equal(receipt.Number, (await recovered.Content.ReadFromJsonAsync<PublicOrderReceipt>())!.Number);
+        await ProblemAsync(await guest.PostAsJsonAsync(OrdersPath, request with { RequestId = Guid.NewGuid() }), "StoreNotAcceptingOrders");
+        await factory.WithDatabaseAsync(async database => Assert.Equal(1, await database.Orders.CountAsync()));
     }
 
     [Fact]

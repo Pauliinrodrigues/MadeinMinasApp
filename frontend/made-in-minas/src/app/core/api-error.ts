@@ -5,6 +5,10 @@ export function apiError(error: unknown, login = false): string {
     return 'Não foi possível concluir. Verifique a conexão e tente novamente.';
   }
   const codes: Record<string, string> = {
+    StoreSettingsChanged:
+      'Outro administrador alterou o atendimento. Recarregue e confira as configurações atuais.',
+    StoreNotAcceptingOrders:
+      error.error?.title ?? 'A loja não está recebendo novos pedidos no momento.',
     PrintingUnavailable:
       error.error?.title ?? 'Não foi possível enviar a comanda. Confira a estação de impressão.',
     DeliverySettingsChanged:
