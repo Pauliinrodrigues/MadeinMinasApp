@@ -3,10 +3,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { IonContent } from '@ionic/angular/ion-content';
 import { AuthSession } from '../../core/auth/auth-session.service';
+import { OrderAlert } from '../../core/services/order-alert.service';
 import { StaffApi } from '../../core/services/staff-api.service';
 
 @Component({
   selector: 'app-staff-layout',
+  providers: [OrderAlert],
   imports: [RouterLink, RouterLinkActive, RouterOutlet, IonContent],
   host: { class: 'ion-page' },
   template: `<ion-content
@@ -108,6 +110,24 @@ import { StaffApi } from '../../core/services/staff-api.service';
         </div>
       </nav>
       <main class="staff-body">
+        @if (session.canManageOrders()) {
+          <div class="panel" aria-label="Aviso de pedidos">
+            <button type="button" (click)="alert.toggle()" [attr.aria-pressed]="alert.enabled()">
+              {{ alert.enabled() ? 'Desativar aviso sonoro' : 'Ativar aviso sonoro' }}
+            </button>
+            <p class="hint">
+              Apitos digitais a cada 30 segundos até aceitar ou cancelar as comandas pendentes. Toca
+              uma amostra ao ativar e continua ao abrir o pedido. Pausa enquanto a aba estiver
+              oculta.
+            </p>
+            @if (alert.enabled()) {
+              <p class="hint">Comandas aguardando confirmação: {{ alert.pendingCount() }}.</p>
+            }
+            @if (alert.warning()) {
+              <p role="status" class="notice">{{ alert.warning() }}</p>
+            }
+          </div>
+        }
         @if (session.user()) {
           <router-outlet />
         }
@@ -118,6 +138,7 @@ import { StaffApi } from '../../core/services/staff-api.service';
 })
 export class StaffLayoutPage {
   readonly session = inject(AuthSession);
+  readonly alert = inject(OrderAlert);
   private readonly api = inject(StaffApi);
   private readonly destroyRef = inject(DestroyRef);
   readonly leaving = signal(false);

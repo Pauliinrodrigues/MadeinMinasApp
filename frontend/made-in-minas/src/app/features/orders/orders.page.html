@@ -28,18 +28,12 @@
     <button type="button" (click)="quickFilter('')" [attr.aria-pressed]="queueIsActive('')">
       Todos os pedidos
     </button>
-    <button type="button" (click)="toggleSound()" [attr.aria-pressed]="soundEnabled()">
-      {{ soundEnabled() ? 'Desativar aviso sonoro' : 'Ativar aviso sonoro' }}
-    </button>
   </div>
-  <p class="hint">O aviso usa uma sirene curta e toca uma amostra ao ser ativado.</p>
   <p class="hint">
     Atualização automática a cada 10 segundos enquanto esta aba estiver visível. @if (updatedAt();
     as updated) { Última atualização: {{ updated | date:'HH:mm:ss' }}. }
   </p>
-  @if (soundWarning()) {
-  <p role="status" class="notice">{{ soundWarning() }}</p>
-  } @if (notification()) {
+  @if (notification()) {
   <p role="status" class="notice">{{ notification() }}</p>
   }
   <form class="panel filters" (ngSubmit)="load()">

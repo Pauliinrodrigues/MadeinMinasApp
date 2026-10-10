@@ -8,6 +8,8 @@ Em **Operação → Pedidos**, combinar busca por número/cliente/telefone, stat
 
 Os atalhos **Aguardando confirmação**, **A receber**, **Prontos** e **Todos os pedidos** limpam os demais filtros e abrem a fila correspondente. O contador de novos e o aviso opcional continuam consultando todas as origens, independentemente do filtro da lista. Ocultar a aba pausa o polling; não há reserva de dados nem confirmação automática.
 
+O controle **Ativar aviso sonoro** fica na área da equipe e toca uma amostra de três apitos digitais, no estilo radinho. Enquanto houver pedidos Novos, repete a cada 30 segundos e continua ao abrir uma comanda ou outra tela da equipe. Aceitar ou cancelar a última pendente interrompe o som; se houver outras, o alerta continua. O aceite em outro navegador é detectado pela consulta da fila a cada 10 segundos. Desativar o aviso ou sair da sessão interrompe o áudio; ocultar a aba pausa o aviso e as consultas. O navegador pode exigir nova ativação ao bloquear ou suspender o áudio.
+
 A origem e a situação do pagamento aparecem na tabela do computador e nos cartões do celular. Confirmar produção continua independente do recebimento financeiro. A lista reflete somente o que foi registrado no sistema: não consulta banco, Pix ou operadora de cartão.
 
 ## Situação financeira da lista
