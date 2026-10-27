@@ -46,6 +46,7 @@ public sealed class AuthenticationFactory : WebApplicationFactory<Program>, IAsy
                 ["Jwt:AccessTokenMinutes"] = "15",
                 ["Logging:LogLevel:Default"] = "Warning",
                 ["ProductImages:StoragePath"] = ProductImagesPath,
+                ["StoreAttendance:ReceiveOrdersOutsideHours"] = "true",
                 ["PublicDelivery:FixedFee"] = null,
                 ["PublicDelivery:Areas:0:CoversAllNeighborhoods"] = "false"
             }));

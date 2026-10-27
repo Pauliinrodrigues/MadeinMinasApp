@@ -1,6 +1,7 @@
 using MadeInMinas.Api.Data;
 using MadeInMinas.Api.Infrastructure;
 using MadeInMinas.Api.Security;
+using MadeInMinas.Api.Services.Ai;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -16,6 +17,11 @@ builder.Services.AddExceptionHandler<UserManagementExceptionHandler>();
 builder.Services.AddExceptionHandler<CategoryExceptionHandler>();
 builder.Services.AddExceptionHandler<DeliverySettingsExceptionHandler>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.DeliverySettingsService>();
+builder.Services.AddScoped<MadeInMinas.Api.Services.StoreAttendanceService>();
+builder.Services.AddOptions<MadeInMinas.Api.Services.StoreAttendanceOptions>()
+    .BindConfiguration("StoreAttendance")
+    .Validate(options => options.IsValid(), "Configure os sete dias da semana, horários válidos e formas de pagamento aceitas.")
+    .ValidateOnStart();
 builder.Services.AddExceptionHandler<ProductExceptionHandler>();
 builder.Services.AddExceptionHandler<IngredientExceptionHandler>();
 builder.Services.AddExceptionHandler<StockExceptionHandler>();
@@ -28,6 +34,16 @@ builder.Services.AddExceptionHandler<PrintingExceptionHandler>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.PrintQueueService>();
 builder.Services.AddExceptionHandler<ChatExceptionHandler>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.HumanChatService>();
+builder.Services.AddScoped<MadeInMinas.Api.Services.ChatOrderService>();
+builder.Services.AddScoped<MadeInMinas.Api.Services.AiChatTools>();
+builder.Services.AddScoped<MadeInMinas.Api.Services.AiChatCoordinator>();
+builder.Services.AddScoped<IAiService, AiService>();
+builder.Services.AddAiProvider();
+builder.Services.AddOptions<AiOptions>()
+    .BindConfiguration("Ai")
+    .Validate(options => options.IsValid(), "Configure os limites válidos do atendimento automático e o provedor OpenAI ou Gemini.")
+    .ValidateOnStart();
+builder.Services.AddHostedService<MadeInMinas.Api.Services.AiChatWorker>();
 builder.Services.AddSingleton<PublicChatAccess>();
 builder.Services.AddRateLimiter(options =>
 {

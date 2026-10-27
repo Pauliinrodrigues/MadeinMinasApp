@@ -8,14 +8,20 @@ import { ChatMessage } from '../../core/services/chat-api.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `<ol aria-label="Mensagens da conversa">
       @for (message of messages(); track message.sequence) {
-        <li [class.staff]="message.kind === 'Staff'" [class.system]="message.kind === 'System'">
+        <li
+          [class.staff]="message.kind === 'Staff'"
+          [class.assistant]="message.kind === 'Assistant'"
+          [class.system]="message.kind === 'System'"
+        >
           <div>
             <strong>{{
               message.kind === 'Visitor'
                 ? 'Cliente'
                 : message.kind === 'Staff'
                   ? 'Atendente'
-                  : 'Atendimento'
+                  : message.kind === 'Assistant'
+                    ? 'Assistente virtual'
+                    : 'Atendimento'
             }}</strong>
             <time [attr.datetime]="message.createdAt">{{
               message.createdAt | date: 'dd/MM HH:mm' : '-0300'
@@ -46,6 +52,10 @@ import { ChatMessage } from '../../core/services/chat-api.service';
     }
     li.system {
       border-style: dashed;
+    }
+    li.assistant {
+      background: #f5eee3;
+      border-left: 4px solid #722f27;
     }
     div {
       display: flex;

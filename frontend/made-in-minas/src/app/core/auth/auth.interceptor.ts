@@ -14,12 +14,17 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
 
   const session = inject(AuthSession);
   const isLogin = target.pathname === apiPath + '/auth/login';
-  const isPublicMenu = target.pathname === apiPath + '/menu';
+  const isPublicMenu =
+    target.pathname === apiPath + '/menu' ||
+    target.pathname === apiPath + '/store-attendance/public';
   const isPublicCart = target.pathname === apiPath + '/public-cart/quote';
   const isPublicTracking = target.pathname === apiPath + '/public-orders/tracking';
   const isPublicChat =
     target.pathname === apiPath + '/public-chat' ||
-    target.pathname === apiPath + '/public-chat/messages';
+    target.pathname === apiPath + '/public-chat/messages' ||
+    target.pathname === apiPath + '/public-chat/handoff' ||
+    target.pathname === apiPath + '/public-chat/order/review' ||
+    target.pathname === apiPath + '/public-chat/order/confirm';
   const isPublicCheckout =
     target.pathname === apiPath + '/public-checkout/options' ||
     target.pathname === apiPath + '/public-checkout/delivery-areas' ||

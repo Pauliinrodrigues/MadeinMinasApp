@@ -7,12 +7,73 @@
     {{ statusLabel(current.conversation.status) }} · Responsável: {{
     current.conversation.assignedToName ?? 'Ninguém' }}
   </p>
+  @if (current.conversation.automationMode) {
+  <p>{{ attendanceLabel(current.conversation) }}</p>
+  }
   <p class="hint">
-    Nome informado pelo visitante, sem identidade verificada. Mensagens não alteram pedidos;
-    confirme a identidade antes de compartilhar dados pessoais.
+    Nome informado pelo visitante, sem identidade verificada. Confirme a identidade antes de
+    compartilhar dados pessoais. A assistente só envia um pedido após confirmação pelo cliente.
   </p>
   @if (loadError()) {
   <p role="alert">{{ loadError() }}</p>
+  } @if (current.transcript.order; as order) {
+  <section class="order-summary" aria-label="Pedido desta conversa">
+    @if (current.linkedOrder; as received) {
+    <h3>Pedido #{{ received.number }} recebido</h3>
+    <p>
+      Status: {{ orderStatusLabel(received.status) }} · {{ received.fulfillment === 'Delivery' ?
+      'Entrega' : 'Retirada' }}
+    </p>
+    @if (received.status === 'New') {
+    <p>Aguardando confirmação da equipe. O preparo começa após o aceite na tela do pedido.</p>
+    }
+    <p>
+      Produtos: {{ price(received.subtotal) }} · Entrega: {{ price(received.deliveryFee) }} ·
+      <strong>Total: {{ price(received.total) }}</strong>
+    </p>
+    @if (session.canManageOrders()) {
+    <a [routerLink]="['/equipe/pedidos', received.id]">Abrir pedido #{{ received.number }}</a>
+    } } @else if (order.receipt; as receipt) {
+    <h3>Pedido #{{ receipt.number }} recebido</h3>
+    <p>
+      Total do pedido: {{ price(receipt.total) }}. Atualize a conversa para conferir o vínculo com o
+      pedido.
+    </p>
+    } @else {
+    <h3>Pedido em montagem</h3>
+    <p>
+      Ainda não aparece na fila de Pedidos. O cliente precisa revisar e usar Confirmar pedido no
+      chat.
+    </p>
+    } @for (item of order.items; track item.productId) {
+    <p>{{ item.quantity }} × {{ item.name }} · {{ price(item.lineTotal) }}</p>
+    @if (item.notes) {
+    <p>Observação do item: {{ item.notes }}</p>
+    } }
+    <p>Contato: {{ order.name }}{{ order.phone ? ' · ' + order.phone : '' }}</p>
+    @if (!order.receipt && !current.linkedOrder) { @if (order.fulfillment) {
+    <p>{{ order.fulfillment === 'Delivery' ? 'Entrega' : 'Retirada' }}</p>
+    } @if (order.review; as review) {
+    <p>
+      Resumo apresentado ao cliente: produtos {{ price(review.subtotal) }} · entrega {{
+      price(review.deliveryFee) }} · <strong>total {{ price(review.total) }}</strong>.
+    </p>
+    } @else if (order.quote; as quote) {
+    <p>Produtos: {{ price(quote.subtotal) }}. O total depende da revisão de entrega ou retirada.</p>
+    } @if (missingOrderFields().length) {
+    <p>Falta informar: {{ missingOrderFields().join(', ') }}.</p>
+    } } @if (order.address; as address) {
+    <p>
+      Endereço informado: {{ address.street }}, {{ address.number }} · {{ address.neighborhood }}
+    </p>
+    @if (address.complement) {
+    <p>Complemento: {{ address.complement }}</p>
+    } @if (address.reference) {
+    <p>Referência: {{ address.reference }}</p>
+    } } @if (order.notes) {
+    <p>Observações: {{ order.notes }}</p>
+    }
+  </section>
   }
   <div
     #messageHistory
@@ -43,6 +104,10 @@
   } @else { @if (canClaim()) {
   <button (click)="act('claim')" [disabled]="busy() || loading() || !fresh()">
     Assumir atendimento
+  </button>
+  } @if (canAutomate()) {
+  <button type="button" (click)="automate()" [disabled]="busy() || loading() || !fresh()">
+    Retomar assistente virtual
   </button>
   } @if (owner() && current.conversation.status === 'InService') {
   <label for="staff-chat-message"

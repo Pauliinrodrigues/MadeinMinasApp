@@ -18,10 +18,12 @@ import {
   ChatMessageInput,
   StaffChat,
   StaffChatApi,
+  chatAttendanceLabel,
   chatStatusLabel,
 } from '../../core/services/chat-api.service';
 import { ChatMessagesComponent } from './chat-messages.component';
 import { ChatReadState } from '../../core/services/chat-read-state.service';
+import { orderStatusLabel } from '../../core/services/order-api.service';
 
 @Component({
   selector: 'app-staff-chat',
@@ -49,6 +51,13 @@ import { ChatReadState } from '../../core/services/chat-read-state.service';
       white-space: pre-wrap;
       overflow-wrap: anywhere;
     }
+    .order-summary {
+      border: 1px solid #dfd3c3;
+      border-radius: 12px;
+      padding: 16px;
+      margin-block: 16px;
+      overflow-wrap: anywhere;
+    }
   `,
 })
 export class StaffChatPage {
@@ -69,6 +78,30 @@ export class StaffChatPage {
   readonly recoveryError = signal(false);
   readonly pending = signal<ChatMessageInput | null>(null);
   readonly statusLabel = chatStatusLabel;
+  readonly attendanceLabel = chatAttendanceLabel;
+  readonly orderStatusLabel = orderStatusLabel;
+  readonly missingOrderFields = computed(() => {
+    const labels: Record<string, string> = {
+      items: 'produtos',
+      name: 'nome',
+      phone: 'telefone com DDD',
+      fulfillment: 'entrega ou retirada',
+      address: 'endereço de entrega',
+    };
+    return (this.data()?.transcript.order?.missingFields ?? []).map(
+      (field) => labels[field] ?? field,
+    );
+  });
+  price(value: number): string {
+    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  }
+  readonly canAutomate = computed(
+    () =>
+      !!this.data()?.conversation.automationAvailable &&
+      this.data()?.conversation.automationMode !== 'Automatic' &&
+      this.data()?.conversation.status !== 'Closed' &&
+      (this.owner() || this.data()?.conversation.status === 'Waiting'),
+  );
   readonly owner = computed(
     () => this.data()?.conversation.assignedToId === this.session.user()?.id,
   );
@@ -290,6 +323,41 @@ export class StaffChatPage {
     if (this.clearPending()) {
       this.recoveryError.set(false);
     }
+  }
+  automate(): void {
+    const data = this.data();
+    if (
+      !data ||
+      !this.canAutomate() ||
+      this.busy() ||
+      this.loading() ||
+      !this.fresh() ||
+      this.pending() ||
+      this.recoveryError()
+    ) {
+      return;
+    }
+    this.busy.set(true);
+    this.error.set('');
+    this.api
+      .automate(this.id, data.conversation.version)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.busy.set(false)),
+      )
+      .subscribe({
+        next: () => {
+          this.busy.set(false);
+          this.fresh.set(false);
+          this.load();
+        },
+        error: (error: unknown) => {
+          this.error.set(apiError(error) + ' Confira o estado antes de repetir.');
+          this.busy.set(false);
+          this.fresh.set(false);
+          this.load();
+        },
+      });
   }
   saveDraft(): void {
     try {

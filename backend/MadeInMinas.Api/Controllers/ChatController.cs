@@ -32,4 +32,8 @@ public sealed class ChatController(HumanChatService chat) : ControllerBase
 
     [HttpPut("{id:guid}/close")]
     public Task<ChatSummaryResponse> Close(Guid id, ChatActionRequest request, CancellationToken cancellationToken) => chat.ActAsync(ActorId, Stamp, id, request, true, cancellationToken);
+
+    [HttpPut("{id:guid}/automation")]
+    public Task<ChatSummaryResponse> ResumeAutomation(Guid id, ChatActionRequest request, CancellationToken cancellationToken) =>
+        chat.ResumeAutomationAsync(ActorId, Stamp, id, request, cancellationToken);
 }

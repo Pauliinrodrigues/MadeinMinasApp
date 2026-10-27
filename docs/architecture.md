@@ -21,7 +21,7 @@ flowchart LR
   WhatsApp -->|link futuro| Frontend[Ionic / Angular]
   Frontend -->|REST| API[ASP.NET Core API]
   API -->|EF Core / Npgsql| DB[(PostgreSQL)]
-  AI[IA futura] -->|operações validadas| API
+  AI[Provedor de IA configurável] -->|ferramentas públicas controladas| API
 ```
 
 ## Backend
@@ -44,7 +44,13 @@ A Fase 2C mantém JWT em memória, sem persistência/refresh token. O intercepto
 
 ## Evolução
 
-Autenticação e autorização de funcionários já existem no backend. Cliente público e funcionário serão identidades distintas. Preços, permissões, status e totais serão definidos pelo backend. Integrações de IA ficarão atrás de contratos introduzidos quando esse módulo for implementado.
+Autenticação e autorização de funcionários já existem no backend. Cliente público e funcionário usam credenciais distintas. Preços, permissões, status e totais são definidos pelo backend. `IAiService` e `IAiProvider` isolam a integração do modelo; `AiChatTools` restringe as operações aos serviços públicos existentes. O processamento usa leases persistentes, sem manter transação durante chamadas externas. Detalhes: [assistente virtual](ai-chat.md).
+
+## Agente do chat — Fase 9
+
+`AiChatCoordinator` reserva turnos pendentes e orçamento no PostgreSQL; `AiChatWorker` processa fora da requisição de mensagem. A resposta só é persistida se a lease, a mensagem de origem e o modo automático continuarem válidos. Assumir/encerrar/transferir revoga a lease em transação. Reinícios recuperam reservas expiradas; múltiplas instâncias usam bloqueios para impedir execução concorrente do mesmo turno.
+
+`ChatOrderDrafts` armazena a seleção, os dados fornecidos, a versão, a revisão e o pedido vinculado a uma conversa. `ChatOrderService` usa `PublicCartService` e `PublicCheckoutService`, sem duplicar cálculos. Confirmar por ação estruturada exige revisão atual e turno concluído; criação e vínculo são atômicos. Respostas ao cliente são montadas no servidor a partir de ferramentas/códigos autorizados, sem publicar texto livre do modelo. A credencial de acompanhamento fica fora do contexto externo.
 
 JWT foi introduzido na Fase 2A; gestão de usuários, na Fase 2B; login e administração no frontend, na Fase 2C. KDS, expedição e impressão pelo navegador foram adicionados na Fase 5. Impressão automática, integrações bancárias e infraestrutura de produção seguem para incrementos posteriores.
 

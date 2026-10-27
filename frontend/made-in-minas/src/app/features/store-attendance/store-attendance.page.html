@@ -1,0 +1,114 @@
+<section>
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">GESTÃO</p>
+      <h1>Atendimento da loja</h1>
+    </div>
+    <button type="button" (click)="load()" [disabled]="loading() || saving()">
+      Recarregar configurações
+    </button>
+  </div>
+  <p>Horários em Brasília, pagamentos aceitos e informações que o cliente verá no site.</p>
+  @if (error()) {
+  <p role="alert" class="notice">{{ error() }}</p>
+  } @if (notice()) {
+  <p role="status" class="notice">{{ notice() }}</p>
+  } @if (loading()) {
+  <p>Carregando configurações…</p>
+  } @if (draft; as settings) {
+  <form class="panel" (ngSubmit)="review()">
+    <fieldset [disabled]="loading() || saving() || needsRefresh() || !!reviewed()">
+      <legend>Funcionamento</legend>
+      <label
+        ><input type="checkbox" name="paused" [(ngModel)]="settings.isPaused" /> Pausar novos
+        pedidos</label
+      >
+      <p class="hint">
+        A pausa impede novos envios no site. Comandas já recebidas continuam no fluxo da equipe.
+      </p>
+      <label
+        ><input
+          type="checkbox"
+          name="outsideHours"
+          [(ngModel)]="settings.receiveOrdersOutsideHours"
+        />
+        Receber pedidos fora do horário</label
+      >
+      <p class="hint">
+        Desmarcado: o cardápio continua disponível, mas novos envios aguardam a abertura.
+      </p>
+      <div class="hours-grid">
+        @for (hours of settings.hours; track hours.day) {
+        <div class="hours-row">
+          <strong>{{ days[hours.day - 1] }}</strong>
+          <label
+            ><input type="checkbox" [name]="'closed-' + hours.day" [(ngModel)]="hours.isClosed" />
+            Fechado em {{ days[hours.day - 1] }}</label
+          >
+          <label
+            >Abertura de {{ days[hours.day - 1] }}<input
+              type="time"
+              [name]="'opens-' + hours.day"
+              [(ngModel)]="hours.opensAt"
+              [disabled]="hours.isClosed"
+              required
+          /></label>
+          <label
+            >Fechamento de {{ days[hours.day - 1] }}<input
+              type="time"
+              [name]="'closes-' + hours.day"
+              [(ngModel)]="hours.closesAt"
+              [disabled]="hours.isClosed"
+              required
+          /></label>
+        </div>
+        }
+      </div>
+      <p class="hint">00:00 significa meia-noite ao final do dia informado.</p>
+      <h2>Pagamentos aceitos</h2>
+      <div class="choices">
+        <label><input type="checkbox" name="card" [(ngModel)]="card" /> Cartão</label
+        ><label><input type="checkbox" name="cash" [(ngModel)]="cash" /> Dinheiro</label
+        ><label><input type="checkbox" name="pix" [(ngModel)]="pix" /> Pix</label>
+      </div>
+      <label
+        >Orientação sobre prazo de entrega<textarea
+          name="estimate"
+          [(ngModel)]="settings.deliveryEstimateMessage"
+          maxlength="500"
+          required
+        ></textarea>
+      </label>
+    </fieldset>
+    <button type="submit" [disabled]="loading() || saving() || needsRefresh() || !!reviewed()">
+      Revisar configurações
+    </button>
+  </form>
+  } @if (reviewed(); as settings) {
+  <section class="panel" aria-label="Revisar atendimento">
+    <h2>Confira antes de salvar</h2>
+    <p>
+      {{ settings.isPaused ? 'Novos pedidos ficarão pausados.' : settings.receiveOrdersOutsideHours
+      ? 'Pedidos poderão ser enviados fora do horário.' : 'Novos pedidos somente dentro do horário.'
+      }}
+    </p>
+    <ul>
+      @for (hours of settings.hours; track hours.day) {
+      <li>
+        {{ days[hours.day - 1] }}: {{ hours.isClosed ? 'Fechado' : hours.opensAt + ' às ' +
+        hours.closesAt }}
+      </li>
+      }
+    </ul>
+    <p>Pagamentos: {{ paymentNames(settings.paymentMethods) }}.</p>
+    <p>{{ settings.deliveryEstimateMessage }}</p>
+    <div class="actions">
+      <button type="button" (click)="save()" [disabled]="saving()">
+        {{ saving() ? 'Salvando…' : 'Confirmar configurações' }}</button
+      ><button type="button" (click)="reviewed.set(null)" [disabled]="saving() || uncertain()">
+        Voltar à edição
+      </button>
+    </div>
+  </section>
+  }
+</section>

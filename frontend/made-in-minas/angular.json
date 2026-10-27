@@ -45,6 +45,28 @@
                 }
               ]
             },
+            "pilot": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.pilot.ts"
+                }
+              ]
+            },
+            "rehearsal": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.rehearsal.ts"
+                }
+              ]
+            },
             "development": {
               "optimization": false,
               "extractLicenses": false,
@@ -58,6 +80,12 @@
           "configurations": {
             "production": {
               "buildTarget": "made-in-minas:build:production"
+            },
+            "pilot": {
+              "buildTarget": "made-in-minas:build:pilot"
+            },
+            "rehearsal": {
+              "buildTarget": "made-in-minas:build:rehearsal"
             },
             "development": {
               "buildTarget": "made-in-minas:build:development"

@@ -16,6 +16,8 @@ public enum OrderError
     OrderStockQuantityExceeded,
     OrderStockReturnOverflow,
     PublicCheckoutUnavailable,
+    StoreNotAcceptingOrders,
+    StoreSettingsChanged,
     PublicDeliveryUnavailable,
     InvalidPublicDeliveryAddress,
     InvalidSession,

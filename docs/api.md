@@ -4,23 +4,25 @@ Na listagem administrativa `GET /api/products`, `hasRecipe` e `hasMissingCosts` 
 
 Base local: `http://localhost:5080`.
 
-| Método | Rota | Resposta |
-| --- | --- | --- |
-| GET | /api/system/status | 200, `{"status":"available"}` |
-| GET | /health/live | 200, `{"status":"Healthy","checks":{}}` |
-| GET | /health/ready | 200 quando conectado; 503 sem conexão |
-| GET | /openapi/v1.json | Documento OpenAPI, somente Development |
+Configurações comerciais: `GET /api/store-attendance/public` é anônimo e sem cache; retorna `hours` (dias ISO 1 a 7), `paymentMethods` (`Card`, `Cash`, `Pix`), `deliveryEstimateMessage`, `timeZone`, `isOpen`, `isPaused`, `acceptingOrders`, `checkedAt` e `nextChangeAt`. `GET /api/store-attendance` e `PUT /api/store-attendance` são administrativos (`delivery.manage`). A escrita recebe `{ expectedRevision, settings }` e rejeita campos desconhecidos, dias repetidos, horários inválidos e pagamentos sem suporte. `StoreSettingsChanged` e `StoreNotAcceptingOrders` retornam 409. Regras e valores acordados: [atendimento da loja](business-rules.md).
+
+| Método | Rota               | Resposta                                |
+| ------ | ------------------ | --------------------------------------- |
+| GET    | /api/system/status | 200, `{"status":"available"}`           |
+| GET    | /health/live       | 200, `{"status":"Healthy","checks":{}}` |
+| GET    | /health/ready      | 200 quando conectado; 503 sem conexão   |
+| GET    | /openapi/v1.json   | Documento OpenAPI, somente Development  |
 
 Readiness saudável:
 
 ```json
-{"status":"Healthy","checks":{"database":"Healthy"}}
+{ "status": "Healthy", "checks": { "database": "Healthy" } }
 ```
 
 Sem configuração ou com PostgreSQL inacessível:
 
 ```json
-{"status":"Unhealthy","checks":{"database":"Unhealthy"}}
+{ "status": "Unhealthy", "checks": { "database": "Unhealthy" } }
 ```
 
 O status da aplicação não informa prontidão do banco. Liveness não depende do banco, evitando reinícios indevidos durante uma indisponibilidade do PostgreSQL.
@@ -65,7 +67,6 @@ O bloco operacional F adiciona `GET /api/stock/replenishment`, com `catalog.mana
 
 A Fase 6B mantém as rotas e entradas de pedidos. A confirmação em PUT /api/orders/{id}/status também baixa estoque; o cancelamento anterior ao preparo devolve a baixa. OrderResponse acrescenta stockStatus/stockComponents, e StockMovementResponse, orderId opcional. Conflitos 409: OrderRecipeRequired, OrderIngredientInactive, OrderInsufficientStock, OrderStockQuantityExceeded e OrderStockReturnOverflow. Não há endpoint público para lançar consumo automático. Contratos e regras: [order-stock.md](order-stock.md).
 
-
 A Fase 6C adiciona GET /api/products/{productId}/costing, exclusivo de catalog.manage, com no-store. Retorna preço/custos atuais, composição, rendimento, CMV e margem teóricos. Estados Ready, MissingRecipe e MissingCosts; pendências retornam 200 com indicadores nulos, produto ausente retorna 404/ProductNotFound. Não há escrita. Contrato: [cmv.md](cmv.md).
 
 A Fase 7A adiciona GET /api/dashboard/today, exclusivo de dashboard.view (administrador), com no-store. Retorna data civil/fuso/limites UTC, pedidos criados e confirmados, valores/ticket, recebimentos/estornos pelos eventos, filas sem corte de data, média de produção e até cinco produtos por quantidade. Médias sem amostra são null; não envia dados pessoais. 401 sem sessão válida, 403 sem permissão. Contrato e critérios: [daily-dashboard.md](daily-dashboard.md).
@@ -81,6 +82,10 @@ A Fase 8C adiciona POST /api/public-checkout/review e POST /api/public-checkout/
 A Fase 8D adiciona GET /api/public-orders/tracking, com credencial no cabeçalho X-Order-Access, sem JWT ou seleção por número/telefone. Checkout passa a retornar tracking { token, expiresAt }, ou null após sete dias da criação. Consulta retorna apenas número, modalidade, total, status e horários/histórico; 200/404 usam no-store. Acesso ausente, inválido, expirado ou para pedido inexistente/manual retorna o mesmo 404 genérico. Limite independente de 60 consultas/minuto por endereço remoto (429). Repetir checkout recupera acesso ao mesmo pedido sem estender o prazo. Contrato completo: [public-order-tracking.md](public-order-tracking.md).
 
 A Fase 8E adiciona POST/GET /api/public-chat e POST /api/public-chat/messages, com X-Chat-Access para ler/enviar após a solicitação inicial. A equipe usa GET /api/chat, GET /api/chat/{id}, POST /api/chat/{id}/messages e PUT /api/chat/{id}/claim ou /close, com chat.manage. Criação/envio retornam 201 ou 200 em repetição; conflitos 409; acesso público inválido 404 genérico. Textos até 2.000 caracteres, transcript por cursor de 50 mensagens e fila de 20 conversas por página. Limites públicos separados de 5/20/120 chamadas por minuto por endereço remoto (iniciar/enviar/ler). Contratos e erros: [human-chat.md](human-chat.md).
+
+A Fase 9 acrescenta `automationMode`, `automationState`, `automationAvailable` e `order` ao transcript e autoria `Assistant`. `PUT /api/public-chat/handoff` recebe `{ expectedVersion }`; `PUT /api/chat/{id}/automation`, com `chat.manage`, retoma o automático. `POST /api/public-chat/order/review` recebe `{ expectedDraftVersion }` e `POST /api/public-chat/order/confirm` recebe `{ requestId, expectedDraftVersion, reviewToken }`, ambos com `X-Chat-Access`. Retornam o estado da montagem/revisão/recibo. A confirmação não recebe itens, preços ou descontos do navegador. `ChatAutomationPending` impede revisar/confirmar enquanto a IA processa alterações; versão/revisão diferente exige nova revisão. Repetir a confirmação aceita recupera o recibo. A criação/envio de mensagens mantém os contratos anteriores e não aguarda o provedor. Contratos, ferramentas e limites: [assistente virtual](ai-chat.md).
+
+Em 11/10/2026, `GET /api/chat/{id}` acrescenta `linkedOrder: { id, number, status, fulfillment, subtotal, deliveryFee, total } | null` à resposta da equipe, mantendo `chat.manage`. A consulta usa o vínculo persistido entre montagem e pedido público e confere a tentativa de criação. O status é atual, inclusive quando não chegaram novas mensagens. O transcript público não recebe esse identificador interno; o detalhe de Pedidos continua protegido por `orders.manage`. Não há nova rota nem migration neste ajuste.
 
 ## Entrega pública — 8F
 

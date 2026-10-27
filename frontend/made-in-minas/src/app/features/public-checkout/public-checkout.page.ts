@@ -1,6 +1,8 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { StoreAttendanceStatus } from '../../core/services/store-attendance-status.service';
+import { StoreAttendanceNotice } from '../../shared/store-attendance-notice.component';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { IonContent } from '@ionic/angular/ion-content';
@@ -21,12 +23,14 @@ import { PublicCheckoutState } from '../../core/services/public-checkout-state.s
 @Component({
   selector: 'app-public-checkout',
   host: { class: 'ion-page' },
-  imports: [FormsModule, RouterLink, IonContent],
+  imports: [FormsModule, RouterLink, IonContent, StoreAttendanceNotice],
+  providers: [StoreAttendanceStatus],
   templateUrl: './public-checkout.page.html',
   styleUrl: './public-checkout.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PublicCheckoutPage {
+  readonly attendance = inject(StoreAttendanceStatus);
   readonly cart = inject(PublicCartState);
   readonly state = inject(PublicCheckoutState);
   private readonly api = inject(PublicCheckoutApi);
@@ -170,7 +174,7 @@ export class PublicCheckoutPage {
   }
 
   revise(): void {
-    if (this.busy() || this.state.locked()) {
+    if (this.busy() || this.state.locked() || !this.attendance.data()?.acceptingOrders) {
       return;
     }
     this.change();
@@ -227,14 +231,16 @@ export class PublicCheckoutPage {
         },
         error: (error: unknown) => {
           this.error.set(
-            error instanceof HttpErrorResponse && error.error?.code === 'CartProductUnavailable'
-              ? 'Um produto ficou indisponível. Volte ao carrinho e confira os itens.'
-              : error instanceof HttpErrorResponse &&
-                  error.error?.code === 'PublicDeliveryUnavailable'
-                ? 'Essa região não está mais disponível. Atualize as regiões ou escolha retirada.'
-                : error instanceof HttpErrorResponse && error.status === 400
-                  ? 'Confira os dados de contato e endereço antes de revisar.'
-                  : 'Não foi possível revisar. Confira sua conexão e tente novamente.',
+            error instanceof HttpErrorResponse && error.error?.code === 'StoreNotAcceptingOrders'
+              ? error.error.title
+              : error instanceof HttpErrorResponse && error.error?.code === 'CartProductUnavailable'
+                ? 'Um produto ficou indisponível. Volte ao carrinho e confira os itens.'
+                : error instanceof HttpErrorResponse &&
+                    error.error?.code === 'PublicDeliveryUnavailable'
+                  ? 'Essa região não está mais disponível. Atualize as regiões ou escolha retirada.'
+                  : error instanceof HttpErrorResponse && error.status === 400
+                    ? 'Confira os dados de contato e endereço antes de revisar.'
+                    : 'Não foi possível revisar. Confira sua conexão e tente novamente.',
           );
         },
       });
@@ -246,6 +252,9 @@ export class PublicCheckoutPage {
     }
     this.error.set('');
     if (!this.state.pending()) {
+      if (!this.attendance.data()?.acceptingOrders) {
+        return;
+      }
       const review = this.review();
       if (!review || !this.reviewedInput) {
         return;
@@ -292,6 +301,7 @@ export class PublicCheckoutPage {
               'OrderReviewChanged',
               'CartProductUnavailable',
               'PublicCheckoutUnavailable',
+              'StoreNotAcceptingOrders',
               'PublicDeliveryUnavailable',
             ].includes(code)
           ) {
@@ -308,11 +318,13 @@ export class PublicCheckoutPage {
                 : this.emptyAddress();
               this.change();
               this.error.set(
-                code === 'PublicCheckoutUnavailable'
-                  ? 'O pedido não foi enviado. Procure o atendimento para continuar.'
-                  : code === 'PublicDeliveryUnavailable'
-                    ? 'O pedido não foi enviado. A região não está disponível; atualize as regiões ou escolha retirada.'
-                    : 'O pedido não foi enviado porque os dados mudaram. Confira o carrinho, endereço e taxa e faça uma nova revisão.',
+                code === 'StoreNotAcceptingOrders'
+                  ? error.error.title
+                  : code === 'PublicCheckoutUnavailable'
+                    ? 'O pedido não foi enviado. Procure o atendimento para continuar.'
+                    : code === 'PublicDeliveryUnavailable'
+                      ? 'O pedido não foi enviado. A região não está disponível; atualize as regiões ou escolha retirada.'
+                      : 'O pedido não foi enviado porque os dados mudaram. Confira o carrinho, endereço e taxa e faça uma nova revisão.',
               );
               return;
             } catch {

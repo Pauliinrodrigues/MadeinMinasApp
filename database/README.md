@@ -199,3 +199,16 @@ dotnet ef database update 20261006174915_AddDeliverySettings --project backend/M
 ```
 
 Reinicie a API atualizada e faça novo login como administrador para receber `delivery.manage`. Cadastros → Regiões de entrega passa a administrar cobertura/taxas sem novos reinícios. Até o primeiro salvamento, lê a configuração legada; depois, prevalece a lista do banco. Down recusa apagar configurações salvas; exportar e migrar antes de uma reversão planejada. Não apagar a linha para contornar a proteção. Regras: [delivery-settings.md](../docs/delivery-settings.md). Resultado local e backup: [validation.md](../docs/validation.md).
+
+## Migration do agente do chat — Fase 9
+
+`20261010152627_AddAiChatAgent`, posterior a `20261010142620_AddStoreAttendanceSettings`, acrescenta modo, progresso, lease e limites de uso às conversas e cria `ChatOrderDrafts`. Conversas existentes recebem `Manual`; mensagens e dados comerciais permanecem intactos. A autoria passa a aceitar `Assistant` e eventos de sistema sem funcionário. A tabela de montagem vincula a conversa ao pedido criado, sem cadastro duplicado de produtos/clientes.
+
+Depois de verificar a conexão exclusivamente ao banco Made in Minas, criar um backup e revisar o script:
+
+```powershell
+dotnet ef migrations script 20261010142620_AddStoreAttendanceSettings 20261010152627_AddAiChatAgent --project backend/MadeInMinas.Api
+dotnet ef database update 20261010152627_AddAiChatAgent --project backend/MadeInMinas.Api
+```
+
+Aplicar o esquema precede executar a API atualizada, mesmo com IA desligada, pois o chat lê o estado da montagem. A geração e os testes da migration não a aplicam à instalação operacional. A reversão recusa apagar montagens, mensagens/eventos da IA ou seu estado/uso; não elimina esses dados para contornar a proteção. Configuração do provedor e roteiro: [assistente virtual](../docs/ai-chat.md).

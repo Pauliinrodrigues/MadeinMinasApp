@@ -12,7 +12,7 @@ public sealed class ChatMessageConfiguration : IEntityTypeConfiguration<ChatMess
         {
             table.HasCheckConstraint("CK_ChatMessages_Sequence", "\"Sequence\" > 0");
             table.HasCheckConstraint("CK_ChatMessages_Text", "length(btrim(\"Text\")) > 0");
-            table.HasCheckConstraint("CK_ChatMessages_Author", "(\"Kind\" = 'Visitor' AND \"ActorId\" IS NULL AND \"ActorName\" IS NULL AND \"RequestId\" IS NOT NULL) OR (\"Kind\" = 'Staff' AND \"ActorId\" IS NOT NULL AND \"ActorName\" IS NOT NULL AND \"RequestId\" IS NOT NULL) OR (\"Kind\" = 'System' AND \"ActorId\" IS NOT NULL AND \"ActorName\" IS NOT NULL AND \"RequestId\" IS NULL)");
+            table.HasCheckConstraint("CK_ChatMessages_Author", "(\"Kind\" = 'Visitor' AND \"ActorId\" IS NULL AND \"ActorName\" IS NULL AND \"RequestId\" IS NOT NULL) OR (\"Kind\" = 'Staff' AND \"ActorId\" IS NOT NULL AND \"ActorName\" IS NOT NULL AND \"RequestId\" IS NOT NULL) OR (\"Kind\" = 'Assistant' AND \"ActorId\" IS NULL AND \"ActorName\" IS NULL AND \"RequestId\" IS NULL) OR (\"Kind\" = 'System' AND \"RequestId\" IS NULL AND ((\"ActorId\" IS NOT NULL AND \"ActorName\" IS NOT NULL) OR (\"ActorId\" IS NULL AND \"ActorName\" IS NULL)))");
         });
         builder.HasKey(message => message.Id);
         builder.HasIndex(message => new { message.ConversationId, message.Sequence }).IsUnique();

@@ -7,6 +7,23 @@ namespace MadeInMinas.Api.Services;
 
 public sealed class PublicMenuService(AppDbContext database)
 {
+    public async Task<MenuProductResponse?> GetProductAsync(Guid id, CancellationToken cancellationToken)
+    {
+        await using var transaction = await database.Database.BeginTransactionAsync(IsolationLevel.RepeatableRead, cancellationToken);
+        var product = await database.Products.AsNoTracking()
+            .Where(product => product.Id == id && product.IsActive && product.Category.IsActive)
+            .Select(product => new MenuProductResponse(product.Id, product.CategoryId, product.Name,
+                product.Description, product.Price, product.ImageUrl, product.IsAvailable))
+            .SingleOrDefaultAsync(cancellationToken);
+        if (product is not null)
+        {
+            var availability = await ProductionAvailability.ReadAsync(database, [id], cancellationToken);
+            product = product with { IsAvailable = product.IsAvailable && availability.CanProduce([(id, 1)]) };
+        }
+        await transaction.CommitAsync(cancellationToken);
+        return product;
+    }
+
     public async Task<PublicMenuResponse> GetAsync(PublicMenuQuery request, CancellationToken cancellationToken)
     {
         await using var transaction = await database.Database.BeginTransactionAsync(IsolationLevel.RepeatableRead, cancellationToken);

@@ -7,8 +7,14 @@
     <section class="intro">
       <span class="eyebrow">PODE CHEGAR.</span>
       <h1>Fale com <em>a gente.</em></h1>
-      <p>Peça ajuda a um atendente. A resposta depende da disponibilidade da equipe.</p>
+      <p>Converse sobre o cardápio e seu pedido. Você também pode pedir ajuda à equipe.</p>
     </section>
+    @if (testing) {
+    <p class="hint" role="note">
+      Ambiente de ensaio. Use dados fictícios. Pedidos enviados aqui são de teste e não chegam à
+      loja.
+    </p>
+    }
     <section class="panel">
       @if (receipt(); as order) { @if (!state.recoveryError() && !unavailable() &&
       !state.value().pendingStart && !state.value().pendingMessage && transcript()?.status !==
@@ -29,17 +35,115 @@
       <p>Ao recomeçar, você perde o acesso anterior desta aba.</p>
       <button (click)="reset()" [disabled]="busy()">Recomeçar atendimento</button>
       } @else if (state.value().access) {
-      <h2>{{ transcript() ? statusLabel(transcript()!.status) : 'Carregando conversa…' }}</h2>
-      @if (transcript()?.status === 'Waiting') {
+      <h2>{{ transcript() ? attendanceLabel(transcript()!) : 'Carregando conversa…' }}</h2>
+      @if (automatic() && transcript()?.status !== 'Closed') {
+      <p>
+        A assistente virtual usa as informações da loja. Um pedido só é enviado após você revisar e
+        confirmar o resumo abaixo.
+      </p>
+      <button type="button" (click)="handoff()" [disabled]="busy() || !fresh()">
+        Falar com atendente humano
+      </button>
+      } @else if (transcript()?.status === 'Waiting') {
       <p>
         Sua solicitação está na fila. Você pode continuar escolhendo no cardápio e voltar por esta
         aba.
+      </p>
+      } @if (assistantPending()) {
+      <p role="status">A assistente virtual está preparando a resposta…</p>
+      } @if (transcript()?.automationState === 'Unavailable') {
+      <p role="status">
+        A assistente virtual está indisponível. Sua conversa permanece disponível para a equipe.
       </p>
       } @if (loadError()) {
       <p role="alert">{{ loadError() }}</p>
       }
       <app-chat-messages [messages]="messages()" />
-      @if (state.value().pendingMessage; as pending) {
+      @if (order(); as currentOrder) {
+      <section class="order-summary" aria-label="Pedido no chat">
+        @if (currentOrder.receipt; as receipt) {
+        <h3>Pedido #{{ receipt.number }} enviado</h3>
+        <p>
+          Total: {{ price(receipt.total) }}. A equipe vai confirmar a disponibilidade e o preparo.
+        </p>
+        @if (receipt.tracking) {
+        <a routerLink="/pedido/acompanhar">Acompanhar pedido #{{ receipt.number }}</a>
+        } } @else if (currentOrder.items.length) {
+        <h3>Seu pedido em montagem</h3>
+        @if (!state.value().pendingOrder) {
+        <p>
+          Seu pedido ainda não foi enviado. Complete os dados, confira o resumo e clique em
+          Confirmar pedido.
+        </p>
+        } @for (item of currentOrder.items; track item.productId) {
+        <p>
+          {{ item.quantity }} × {{ item.name }} · {{ price(item.unitPrice) }} por unidade · {{
+          price(item.lineTotal) }}
+        </p>
+        @if (item.notes) {
+        <p>Observação do item: {{ item.notes }}</p>
+        } } @if (currentOrder.quote; as quote) {
+        <p>Produtos: {{ price(quote.subtotal) }}</p>
+        } @if (missingOrderFields().length) {
+        <p>Informe na conversa: {{ missingOrderFields().join(', ') }}.</p>
+        } @if (currentOrder.review; as result) {
+        <div role="region" aria-label="Resumo para confirmação">
+          <h3>Confira antes de confirmar</h3>
+          <p>{{ result.name }} · {{ result.phone }}</p>
+          @if (result.address; as address) {
+          <p>
+            Entrega em {{ address.street }}, {{ address.number }} · {{ address.neighborhood }} · {{
+            address.city }}/{{ address.state }}
+          </p>
+          @if (address.complement) {
+          <p>Complemento: {{ address.complement }}</p>
+          } @if (address.postalCode) {
+          <p>CEP: {{ address.postalCode }}</p>
+          } @if (address.reference) {
+          <p>Referência: {{ address.reference }}</p>
+          } } @else {
+          <p>Retirada no balcão</p>
+          } @if (result.notes) {
+          <p>Observações: {{ result.notes }}</p>
+          }
+          <p>
+            Produtos: {{ price(result.subtotal) }} · Taxa de entrega: {{ price(result.deliveryFee)
+            }}
+          </p>
+          <p><strong>Total: {{ price(result.total) }}</strong></p>
+          <p>
+            Este envio não realiza cobrança. Combine a forma de pagamento com a equipe. Para alterar
+            o pedido, escreva na conversa e revise novamente.
+          </p>
+          @if (!state.value().pendingOrder) {
+          <button
+            type="button"
+            (click)="confirmOrder()"
+            [disabled]="busy() || !fresh() || orderProcessing() || transcript()?.status === 'Closed'"
+          >
+            Confirmar pedido
+          </button>
+          }
+        </div>
+        } @else if (!state.value().pendingOrder && !currentOrder.missingFields.length) {
+        <button
+          type="button"
+          (click)="reviewOrder()"
+          [disabled]="busy() || !fresh() || orderProcessing() || transcript()?.status === 'Closed'"
+        >
+          Revisar pedido
+        </button>
+        } }
+      </section>
+      } @if (state.value().pendingOrder) {
+      <p role="status">
+        O envio do pedido ainda não foi confirmado. Confira a mesma tentativa antes de alterar os
+        itens.
+      </p>
+      <button type="button" (click)="confirmOrder()" [disabled]="busy()">
+        {{ busy() ? 'Conferindo…' : 'Conferir envio' }}
+      </button>
+      } @if (state.value().pendingMessage; as pending) {
       <p>Mensagem aguardando confirmação:</p>
       <p class="pending">{{ pending.text }}</p>
       <button (click)="send()" [disabled]="busy()">
@@ -55,9 +159,12 @@
         [(ngModel)]="text"
         maxlength="2000"
         rows="4"
-        [disabled]="busy()"
+        [disabled]="busy() || !!state.value().pendingOrder"
       ></textarea>
-      <button (click)="send()" [disabled]="busy() || !fresh() || !text.trim()">
+      <button
+        (click)="send()"
+        [disabled]="busy() || !fresh() || !text.trim() || !!state.value().pendingOrder"
+      >
         {{ busy() ? 'Enviando…' : 'Enviar mensagem' }}
       </button>
       }
@@ -82,8 +189,9 @@
       <p class="error" role="alert">{{ error() }}</p>
       }
       <p class="hint">
-        Não envie senhas ou dados de cartão. Para comprar, use o
-        <a routerLink="/pedido">cardápio e o carrinho</a>; uma mensagem não confirma um pedido.
+        Não envie senhas ou dados de cartão. Você também pode comprar pelo
+        <a routerLink="/pedido">cardápio e o carrinho</a>. Uma mensagem não confirma um pedido;
+        confira o resumo e use o botão de confirmação.
       </p>
     </section>
     <footer>Made in Minas · Feito com cuidado.</footer>

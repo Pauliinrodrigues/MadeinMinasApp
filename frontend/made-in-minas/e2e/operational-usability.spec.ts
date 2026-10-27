@@ -1,7 +1,12 @@
+import { publicAttendanceFixture } from './fixtures/store-attendance';
 import { expect, Page, test } from '@playwright/test';
 
 async function auth(page: Page, role: string, permissions: string[]) {
   await page.route('**/api/**', async (route) => {
+    if (new URL(route.request().url()).pathname === '/api/store-attendance/public') {
+      expect(route.request().headers()['authorization']).toBeUndefined();
+      return route.fulfill({ json: publicAttendanceFixture() });
+    }
     const path = new URL(route.request().url()).pathname;
     const user = { id: 'worker-1', name: 'Equipe', username: 'equipe', role, permissions };
     if (path === '/api/auth/login') {
@@ -82,6 +87,10 @@ test('cardÃ¡pio mostra cobertura, busca no servidor e preserva rascunho sem preÃ
   let price = 29.9;
   const searches: string[] = [];
   await page.route('**/api/**', async (route) => {
+    if (new URL(route.request().url()).pathname === '/api/store-attendance/public') {
+      expect(route.request().headers()['authorization']).toBeUndefined();
+      return route.fulfill({ json: publicAttendanceFixture() });
+    }
     const url = new URL(route.request().url());
     if (url.pathname === '/api/public-checkout/delivery-areas') {
       return route.fulfill({ json: [] });

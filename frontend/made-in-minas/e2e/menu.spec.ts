@@ -1,3 +1,4 @@
+import { publicAttendanceFixture } from './fixtures/store-attendance';
 import { expect, Page, test } from '@playwright/test';
 import type { PublicMenu } from '../src/app/core/services/menu-api.service';
 
@@ -65,6 +66,10 @@ async function setup(page: Page) {
         }),
   );
   await page.route('**/api/**', async (route) => {
+    if (new URL(route.request().url()).pathname === '/api/store-attendance/public') {
+      expect(route.request().headers()['authorization']).toBeUndefined();
+      return route.fulfill({ json: publicAttendanceFixture() });
+    }
     const request = route.request();
     const url = new URL(request.url());
     if (url.pathname.startsWith('/api/product-images/')) {

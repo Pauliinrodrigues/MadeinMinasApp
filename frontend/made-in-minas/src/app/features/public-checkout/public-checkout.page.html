@@ -8,6 +8,7 @@
       <span class="eyebrow">FALTA POUCO.</span>
       <h1>Seu pedido, <em>com cuidado.</em></h1>
     </section>
+    <app-store-attendance-notice />
     @if (state.receipt(); as receipt) {
     <section class="panel" aria-label="Pedido recebido">
       <h2>Recebemos o pedido #{{ receipt.number }}</h2>
@@ -65,7 +66,11 @@
         Mantenha esta aba aberta. Atualizá-la permite retomar a conferência; fechá-la pode perder a
         recuperação.
       </p>
-      <button type="button" (click)="send()" [disabled]="busy()">
+      <button
+        type="button"
+        (click)="send()"
+        [disabled]="busy() || (!state.pending() && !attendance.data()?.acceptingOrders)"
+      >
         {{ busy() ? 'Conferindo…' : 'Conferir envio' }}
       </button>
     </section>
@@ -252,7 +257,11 @@
       </section>
       <section class="panel" aria-label="Revisão do pedido">
         <h2>Confira antes de enviar</h2>
-        <button type="button" (click)="revise()" [disabled]="busy()">
+        <button
+          type="button"
+          (click)="revise()"
+          [disabled]="busy() || !attendance.data()?.acceptingOrders"
+        >
           {{ busy() ? 'Revisando…' : fulfillment === 'Delivery' ? 'Revisar pedido para entrega' :
           'Revisar pedido para retirada' }}
         </button>

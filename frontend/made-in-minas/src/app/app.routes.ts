@@ -67,6 +67,14 @@ export const routes: Routes = [
       import('./features/staff/staff-layout.page').then((page) => page.StaffLayoutPage),
     children: [
       {
+        path: 'configuracoes-atendimento',
+        canActivate: [deliveryGuard],
+        loadComponent: () =>
+          import('./features/store-attendance/store-attendance.page').then(
+            (page) => page.StoreAttendancePage,
+          ),
+      },
+      {
         path: 'impressao',
         canActivate: [printingSettingsGuard],
         loadComponent: () =>

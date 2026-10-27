@@ -29,4 +29,8 @@ public sealed class PublicChatController(HumanChatService chat) : ControllerBase
         var result = await chat.SendPublicAsync(Access, request, cancellationToken);
         return StatusCode(result.Created ? 201 : 200, result.Message);
     }
+
+    [HttpPut("handoff"), EnableRateLimiting("chat-send")]
+    public Task<ChatTranscriptResponse> HandOff(ChatActionRequest request, CancellationToken cancellationToken) =>
+        chat.HandOffPublicAsync(Access, request, cancellationToken);
 }

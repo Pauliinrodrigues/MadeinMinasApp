@@ -15,6 +15,8 @@ function Invoke-Check {
 
 Push-Location $workspace
 try {
+    # Simulated evaluation checks: no API key, network or paid provider calls.
+    Invoke-Check node @('--test', 'scripts/ai-evaluation/*.test.mjs')
     Invoke-Check dotnet @('restore', 'MadeinMinasApp.sln', '--locked-mode')
     Invoke-Check dotnet @('format', 'whitespace', 'MadeinMinasApp.sln', '--no-restore', '--verify-no-changes', '--exclude', 'backend/MadeInMinas.Api/Data/Migrations')
     # O script compila e testa em .local/test-build, sem substituir a API em execucao.

@@ -12,6 +12,7 @@ import {
   OrderStatusInput,
   orderStatusLabel,
 } from '../../core/services/order-api.service';
+import { OrderAlert } from '../../core/services/order-alert.service';
 import { formatProductPrice } from '../../core/services/product-api.service';
 import {
   PaymentApi,
@@ -56,6 +57,7 @@ import {
 })
 export class OrderDetailPage {
   private readonly api = inject(OrderApi);
+  private readonly alert = inject(OrderAlert);
   private readonly paymentsApi = inject(PaymentApi);
   private paymentRequest?: Subscription;
   readonly payments = signal<PaymentPage | null>(null);
@@ -197,6 +199,9 @@ export class OrderDetailPage {
       .subscribe({
         next: (result) => {
           this.order.set(result);
+          if (order.status === 'New') {
+            this.alert.accepted();
+          }
           this.pending.set(null);
           this.notice.set(
             'Pedido ' + (result.status === 'Confirmed' ? 'confirmado.' : 'cancelado.'),

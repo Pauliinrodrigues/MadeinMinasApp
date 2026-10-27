@@ -52,7 +52,11 @@ jobs:
           path: TestResults
 
   frontend:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    # Keep browsers and system libraries aligned with @playwright/test.
+    container:
+      image: mcr.microsoft.com/playwright:v1.58.2-noble
+      options: --ipc=host
     timeout-minutes: 15
     defaults:
       run:
@@ -64,11 +68,12 @@ jobs:
           node-version-file: frontend/made-in-minas/.nvmrc
           cache: npm
           cache-dependency-path: frontend/made-in-minas/package-lock.json
+      - name: Evaluate assistant safeguards without provider calls
+        run: node --test ../../scripts/ai-evaluation/*.test.mjs
       - run: npm ci
       - run: npm run format:check
       - run: npm run lint
       - run: npm run build
-      - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
       - uses: actions/upload-artifact@v4
         if: failure()
