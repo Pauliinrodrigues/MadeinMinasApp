@@ -52,8 +52,11 @@ jobs:
           path: TestResults
 
   frontend:
-    # Playwright 1.58.2 supports Ubuntu 24.04; ubuntu-latest now also selects 26.04.
     runs-on: ubuntu-24.04
+    # Keep browsers and system libraries aligned with @playwright/test.
+    container:
+      image: mcr.microsoft.com/playwright:v1.58.2-noble
+      options: --ipc=host
     timeout-minutes: 15
     defaults:
       run:
@@ -71,7 +74,6 @@ jobs:
       - run: npm run format:check
       - run: npm run lint
       - run: npm run build
-      - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
       - uses: actions/upload-artifact@v4
         if: failure()
