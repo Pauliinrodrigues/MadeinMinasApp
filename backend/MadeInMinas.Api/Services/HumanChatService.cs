@@ -7,11 +7,14 @@ using MadeInMinas.Api.Data;
 using MadeInMinas.Api.DTOs.Chat;
 using MadeInMinas.Api.Models;
 using MadeInMinas.Api.Security;
+using MadeInMinas.Api.Services.Ai;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace MadeInMinas.Api.Services;
 
-public sealed class HumanChatService(AppDbContext database, PublicChatAccess access, TimeProvider clock)
+public sealed class HumanChatService(AppDbContext database, PublicChatAccess access, TimeProvider clock,
+    IOptions<AiOptions> aiOptions, ChatOrderService orders)
 {
     public async Task<ChatStartResult> StartAsync(StartChatRequest request, CancellationToken cancellationToken)
     {
@@ -30,7 +33,15 @@ public sealed class HumanChatService(AppDbContext database, PublicChatAccess acc
             return new ChatStartResult(new(access.Issue(existing.Id, existing.CreatedAt), existing.CreatedAt), false);
         }
         var now = UtcNow();
-        var conversation = new ChatConversation { RequestId = request.RequestId!.Value, RequestHash = hash, VisitorName = name, CreatedAt = now, UpdatedAt = now };
+        var conversation = new ChatConversation
+        {
+            RequestId = request.RequestId!.Value,
+            RequestHash = hash,
+            VisitorName = name,
+            CreatedAt = now,
+            UpdatedAt = now,
+            AutomationMode = aiOptions.Value.IsConfigured ? "Automatic" : "Manual"
+        };
         database.ChatConversations.Add(conversation);
         database.ChatMessages.Add(new ChatMessage
         {
@@ -41,6 +52,8 @@ public sealed class HumanChatService(AppDbContext database, PublicChatAccess acc
             Text = text,
             CreatedAt = now
         });
+        if (aiOptions.Value.Enabled && !aiOptions.Value.IsConfigured)
+            AddMessage(conversation, "System", "O atendimento automático está indisponível. Sua conversa seguirá para a equipe.", null, null);
         await database.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         return new ChatStartResult(new(access.Issue(conversation.Id, now), now), true);
@@ -85,7 +98,17 @@ public sealed class HumanChatService(AppDbContext database, PublicChatAccess acc
     {
         await using var transaction = await database.Database.BeginTransactionAsync(IsolationLevel.RepeatableRead, cancellationToken);
         var conversation = await database.ChatConversations.AsNoTracking().SingleOrDefaultAsync(chat => chat.Id == id, cancellationToken) ?? throw Unavailable();
-        var result = new StaffChatResponse(Summary(conversation), await TranscriptAsync(conversation, after, cancellationToken));
+        // The staff shortcut comes from the server-owned confirmation link,
+        // never from a number/ID written in a message or from the model.
+        var linkedOrder = await (from draft in database.ChatOrderDrafts.AsNoTracking()
+                                 join order in database.Orders.AsNoTracking() on draft.OrderId equals (Guid?)order.Id
+                                 where draft.ConversationId == id && draft.OrderRequestId == order.RequestId && order.Origin == "DirectLink"
+                                 select new StaffChatOrderResponse(order.Id, order.Number, order.Status, order.Fulfillment,
+                                     order.Subtotal, order.DeliveryFee, order.Total)).SingleOrDefaultAsync(cancellationToken);
+        var result = new StaffChatResponse(Summary(conversation), await TranscriptAsync(conversation, after, cancellationToken))
+        {
+            LinkedOrder = linkedOrder
+        };
         await transaction.CommitAsync(cancellationToken);
         return result;
     }
@@ -131,10 +154,90 @@ public sealed class HumanChatService(AppDbContext database, PublicChatAccess acc
             conversation.AssignedToName = actor.Name;
             conversation.Status = "InService";
         }
+        StopAutomation(conversation);
         AddMessage(conversation, "System", actionText, null, actor);
         await database.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         return Summary(conversation);
+    }
+
+    public async Task<ChatTranscriptResponse> HandOffPublicAsync(string? token, ChatActionRequest request, CancellationToken cancellationToken)
+    {
+        var id = VisitorId(token);
+        await using var transaction = await database.Database.BeginTransactionAsync(cancellationToken);
+        var conversation = await LockAsync(id, cancellationToken);
+        const string text = "O cliente solicitou atendimento humano. A equipe responderá quando disponível.";
+        var last = await database.ChatMessages.AsNoTracking().SingleAsync(message => message.ConversationId == id && message.Sequence == conversation.Version, cancellationToken);
+        var repeated = request.ExpectedVersion == conversation.Version - 1 && last.Kind == "System" && last.ActorId is null && last.Text == text;
+        if (!repeated)
+        {
+            ValidateAction(conversation, request);
+            if (conversation.AutomationMode != "Manual")
+            {
+                StopAutomation(conversation);
+                AddMessage(conversation, "System", text, null, null);
+                await database.SaveChangesAsync(cancellationToken);
+            }
+        }
+        var result = await TranscriptAsync(conversation, 0, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return result;
+    }
+
+    public async Task<ChatSummaryResponse> ResumeAutomationAsync(Guid actorId, Guid stamp, Guid id, ChatActionRequest request, CancellationToken cancellationToken)
+    {
+        await using var transaction = await database.Database.BeginTransactionAsync(cancellationToken);
+        var (actor, _) = await ActorAsync(actorId, stamp, cancellationToken);
+        var conversation = await LockAsync(id, cancellationToken);
+        const string text = "O atendimento automático foi retomado pela equipe.";
+        var last = await database.ChatMessages.AsNoTracking().SingleAsync(message => message.ConversationId == id && message.Sequence == conversation.Version, cancellationToken);
+        if (request.ExpectedVersion == conversation.Version - 1 && last.Kind == "System" && last.ActorId == actorId && last.Text == text && conversation.AutomationMode == "Automatic")
+        {
+            await transaction.CommitAsync(cancellationToken);
+            return Summary(conversation);
+        }
+        ValidateAction(conversation, request);
+        if (!aiOptions.Value.IsConfigured)
+            throw new ChatException(ChatError.ChatAutomationUnavailable, "O atendimento automático está desativado ou indisponível.");
+        if (conversation.Status == "InService" && conversation.AssignedToId != actorId)
+            throw AssignmentRequired();
+        if (conversation.Version >= 500)
+            throw new ChatException(ChatError.ChatLimitReached, "Esta conversa atingiu o limite de mensagens. Encerre o atendimento.");
+        conversation.Status = "Waiting";
+        conversation.AssignedToId = null;
+        conversation.AssignedToName = null;
+        conversation.AutomationMode = "Automatic";
+        ClearLease(conversation);
+        var latestVisitor = await database.ChatMessages.Where(message => message.ConversationId == id && message.Kind == "Visitor")
+            .MaxAsync(message => message.Sequence, cancellationToken);
+        conversation.AiProcessedSequence = Math.Max(0, latestVisitor - 1);
+        AddMessage(conversation, "System", text, null, actor);
+        await database.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return Summary(conversation);
+    }
+
+    private void ValidateAction(ChatConversation conversation, ChatActionRequest request)
+    {
+        if (conversation.Version != request.ExpectedVersion)
+            throw new ChatException(ChatError.ChatVersionConflict, "A conversa mudou. Atualize antes de continuar.");
+        if (conversation.Status == "Closed")
+            throw new ChatException(ChatError.ChatClosed, "O atendimento foi encerrado.");
+        if (conversation.CreatedAt.AddDays(7) <= clock.GetUtcNow())
+            throw new ChatException(ChatError.ChatExpired, "O acesso do visitante expirou. Encerre esta conversa.");
+    }
+
+    private static void ClearLease(ChatConversation conversation)
+    {
+        conversation.AiLeaseId = null;
+        conversation.AiLeaseExpiresAt = null;
+        conversation.AiLeaseSourceSequence = null;
+    }
+
+    private static void StopAutomation(ChatConversation conversation)
+    {
+        conversation.AutomationMode = "Manual";
+        ClearLease(conversation);
     }
 
     private async Task<ChatSendResult> SendAsync(ChatConversation conversation, SendChatMessageRequest request, User? actor, CancellationToken cancellationToken)
@@ -157,6 +260,16 @@ public sealed class HumanChatService(AppDbContext database, PublicChatAccess acc
         if (conversation.Version >= 500)
             throw new ChatException(ChatError.ChatLimitReached, "Esta conversa atingiu o limite de mensagens. Solicite o encerramento ao atendimento.");
         var message = AddMessage(conversation, kind, text, request.RequestId, actor);
+        if (actor is null)
+        {
+            ClearLease(conversation);
+            await orders.InvalidateReviewAsync(conversation.Id, cancellationToken);
+            if (conversation.AutomationMode == "Automatic" && !aiOptions.Value.IsConfigured)
+            {
+                StopAutomation(conversation);
+                AddMessage(conversation, "System", "O atendimento automático está indisponível. Sua conversa seguirá para a equipe.", null, null);
+            }
+        }
         await database.SaveChangesAsync(cancellationToken);
         return new ChatSendResult(Message(message), true);
     }
@@ -185,7 +298,19 @@ public sealed class HumanChatService(AppDbContext database, PublicChatAccess acc
         var messages = await database.ChatMessages.AsNoTracking().Where(message => message.ConversationId == conversation.Id && message.Sequence > after)
             .OrderBy(message => message.Sequence).Take(51)
             .Select(message => new ChatMessageResponse(message.Sequence, message.Kind, message.Text, message.CreatedAt)).ToArrayAsync(cancellationToken);
-        return new ChatTranscriptResponse(conversation.Status, conversation.Version, conversation.CreatedAt, conversation.UpdatedAt, messages.Take(50).ToArray(), messages.Length > 50);
+        var latestVisitor = await database.ChatMessages.Where(message => message.ConversationId == conversation.Id && message.Kind == "Visitor")
+            .MaxAsync(message => (int?)message.Sequence, cancellationToken) ?? 0;
+        var automationState = conversation.AutomationMode != "Automatic" ? "Idle"
+            : !aiOptions.Value.IsConfigured ? "Unavailable"
+            : conversation.AiLeaseExpiresAt > clock.GetUtcNow() ? "Processing"
+            : latestVisitor > conversation.AiProcessedSequence ? "Pending" : "Idle";
+        return new ChatTranscriptResponse(conversation.Status, conversation.Version, conversation.CreatedAt, conversation.UpdatedAt, messages.Take(50).ToArray(), messages.Length > 50)
+        {
+            AutomationMode = conversation.AutomationMode,
+            AutomationState = automationState,
+            AutomationAvailable = aiOptions.Value.IsConfigured,
+            Order = await orders.GetStateAsync(conversation.Id, cancellationToken)
+        };
     }
 
     private async Task<ChatConversation> LockAsync(Guid id, CancellationToken cancellationToken) =>
@@ -208,7 +333,11 @@ public sealed class HumanChatService(AppDbContext database, PublicChatAccess acc
     private static ChatException Conflict() => new(ChatError.ChatRequestConflict, "Esta tentativa já foi usada com outro conteúdo. Confira a conversa antes de repetir.");
     private static ChatException AssignmentRequired() => new(ChatError.ChatAssignmentRequired, "Assuma a conversa antes de responder ou encerrar. Somente um administrador pode assumir a conversa de outro atendente.");
     private static ChatMessageResponse Message(ChatMessage message) => new(message.Sequence, message.Kind, message.Text, message.CreatedAt);
-    private static ChatSummaryResponse Summary(ChatConversation conversation) => new(conversation.Id, conversation.VisitorName, conversation.Status,
-        conversation.AssignedToId, conversation.AssignedToName, conversation.Version, conversation.CreatedAt, conversation.UpdatedAt);
+    private ChatSummaryResponse Summary(ChatConversation conversation) => new(conversation.Id, conversation.VisitorName, conversation.Status,
+        conversation.AssignedToId, conversation.AssignedToName, conversation.Version, conversation.CreatedAt, conversation.UpdatedAt)
+    {
+        AutomationMode = conversation.AutomationMode,
+        AutomationAvailable = aiOptions.Value.IsConfigured
+    };
     private DateTimeOffset UtcNow() => DateTimeOffset.FromUnixTimeMilliseconds(clock.GetUtcNow().ToUnixTimeMilliseconds());
 }

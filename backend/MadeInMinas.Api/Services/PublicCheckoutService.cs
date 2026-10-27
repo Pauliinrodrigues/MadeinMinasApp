@@ -54,7 +54,8 @@ public sealed class PublicCheckoutService(
 
     public async Task<PublicOrderCreationResult> CreateAsync(PublicOrderRequest request, CancellationToken cancellationToken)
     {
-        await using var transaction = await database.Database.BeginTransactionAsync(cancellationToken);
+        await using var transaction = database.Database.CurrentTransaction is null
+            ? await database.Database.BeginTransactionAsync(cancellationToken) : null;
         var lockKey = BinaryPrimitives.ReadInt64BigEndian(SHA256.HashData(Encoding.UTF8.GetBytes($"public-order:{request.RequestId}")));
         await database.Database.ExecuteSqlInterpolatedAsync($"SELECT pg_advisory_xact_lock({lockKey})", cancellationToken);
         var hash = PublicCheckoutFingerprint.ForRequest(request);
@@ -64,7 +65,8 @@ public sealed class PublicCheckoutService(
         {
             if (existing.RequestHash != hash)
                 throw new OrderException(OrderError.OrderRequestConflict, "Esta tentativa já foi usada com outro conteúdo. Procure o atendimento antes de fazer outro pedido.");
-            await transaction.CommitAsync(cancellationToken);
+            if (transaction is not null)
+                await transaction.CommitAsync(cancellationToken);
             return new PublicOrderCreationResult(Receipt(existing), false);
         }
 
@@ -131,7 +133,8 @@ public sealed class PublicCheckoutService(
         };
         database.Orders.Add(order);
         await database.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
+        if (transaction is not null)
+            await transaction.CommitAsync(cancellationToken);
         logger.LogInformation("Public order {OrderId} number {OrderNumber} received.", order.Id, order.Number);
         return new PublicOrderCreationResult(Receipt(order), true);
     }

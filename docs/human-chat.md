@@ -1,5 +1,9 @@
 # Fase 8E — atendimento humano no chat próprio
 
+Atualização da Fase 9: o [assistente virtual](ai-chat.md) reutiliza este chat e preserva o fluxo manual quando desligado. Acrescenta autoria, modos persistentes, montagem e confirmação explícita de pedidos. O conteúdo abaixo registra a implementação original do atendimento humano.
+
+Atualização de 11/10/2026: a conversa da equipe mostra o resumo da montagem e suas pendências; após a confirmação explícita do cliente, apresenta o pedido recebido e seu status atual. **Abrir pedido #…** usa somente o vínculo persistido pelo checkout e aparece para quem tem `orders.manage`. Mencionar um número em uma mensagem não vincula pedidos. `GET /api/chat/{id}` passa a retornar `linkedOrder` administrativo ou `null`; a confirmação de preparo continua na tela de Pedidos. Não houve alteração nas ações de assumir, responder, retomar a IA ou encerrar.
+
 Continuidade autorizada em 05/10/2026. O acompanhamento (8D) foi preservado no commit `687e10c`; a implementação 8E foi registrada em `720f586`, na branch `feat/human-chat`, e integrada na master pelo [PR #17](https://github.com/Pauliinrodrigues/MadeinMinasApp/pull/17). O responsável autorizou expressamente a integração após os antecessores usando os testes locais aprovados, com checks remotos pendentes/cancelados durante o incidente do GitHub Actions. Isso não comprova execução manual integral do roteiro nem aprovação remota dos checks pendentes. Registro da publicação em [validation.md](validation.md).
 
 ## Escopo
@@ -43,16 +47,16 @@ Conversa consulta novas mensagens a cada cinco segundos enquanto visível; pági
 
 Todos os endpoints usam `no-store`. Nas rotas administrativas, `chat.manage` permite somente Administrator e Attendant. Kitchen/Dispatch não acessam fila, mensagens ou ações.
 
-| Método e rota | Entrada | Resultado |
-| --- | --- | --- |
-| POST `/api/public-chat` | `{ requestId, name, text }` | 201 criação / 200 repetição; `{ access: { token, expiresAt } ou null, createdAt }` |
-| GET `/api/public-chat?after=0` | Cabeçalho X-Chat-Access; cursor não negativo | `{ status, version, createdAt, updatedAt, messages, hasMore }` |
-| POST `/api/public-chat/messages` | X-Chat-Access; `{ requestId, text }` | 201 / 200; mensagem aceita |
-| GET `/api/chat?status=Waiting&page=1` | JWT + chat.manage | `{ items, page, pageSize, totalCount }` |
-| GET `/api/chat/{id}?after=0` | JWT + chat.manage | `{ conversation, transcript }` |
-| POST `/api/chat/{id}/messages` | JWT; `{ requestId, text }` | 201 / 200; mensagem aceita |
-| PUT `/api/chat/{id}/claim` | JWT; `{ expectedVersion }` | Resumo atualizado |
-| PUT `/api/chat/{id}/close` | JWT; `{ expectedVersion }` | Resumo atualizado |
+| Método e rota                         | Entrada                                      | Resultado                                                                          |
+| ------------------------------------- | -------------------------------------------- | ---------------------------------------------------------------------------------- |
+| POST `/api/public-chat`               | `{ requestId, name, text }`                  | 201 criação / 200 repetição; `{ access: { token, expiresAt } ou null, createdAt }` |
+| GET `/api/public-chat?after=0`        | Cabeçalho X-Chat-Access; cursor não negativo | `{ status, version, createdAt, updatedAt, messages, hasMore }`                     |
+| POST `/api/public-chat/messages`      | X-Chat-Access; `{ requestId, text }`         | 201 / 200; mensagem aceita                                                         |
+| GET `/api/chat?status=Waiting&page=1` | JWT + chat.manage                            | `{ items, page, pageSize, totalCount }`                                            |
+| GET `/api/chat/{id}?after=0`          | JWT + chat.manage                            | `{ conversation, transcript }`                                                     |
+| POST `/api/chat/{id}/messages`        | JWT; `{ requestId, text }`                   | 201 / 200; mensagem aceita                                                         |
+| PUT `/api/chat/{id}/claim`            | JWT; `{ expectedVersion }`                   | Resumo atualizado                                                                  |
+| PUT `/api/chat/{id}/close`            | JWT; `{ expectedVersion }`                   | Resumo atualizado                                                                  |
 
 Mensagem pública/transcript: `{ sequence, kind, text, createdAt }`. Resumo administrativo: `{ id, visitorName, status, assignedToId, assignedToName, version, createdAt, updatedAt, expiresAt }`.
 

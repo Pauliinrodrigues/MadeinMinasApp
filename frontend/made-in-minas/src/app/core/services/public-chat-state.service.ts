@@ -1,12 +1,23 @@
 import { Injectable, signal } from '@angular/core';
-import { ChatAccess, ChatMessageInput, StartChatInput } from './chat-api.service';
+import {
+  ChatAccess,
+  ChatMessageInput,
+  ChatOrderConfirmation,
+  StartChatInput,
+} from './chat-api.service';
 
 interface ChatRecovery {
   access: ChatAccess | null;
   pendingStart: StartChatInput | null;
   pendingMessage: ChatMessageInput | null;
+  pendingOrder: ChatOrderConfirmation | null;
 }
-const empty: ChatRecovery = { access: null, pendingStart: null, pendingMessage: null };
+const empty: ChatRecovery = {
+  access: null,
+  pendingStart: null,
+  pendingMessage: null,
+  pendingOrder: null,
+};
 const key = 'made-in-minas.public-chat.v1';
 const validMessage = (value: unknown): value is ChatMessageInput => {
   if (!value || typeof value !== 'object' || !('requestId' in value) || !('text' in value)) {
@@ -36,6 +47,9 @@ export class PublicChatState {
       }
       const parsed = JSON.parse(stored);
       const value = parsed.value;
+      if (value && !('pendingOrder' in value)) {
+        value.pendingOrder = null;
+      }
       if (
         parsed.version !== 1 ||
         !value ||
@@ -51,6 +65,18 @@ export class PublicChatState {
             !value.pendingStart.name.trim() ||
             value.pendingStart.name.length > 120)) ||
         (value.pendingMessage !== null && !validMessage(value.pendingMessage)) ||
+        (value.pendingOrder !== null &&
+          (!value.pendingOrder ||
+            typeof value.pendingOrder.requestId !== 'string' ||
+            !/^[0-9a-f-]{36}$/i.test(value.pendingOrder.requestId) ||
+            !Number.isSafeInteger(value.pendingOrder.expectedDraftVersion) ||
+            value.pendingOrder.expectedDraftVersion < 0 ||
+            typeof value.pendingOrder.reviewToken !== 'string' ||
+            !value.pendingOrder.reviewToken.length ||
+            value.pendingOrder.reviewToken.length > 4096 ||
+            !value.access ||
+            value.pendingMessage ||
+            value.pendingStart)) ||
         (value.pendingMessage && !value.access) ||
         (value.pendingStart && value.access)
       ) {

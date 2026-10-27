@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
+using MadeInMinas.Api.DTOs.ChatOrders;
 
 namespace MadeInMinas.Api.DTOs.Chat;
 
@@ -45,11 +46,24 @@ public sealed record ChatStartResult(StartChatResponse Response, bool Created);
 public sealed record ChatMessageResponse(int Sequence, string Kind, string Text, DateTimeOffset CreatedAt);
 public sealed record ChatSendResult(ChatMessageResponse Message, bool Created);
 public sealed record ChatTranscriptResponse(string Status, int Version, DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt, ChatMessageResponse[] Messages, bool HasMore);
+    DateTimeOffset UpdatedAt, ChatMessageResponse[] Messages, bool HasMore)
+{
+    public string AutomationMode { get; init; } = "Manual";
+    public string AutomationState { get; init; } = "Idle";
+    public bool AutomationAvailable { get; init; }
+    public ChatOrderStateResponse? Order { get; init; }
+}
 public sealed record ChatSummaryResponse(Guid Id, string VisitorName, string Status, Guid? AssignedToId,
     string? AssignedToName, int Version, DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt)
 {
     public DateTimeOffset ExpiresAt => CreatedAt.AddDays(7);
+    public string AutomationMode { get; init; } = "Manual";
+    public bool AutomationAvailable { get; init; }
 }
-public sealed record StaffChatResponse(ChatSummaryResponse Conversation, ChatTranscriptResponse Transcript);
+public sealed record StaffChatOrderResponse(Guid Id, int Number, string Status, string Fulfillment,
+    decimal Subtotal, decimal DeliveryFee, decimal Total);
+public sealed record StaffChatResponse(ChatSummaryResponse Conversation, ChatTranscriptResponse Transcript)
+{
+    public StaffChatOrderResponse? LinkedOrder { get; init; }
+}
 public sealed record ChatPageResponse(ChatSummaryResponse[] Items, int Page, int PageSize, int TotalCount);

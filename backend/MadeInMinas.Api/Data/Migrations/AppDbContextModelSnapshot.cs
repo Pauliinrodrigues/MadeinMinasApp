@@ -138,12 +138,40 @@ namespace MadeInMinas.Api.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<DateOnly?>("AiCallsDate")
+                        .HasColumnType("date");
+
+                    b.Property<int>("AiDailyCalls")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("AiLeaseExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("AiLeaseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("AiLeaseSourceSequence")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("AiProcessedSequence")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("AiTotalCalls")
+                        .HasColumnType("integer");
+
                     b.Property<Guid?>("AssignedToId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("AssignedToName")
                         .HasMaxLength(120)
                         .HasColumnType("character varying(120)");
+
+                    b.Property<string>("AutomationMode")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Manual");
 
                     b.Property<DateTimeOffset?>("ClosedAt")
                         .HasColumnType("timestamp with time zone");
@@ -186,6 +214,12 @@ namespace MadeInMinas.Api.Data.Migrations
 
                     b.ToTable("ChatConversations", null, t =>
                         {
+                            t.HasCheckConstraint("CK_ChatConversations_AiLease", "(\"AiLeaseId\" IS NULL AND \"AiLeaseExpiresAt\" IS NULL AND \"AiLeaseSourceSequence\" IS NULL) OR (\"AutomationMode\" = 'Automatic' AND \"AiLeaseId\" IS NOT NULL AND \"AiLeaseExpiresAt\" IS NOT NULL AND \"AiLeaseSourceSequence\" IS NOT NULL AND \"AiLeaseSourceSequence\" > 0 AND \"AiLeaseSourceSequence\" <= \"Version\")");
+
+                            t.HasCheckConstraint("CK_ChatConversations_AiUsage", "\"AiProcessedSequence\" >= 0 AND \"AiProcessedSequence\" <= \"Version\" AND \"AiDailyCalls\" >= 0 AND \"AiTotalCalls\" >= 0 AND (\"AiDailyCalls\" = 0 OR \"AiCallsDate\" IS NOT NULL)");
+
+                            t.HasCheckConstraint("CK_ChatConversations_Automation", "\"AutomationMode\" IN ('Manual', 'Automatic') AND (\"AutomationMode\" = 'Manual' OR \"Status\" = 'Waiting')");
+
                             t.HasCheckConstraint("CK_ChatConversations_State", "(\"Status\" = 'Waiting' AND \"AssignedToId\" IS NULL AND \"AssignedToName\" IS NULL AND \"ClosedAt\" IS NULL) OR (\"Status\" = 'InService' AND \"AssignedToId\" IS NOT NULL AND \"AssignedToName\" IS NOT NULL AND \"ClosedAt\" IS NULL) OR (\"Status\" = 'Closed' AND \"AssignedToId\" IS NOT NULL AND \"AssignedToName\" IS NOT NULL AND \"ClosedAt\" IS NOT NULL)");
 
                             t.HasCheckConstraint("CK_ChatConversations_Version", "\"Version\" > 0");
@@ -239,11 +273,86 @@ namespace MadeInMinas.Api.Data.Migrations
 
                     b.ToTable("ChatMessages", null, t =>
                         {
-                            t.HasCheckConstraint("CK_ChatMessages_Author", "(\"Kind\" = 'Visitor' AND \"ActorId\" IS NULL AND \"ActorName\" IS NULL AND \"RequestId\" IS NOT NULL) OR (\"Kind\" = 'Staff' AND \"ActorId\" IS NOT NULL AND \"ActorName\" IS NOT NULL AND \"RequestId\" IS NOT NULL) OR (\"Kind\" = 'System' AND \"ActorId\" IS NOT NULL AND \"ActorName\" IS NOT NULL AND \"RequestId\" IS NULL)");
+                            t.HasCheckConstraint("CK_ChatMessages_Author", "(\"Kind\" = 'Visitor' AND \"ActorId\" IS NULL AND \"ActorName\" IS NULL AND \"RequestId\" IS NOT NULL) OR (\"Kind\" = 'Staff' AND \"ActorId\" IS NOT NULL AND \"ActorName\" IS NOT NULL AND \"RequestId\" IS NOT NULL) OR (\"Kind\" = 'Assistant' AND \"ActorId\" IS NULL AND \"ActorName\" IS NULL AND \"RequestId\" IS NULL) OR (\"Kind\" = 'System' AND \"RequestId\" IS NULL AND ((\"ActorId\" IS NOT NULL AND \"ActorName\" IS NOT NULL) OR (\"ActorId\" IS NULL AND \"ActorName\" IS NULL)))");
 
                             t.HasCheckConstraint("CK_ChatMessages_Sequence", "\"Sequence\" > 0");
 
                             t.HasCheckConstraint("CK_ChatMessages_Text", "length(btrim(\"Text\")) > 0");
+                        });
+                });
+
+            modelBuilder.Entity("MadeInMinas.Api.Models.ChatOrderDraft", b =>
+                {
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AddressJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("ConfirmationHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid?>("ConfirmationRequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Fulfillment")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("ItemsJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<Guid?>("OrderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("OrderRequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("QuoteJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("ReceiptJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("ReviewJson")
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("integer");
+
+                    b.HasKey("ConversationId");
+
+                    b.HasIndex("OrderId")
+                        .IsUnique();
+
+                    b.HasIndex("OrderRequestId")
+                        .IsUnique();
+
+                    b.ToTable("ChatOrderDrafts", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ChatOrderDrafts_Fulfillment", "\"Fulfillment\" IS NULL OR \"Fulfillment\" IN ('Pickup','Delivery')");
+
+                            t.HasCheckConstraint("CK_ChatOrderDrafts_Receipt", "(\"ReceiptJson\" IS NULL AND \"OrderId\" IS NULL AND \"ConfirmationRequestId\" IS NULL AND \"ConfirmationHash\" IS NULL) OR (\"ReceiptJson\" IS NOT NULL AND \"OrderId\" IS NOT NULL AND \"OrderRequestId\" IS NOT NULL AND \"ConfirmationRequestId\" IS NOT NULL AND \"ConfirmationHash\" IS NOT NULL)");
+
+                            t.HasCheckConstraint("CK_ChatOrderDrafts_Version", "\"Version\" >= 1");
                         });
                 });
 
@@ -1292,6 +1401,20 @@ namespace MadeInMinas.Api.Data.Migrations
                         .HasForeignKey("ConversationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("MadeInMinas.Api.Models.ChatOrderDraft", b =>
+                {
+                    b.HasOne("MadeInMinas.Api.Models.ChatConversation", null)
+                        .WithOne()
+                        .HasForeignKey("MadeInMinas.Api.Models.ChatOrderDraft", "ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MadeInMinas.Api.Models.Order", null)
+                        .WithOne()
+                        .HasForeignKey("MadeInMinas.Api.Models.ChatOrderDraft", "OrderId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("MadeInMinas.Api.Models.Order", b =>

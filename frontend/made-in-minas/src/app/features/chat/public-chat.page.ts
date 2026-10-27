@@ -14,14 +14,17 @@ import { IonContent } from '@ionic/angular/ion-content';
 import { finalize, fromEvent, interval, Subscription } from 'rxjs';
 import {
   ChatMessage,
+  ChatOrderState,
   ChatTranscript,
   PublicChatApi,
-  chatStatusLabel,
+  chatAttendanceLabel,
 } from '../../core/services/chat-api.service';
 import { PublicChatState } from '../../core/services/public-chat-state.service';
 import { ChatMessagesComponent } from './chat-messages.component';
 import { PublicCheckoutState } from '../../core/services/public-checkout-state.service';
 import { PublicOrderHistory } from '../../core/services/public-order-history.service';
+import { apiError } from '../../core/api-error';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-public-chat',
@@ -32,6 +35,7 @@ import { PublicOrderHistory } from '../../core/services/public-order-history.ser
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PublicChatPage {
+  readonly testing = 'testing' in environment && environment.testing === true;
   readonly state = inject(PublicChatState);
   private readonly checkout = inject(PublicCheckoutState);
   private readonly history = inject(PublicOrderHistory);
@@ -45,15 +49,39 @@ export class PublicChatPage {
   private readonly destroyRef = inject(DestroyRef);
   readonly transcript = signal<ChatTranscript | null>(null);
   readonly messages = signal<ChatMessage[]>([]);
+  readonly order = signal<ChatOrderState | null>(null);
   readonly loading = signal(false);
   readonly busy = signal(false);
   readonly unavailable = signal(false);
   readonly fresh = signal(false);
   readonly error = signal('');
   readonly loadError = signal('');
-  readonly statusLabel = chatStatusLabel;
+  readonly attendanceLabel = chatAttendanceLabel;
+  readonly automatic = computed(() => this.transcript()?.automationMode === 'Automatic');
+  readonly assistantPending = computed(() =>
+    ['Pending', 'Processing'].includes(this.transcript()?.automationState ?? ''),
+  );
+  readonly orderProcessing = computed(
+    () =>
+      this.assistantPending() ||
+      !!this.transcript()?.hasMore ||
+      !!this.state.value().pendingMessage,
+  );
+  readonly missingOrderFields = computed(() => {
+    const labels: Record<string, string> = {
+      items: 'produtos',
+      name: 'nome',
+      phone: 'telefone com DDD',
+      fulfillment: 'entrega ou retirada',
+      address: 'endereço completo para entrega',
+    };
+    return (this.order()?.missingFields ?? []).map(
+      (field) => labels[field] ?? 'informações do pedido',
+    );
+  });
   private readRequest?: Subscription;
   private retryAt = 0;
+  private invalidReviewToken: string | null = null;
   name = '';
   text = '';
 
@@ -124,6 +152,7 @@ export class PublicChatPage {
       .subscribe({
         next: (result) => {
           this.transcript.set(result);
+          this.acceptOrderState(result.order ?? null);
           this.messages.update((messages) => [
             ...messages,
             ...result.messages.filter(
@@ -164,6 +193,7 @@ export class PublicChatPage {
         this.state.save({
           access: null,
           pendingMessage: null,
+          pendingOrder: null,
           pendingStart: {
             requestId: crypto.randomUUID(),
             name: this.name.trim(),
@@ -190,7 +220,12 @@ export class PublicChatPage {
             return;
           }
           try {
-            this.state.save({ access: result.access, pendingStart: null, pendingMessage: null });
+            this.state.save({
+              access: result.access,
+              pendingStart: null,
+              pendingMessage: null,
+              pendingOrder: null,
+            });
           } catch {
             this.storageError();
             return;
@@ -212,6 +247,7 @@ export class PublicChatPage {
     if (
       this.busy() ||
       !value.access ||
+      value.pendingOrder ||
       this.unavailable() ||
       (!value.pendingMessage && (!this.fresh() || this.transcript()?.status === 'Closed'))
     ) {
@@ -234,6 +270,7 @@ export class PublicChatPage {
       }
     }
     this.busy.set(true);
+    this.readRequest?.unsubscribe();
     this.api
       .send(value.access.token, this.state.value().pendingMessage!)
       .pipe(
@@ -249,6 +286,7 @@ export class PublicChatPage {
             return;
           }
           this.text = '';
+          this.order.update((order) => (order ? { ...order, review: null } : null));
           this.busy.set(false);
           this.fresh.set(false);
           this.load();
@@ -293,6 +331,7 @@ export class PublicChatPage {
     this.readRequest?.unsubscribe();
     this.transcript.set(null);
     this.messages.set([]);
+    this.order.set(null);
     this.unavailable.set(false);
     this.fresh.set(false);
     this.error.set('');
@@ -300,6 +339,201 @@ export class PublicChatPage {
     this.name = '';
     this.text = '';
     this.retryAt = 0;
+    this.invalidReviewToken = null;
+  }
+
+  handoff(): void {
+    const transcript = this.transcript();
+    const value = this.state.value();
+    if (!transcript || !value.access || !this.automatic() || this.busy() || !this.fresh()) {
+      return;
+    }
+    this.busy.set(true);
+    this.error.set('');
+    this.readRequest?.unsubscribe();
+    this.api
+      .handoff(value.access.token, transcript.version)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.busy.set(false)),
+      )
+      .subscribe({
+        next: (result) => {
+          this.transcript.set(result);
+          this.acceptOrderState(result.order ?? null);
+          this.messages.update((messages) => [
+            ...messages,
+            ...result.messages.filter(
+              (message) => message.sequence > (messages.at(-1)?.sequence ?? 0),
+            ),
+          ]);
+          this.busy.set(false);
+          this.fresh.set(false);
+          this.load();
+        },
+        error: (error: unknown) => {
+          this.error.set(apiError(error) + ' Confira o estado da conversa.');
+          this.busy.set(false);
+          this.fresh.set(false);
+          this.load();
+        },
+      });
+  }
+
+  reviewOrder(): void {
+    const value = this.state.value();
+    const order = this.order();
+    if (
+      !value.access ||
+      !order ||
+      this.busy() ||
+      !this.fresh() ||
+      this.orderProcessing() ||
+      value.pendingOrder ||
+      value.pendingMessage ||
+      order.receipt ||
+      order.missingFields.length ||
+      this.transcript()?.status === 'Closed'
+    ) {
+      return;
+    }
+    this.busy.set(true);
+    this.error.set('');
+    this.readRequest?.unsubscribe();
+    this.api
+      .reviewOrder(value.access.token, order.draftVersion)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.busy.set(false)),
+      )
+      .subscribe({
+        next: (result) => {
+          this.invalidReviewToken = null;
+          this.acceptOrderState(result);
+        },
+        error: (error: unknown) => {
+          this.invalidReviewToken = this.order()?.review?.reviewToken ?? null;
+          this.order.update((current) => (current ? { ...current, review: null } : null));
+          this.error.set(apiError(error));
+          this.busy.set(false);
+          this.fresh.set(false);
+          this.load();
+        },
+      });
+  }
+
+  confirmOrder(): void {
+    const value = this.state.value();
+    const order = this.order();
+    if (!value.access || this.busy() || this.state.recoveryError() || this.unavailable()) {
+      return;
+    }
+    if (!value.pendingOrder) {
+      if (
+        !order?.review ||
+        order.receipt ||
+        !this.fresh() ||
+        this.orderProcessing() ||
+        value.pendingMessage ||
+        this.transcript()?.status === 'Closed'
+      ) {
+        return;
+      }
+      try {
+        this.state.save({
+          ...value,
+          pendingOrder: {
+            requestId: crypto.randomUUID(),
+            expectedDraftVersion: order.draftVersion,
+            reviewToken: order.review.reviewToken,
+          },
+        });
+      } catch {
+        this.storageError();
+        return;
+      }
+    }
+    this.busy.set(true);
+    this.error.set('');
+    this.readRequest?.unsubscribe();
+    this.api
+      .confirmOrder(value.access.token, this.state.value().pendingOrder!)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => this.busy.set(false)),
+      )
+      .subscribe({
+        next: (result) => {
+          if (!result.receipt) {
+            this.error.set('Envio sem confirmação. Confira a mesma tentativa antes de continuar.');
+            return;
+          }
+          this.acceptOrderState(result);
+          this.busy.set(false);
+          this.fresh.set(false);
+          this.load();
+        },
+        error: (error: unknown) => {
+          const code = error instanceof HttpErrorResponse ? error.error?.code : '';
+          if (
+            (error instanceof HttpErrorResponse && error.status === 400) ||
+            [
+              'ChatDraftChanged',
+              'ChatOrderReviewRequired',
+              'OrderReviewChanged',
+              'StoreNotAcceptingOrders',
+              'CartProductUnavailable',
+              'ChatOrderIncomplete',
+              'ChatAutomationPending',
+              'PublicDeliveryUnavailable',
+              'InvalidPublicDeliveryAddress',
+              'PublicCheckoutUnavailable',
+              'ChatClosed',
+              'ChatUnavailable',
+            ].includes(code)
+          ) {
+            this.invalidReviewToken = this.state.value().pendingOrder?.reviewToken ?? null;
+            try {
+              this.state.save({ ...this.state.value(), pendingOrder: null });
+            } catch {
+              this.storageError();
+              return;
+            }
+            this.order.update((current) => (current ? { ...current, review: null } : null));
+            this.error.set('Pedido não enviado. ' + apiError(error) + ' Revise novamente.');
+            this.busy.set(false);
+            this.fresh.set(false);
+            this.load();
+          } else {
+            this.error.set(
+              'Envio sem confirmação. Use “Conferir envio” para recuperar a mesma tentativa.',
+            );
+          }
+        },
+      });
+  }
+
+  price(value: number): string {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+  }
+
+  private acceptOrderState(order: ChatOrderState | null): void {
+    if (order?.review?.reviewToken === this.invalidReviewToken && !order.receipt) {
+      order = { ...order, review: null, needsReview: true };
+    }
+    this.order.set(order);
+    if (!order?.receipt) {
+      return;
+    }
+    this.history.add(order.receipt);
+    if (this.state.value().pendingOrder) {
+      try {
+        this.state.save({ ...this.state.value(), pendingOrder: null });
+        this.error.set('');
+      } catch {
+        this.storageError();
+      }
+    }
   }
   private validText(): boolean {
     return !!this.text.trim() && this.text.length <= 2000;

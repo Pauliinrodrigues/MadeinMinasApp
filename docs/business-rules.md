@@ -10,7 +10,15 @@ Sem uma configuração salva, os valores confirmados vêm de `StoreAttendance` e
 
 Como padrão, fora do horário o cliente consulta o cardápio e monta o carrinho, mas não envia novas compras. O administrador pode permitir recebimento fora do horário; a pausa manual sempre prevalece. O backend verifica o atendimento na revisão e novamente na criação transacional. Fechamento ou pausa preservam a seleção no navegador. A recuperação idempotente de pedido já recebido continua disponível, mesmo com a loja fechada. Pedidos manuais e comandas já recebidas seguem o fluxo da equipe.
 
-Os pagamentos são informações de atendimento; a escolha da forma pelo cliente e a cobrança online não foram acrescentadas neste incremento. A IA ainda não foi conectada; autoria do assistente e transferência IA/humano são os próximos passos.
+Os pagamentos são informações de atendimento; a escolha da forma pelo cliente e a cobrança online não foram acrescentadas neste incremento. A integração do assistente é descrita a seguir e permanece desativada até configurar o piloto.
+
+## Assistente virtual — Fase 9
+
+A IA interpreta mensagens e solicita ferramentas autorizadas; o servidor fornece respostas comerciais, produtos e cálculos reais. Não há consulta direta do modelo ao banco, SQL livre, acesso a CMV/custos/margens/estoque interno, desconto, promoção ou adicional inventado. O cadastro atual não possui promoções, combos ou adicionais estruturados.
+
+Montagem e revisão ficam vinculadas à credencial da própria conversa. Nome/telefone são dados informados pelo visitante; não autorizam acesso ao histórico de outra pessoa. Alterar a seleção ou enviar nova mensagem após a revisão exige revisar novamente. Durante processamento pendente, a confirmação fica bloqueada. Somente **Confirmar pedido**, associado à versão/revisão atuais, cria a compra; mensagens livres de confirmação não a criam. A transação revalida atendimento, endereço/cobertura, preço e disponibilidade, grava o pedido e seu vínculo sem duplicação. O pedido nasce `New`, sem recebimento de pagamento, reserva/baixa automática ou confirmação de preparo.
+
+Uma conversa mantém um pedido recebido. Alterações/cancelamento posteriores seguem o atendimento humano. O status automático usa apenas o pedido vinculado à conversa. Assumir/transferir/encerrar interrompe respostas e ferramentas antigas; retomar depende da permissão e do provedor configurado. Falha, timeout ou limite encaminha a conversa preservada para a equipe, sem prometer prazo. Desligar a integração mantém o atendimento manual. Configuração e execução: [assistente virtual](ai-chat.md).
 
 Regra do bloco operacional F: a [central de reposição](stock-replenishment.md) alerta inclusive quando saldo é igual ao mínimo e informa somente a diferença até esse mínimo. Não cria movimentos, compras ou despesas. Ausência de movimentação exige conferência física; uma movimentação anterior não comprova inventário.
 

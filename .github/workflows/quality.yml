@@ -64,6 +64,8 @@ jobs:
           node-version-file: frontend/made-in-minas/.nvmrc
           cache: npm
           cache-dependency-path: frontend/made-in-minas/package-lock.json
+      - name: Evaluate assistant safeguards without provider calls
+        run: node --test ../../scripts/ai-evaluation/*.test.mjs
       - run: npm ci
       - run: npm run format:check
       - run: npm run lint

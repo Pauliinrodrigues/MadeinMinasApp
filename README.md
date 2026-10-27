@@ -68,7 +68,9 @@ A montagem inicial do carrinho é temporária. Ao enviar, a tentativa fica guard
 
 O acompanhamento usa uma credencial exclusiva do pedido, válida por sete dias desde a criação, guardada na sessão da aba. Montar outro pedido remove esse acesso; fechar a aba pode perdê-lo. Comprovantes antigos orientam atendimento. A 8D não exige migration. A preservação das chaves do servidor em outra máquina/hospedagem está descrita em [acompanhamento](docs/public-order-tracking.md#banco-chaves-e-execução).
 
-**Atendimento humano (8E):** no site, clique **Falar com atendente** ou abra http://localhost:8101/pedido/atendimento. Informe nome e mensagem; mantenha a aba para acompanhar a resposta. Na área da equipe, administrador/atendente usam **Atendimentos → Assumir atendimento → Enviar resposta → Encerrar atendimento**. Faça novo login para carregar a permissão nova. É necessário aplicar `AddHumanChat` conforme [database/README.md](database/README.md). Mensagens não alteram pedidos/pagamentos, e não há IA nesta etapa. Recuperação de envio, limites e roteiro: [human-chat.md](docs/human-chat.md).
+**Atendimento humano (8E):** no site, clique **Falar com atendente** ou abra http://localhost:8101/pedido/atendimento. Informe nome e mensagem; mantenha a aba para acompanhar a resposta. Na área da equipe, administrador/atendente usam **Atendimentos → Assumir atendimento → Enviar resposta → Encerrar atendimento**. Faça novo login para carregar a permissão nova. Recuperação de envio, limites e roteiro: [human-chat.md](docs/human-chat.md).
+
+**Assistente virtual (9):** a integração reutiliza esse chat, com cardápio real, montagem do pedido, resumo calculado pelo backend e botão **Confirmar pedido**. A equipe pode assumir a conversa ou retomar o automático. Está desativada por padrão, com Gemini selecionado para o piloto e OpenAI disponível por configuração; para testar, aplique `AddAiChatAgent` e configure chave/modelo somente no backend, conforme [configuração da IA](docs/ai-chat.md). Use dados fictícios na camada gratuita do Gemini e confira a cota do projeto no AI Studio. Sem provedor disponível, o atendimento manual permanece funcionando. A confirmação cria um pedido Novo, aguardando aceite da equipe; não recebe pagamento.
 
 Para entrar, acesse http://localhost:8101/entrar ou clique em **Área da equipe**. Use o administrador criado pelo [comando interativo](docs/authentication.md#administrador-inicial); não existe senha padrão. A sessão dura até 15 minutos e atualizar a página exige novo login. Administradores acessam cadastro, edição e ativação/inativação de funcionários. Todos os perfis podem alterar a própria senha.
 
@@ -163,6 +165,9 @@ O GitHub Actions executa as verificações em pushes para `master` e pull reques
 - [Contrato da API](docs/api.md)
 - [Decisões técnicas](docs/decisions.md)
 - [Regras de negócio](docs/business-rules.md)
+- [Assistente virtual: configuração, ferramentas e confirmação](docs/ai-chat.md)
+- [Avaliação repetível do piloto com Gemini](docs/ai-evaluation.md)
+- [Ensaio com o catálogo comercial e clientes fictícios](docs/ai-rehearsal.md)
 - [Etapas](docs/roadmap.md)
 
 **Expedição e impressão (5B/5C):** faça novo login como administrador ou expedição e abra **Expedição**. Confira destino, produtos e pagamento antes de avançar. Retirada segue direto de Pronto para Entregue; finalize após recebimento integral registrado pelo atendimento. As comandas de produção e expedição abrem prévia com impressão explícita pelo navegador (58/80 mm ou A4). Impressão automática e acerto de margens/corte dependem do equipamento real. Roteiro: [expedição e impressão](docs/dispatch-printing.md).

@@ -103,6 +103,13 @@ export function apiError(error: unknown, login = false): string {
     ChatClosed: 'Este atendimento foi encerrado.',
     ChatExpired: 'O acesso do visitante expirou. Encerre esta conversa.',
     ChatLimitReached: 'Esta conversa atingiu o limite de mensagens. Encerre o atendimento.',
+    ChatAutomationUnavailable:
+      'A assistente virtual está indisponível. Continue com o atendimento manual.',
+    ChatDraftChanged: 'O pedido em montagem mudou. Confira o resumo atual antes de confirmar.',
+    ChatOrderReviewRequired: 'Revise o pedido e confirme o resumo atualizado.',
+    ChatOrderIncomplete: 'Ainda faltam dados do pedido. Informe os dados solicitados na conversa.',
+    ChatAutomationPending:
+      'A assistente ainda está processando sua mensagem. Aguarde a atualização da conversa.',
     PermissionDenied: 'Você não tem permissão para esta operação.',
   };
   const code: unknown = error.error?.code;

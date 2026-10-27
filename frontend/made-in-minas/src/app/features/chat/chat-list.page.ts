@@ -56,6 +56,9 @@ import { ChatReadState } from '../../core/services/chat-read-state.service';
                   <span class="badge">Nova atividade</span>
                 }
                 <p>{{ statusLabel(chat.status) }} · {{ chat.assignedToName ?? 'Sem atendente' }}</p>
+                @if (chat.automationMode === 'Automatic') {
+                  <span class="badge">Assistente virtual</span>
+                }
               </div>
               <time [attr.datetime]="chat.createdAt"
                 >Solicitado em {{ chat.createdAt | date: 'dd/MM HH:mm' : '-0300' }}</time

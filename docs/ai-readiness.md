@@ -1,5 +1,7 @@
 # Prontidão do Made in Minas para integração com IA
 
+Atualização de 11/10/2026: a branch local `feat/ai-chat-agent` implementa [provedor, contexto, ferramentas, montagem, confirmação e controle humano](ai-chat.md). A integração está desligada por padrão na operação; o piloto isolado já utiliza Gemini real e possui [avaliação repetível](ai-evaluation.md). O [ambiente de ensaio com catálogo comercial](ai-rehearsal.md) utiliza clientes e estoque fictícios. O responsável relatou sucesso na confirmação/localização de um pedido e no acesso da equipe. O chat administrativo agora mostra montagem, pendências e atalho para o pedido confirmado. O restante do roteiro manual, catálogo completo, conferência dos horários e liberação controlada continuam pendentes. O diagnóstico abaixo é o registro histórico que orientou essa entrega; os resultados atuais ficam em [validation.md](validation.md).
+
 O sistema tem a base operacional necessária para iniciar a Fase 9 em ambiente de teste: catálogo, revisão de compras, pedidos, estoque, atendimento humano, produção, entrega e impressão. Os serviços existentes podem fornecer dados e validar as operações da IA. A liberação para clientes depende de completar as regras de atendimento e implementar controle da conversa, ferramentas autorizadas, recuperação de falhas e avaliação das respostas.
 
 A primeira entrega recomendada é um assistente no chat próprio que consulta o cardápio atual, informa as condições de entrega e retirada e encaminha dúvidas ao atendente. A criação de pedidos pela conversa entra em um incremento seguinte, com revisão calculada pelo backend e confirmação explícita do cliente. Essa sequência considera o atendimento ao cliente como prioridade inicial da Fase 9; análises administrativas de vendas e estoque terão permissões e critérios próprios.
@@ -8,7 +10,7 @@ Diagnóstico de 08/10/2026, baseado no código da branch `fix/thermal-print-heig
 
 ## Situação das funcionalidades
 
-Atualização de 10/10/2026: o primeiro incremento da Fase 9A implementa a [configuração de atendimento](business-rules.md), com horários de Brasília, pausa, pagamentos e prazo variável, disponível à equipe e ao site. A integração do modelo, autoria do assistente e transferência IA/humano continuam pendentes. O quadro abaixo preserva o diagnóstico de 08/10.
+O primeiro incremento de 10/10/2026 da Fase 9A implementou a [configuração de atendimento](business-rules.md), com horários de Brasília, pausa, pagamentos e prazo variável, disponível à equipe e ao site. A entrega posterior do agente e do controle humano está no guia indicado no início deste documento. O quadro abaixo preserva o diagnóstico de 08/10.
 
 “Implementado” descreve o escopo presente no código. Aceite de uma funcionalidade não comprova toda a operação em produção.
 

@@ -84,7 +84,7 @@ public sealed class HumanChatTests(AuthenticationFactory factory) : IClassFixtur
         Assert.True(response.Headers.CacheControl?.NoStore);
         var json = await response.Content.ReadAsStringAsync();
         using var body = JsonDocument.Parse(json);
-        Assert.Equal(["createdAt", "hasMore", "messages", "status", "updatedAt", "version"], body.RootElement.EnumerateObject().Select(field => field.Name).Order());
+        Assert.Equal(["automationAvailable", "automationMode", "automationState", "createdAt", "hasMore", "messages", "order", "status", "updatedAt", "version"], body.RootElement.EnumerateObject().Select(field => field.Name).Order());
         Assert.Equal(["createdAt", "kind", "sequence", "text"], body.RootElement.GetProperty("messages")[0].EnumerateObject().Select(field => field.Name).Order());
         Assert.DoesNotContain(first.Id.ToString(), json);
         Assert.DoesNotContain("Maria", json);
