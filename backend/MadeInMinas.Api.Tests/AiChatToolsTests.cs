@@ -122,8 +122,11 @@ public sealed class AiChatToolsTests(AuthenticationFactory factory) : IClassFixt
             ("adicionar_item_pedido", new { productId = burger.Id, quantity = 1, notes = (string?)null }),
             ("definir_dados_pedido", new
             {
-                name = (string?)null, phone = "38999992468", fulfillment = "Pickup",
-                address = (object?)null, notes = (string?)null
+                name = (string?)null,
+                phone = "38999992468",
+                fulfillment = "Pickup",
+                address = (object?)null,
+                notes = (string?)null
             }));
         Assert.NotNull(transcript.Order);
         Assert.Single(transcript.Order.Items);
@@ -317,7 +320,10 @@ public sealed class AiChatToolsTests(AuthenticationFactory factory) : IClassFixt
             ("definir_dados_pedido", new ChatOrderDetailsRequest(Name: "Maria", Phone: "+5538999991234", Fulfillment: "Delivery",
                 Address: new PublicDeliveryAddressRequest("corinto", "Rua Esperança", "68")
                 {
-                    Neighborhood = "Centro", PostalCode = "39200000", Complement = "Complemento inventado", Reference = "Referência inventada"
+                    Neighborhood = "Centro",
+                    PostalCode = "39200000",
+                    Complement = "Complemento inventado",
+                    Reference = "Referência inventada"
                 })),
             ("responder_cliente", new { code = "ToolResult" }));
         Assert.Equal("Delivery", transcript.Order!.Fulfillment);
