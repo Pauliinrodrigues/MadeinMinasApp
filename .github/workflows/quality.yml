@@ -71,9 +71,14 @@ jobs:
       - name: Evaluate assistant safeguards without provider calls
         run: node --test ../../scripts/ai-evaluation/*.test.mjs
       - run: npm ci
+      - name: Check high and critical dependency advisories
+        run: npm audit --audit-level=high
       - run: npm run format:check
       - run: npm run lint
-      - run: npm run build
+      - run: npm run build -- --output-path .local/environment-builds/production
+      - run: npm run build:staging -- --output-path .local/environment-builds/staging
+      - name: Check production and staging builds without real API access
+        run: node ../../scripts/Test-EnvironmentBuilds.mjs .local/environment-builds
       - run: npm run test:e2e
       - uses: actions/upload-artifact@v4
         if: failure()

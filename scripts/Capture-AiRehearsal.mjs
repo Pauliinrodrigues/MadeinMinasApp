@@ -15,7 +15,7 @@ async function main() {
   );
   const discrepancies = [];
   for (const hour of snapshot.attendance.hours) {
-    const expected = hour.day <= 4 ? "23:30" : "00:00";
+    const expected = hour.day <= 4 ? "23:30" : "23:59";
     if (hour.opensAt !== "18:30" || hour.closesAt !== expected || hour.isClosed)
       discrepancies.push({
         type: "HoursDifferFromOwnerInstructions",

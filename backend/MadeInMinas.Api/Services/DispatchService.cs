@@ -102,7 +102,8 @@ public sealed class DispatchService(AppDbContext database, TimeProvider clock, I
         order.Items.OrderBy(item => item.Position).Select(item => new CartItemResponse(item.ProductId, item.ProductName, item.Quantity,
             item.UnitPrice, item.LineTotal, item.Notes)).ToArray(), order.Notes, order.Subtotal, order.DeliveryFee, order.Total,
         order.CreatedAt, order.UpdatedAt, order.History.Where(history => history.ToStatus == "Ready").Select(history => (DateTimeOffset?)history.OccurredAt).Min(),
-        payment is null ? null : new DispatchPaymentResponse(payment.Method, payment.Status, payment.Amount, payment.CashTendered, payment.CashTendered - payment.Amount));
+        payment is null ? null : new DispatchPaymentResponse(payment.Method, payment.Status, payment.Amount, payment.CashTendered, payment.CashTendered - payment.Amount))
+    { PaymentPreference = order.PaymentPreference, ChangeFor = order.ChangeFor };
     private static OrderException NotFound() => new(OrderError.OrderNotFound, "Pedido não encontrado.");
     private DateTimeOffset UtcNow() => DateTimeOffset.FromUnixTimeMilliseconds(clock.GetUtcNow().ToUnixTimeMilliseconds());
 }

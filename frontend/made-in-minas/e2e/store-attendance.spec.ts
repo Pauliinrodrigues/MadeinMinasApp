@@ -79,8 +79,8 @@ test('loja: horários de Brasília, meia-noite e pausa ficam persistidos após r
   const state = await setup(page);
   await open(page);
   await expect(page.getByLabel('Fechamento de Quinta-feira', { exact: true })).toHaveValue('23:30');
-  await expect(page.getByLabel('Fechamento de Sexta-feira', { exact: true })).toHaveValue('00:00');
-  await expect(page.getByLabel('Fechamento de Domingo', { exact: true })).toHaveValue('00:00');
+  await expect(page.getByLabel('Fechamento de Sexta-feira', { exact: true })).toHaveValue('23:59');
+  await expect(page.getByLabel('Fechamento de Domingo', { exact: true })).toHaveValue('23:59');
   await page.getByLabel('Pausar novos pedidos', { exact: true }).check();
   await page.getByRole('button', { name: 'Revisar configurações', exact: true }).click();
   expect(state.writes).toHaveLength(0);

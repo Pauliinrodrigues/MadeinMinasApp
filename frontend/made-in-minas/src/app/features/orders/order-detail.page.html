@@ -66,6 +66,11 @@
         @if (canManagePayments()) {
         <section aria-label="Resumo do pagamento">
           <h2>Pagamento</h2>
+          <app-requested-payment
+            [method]="data.paymentPreference"
+            [changeFor]="data.changeFor"
+            [total]="data.total"
+          />
           @if (payments(); as paymentData) {
           <p>
             Recebido: <strong>{{ formatPrice(paymentData.receivedAmount) }}</strong> · Saldo:

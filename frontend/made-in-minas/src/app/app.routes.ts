@@ -18,6 +18,10 @@ import {
 
 export const routes: Routes = [
   {
+    path: 'privacidade',
+    loadComponent: () => import('./features/privacy/privacy.page').then((page) => page.PrivacyPage),
+  },
+  {
     path: 'pedido/atendimento',
     loadComponent: () =>
       import('./features/chat/public-chat.page').then((page) => page.PublicChatPage),

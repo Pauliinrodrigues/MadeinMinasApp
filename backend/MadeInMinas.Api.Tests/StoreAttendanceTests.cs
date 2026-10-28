@@ -63,6 +63,16 @@ public sealed class StoreAttendanceTests(AuthenticationFactory factory) : IClass
         Assert.False(StoreAttendanceService.Evaluate(allClosed with { IsPaused = true }, result.CheckedAt).AcceptingOrders);
     }
 
+    [Theory]
+    [InlineData("2026-10-17T02:58:59Z", true)]
+    [InlineData("2026-10-17T02:59:00Z", false)]
+    [InlineData("2026-10-17T03:00:00Z", false)]
+    public void ApprovedWeekendHoursCloseAt2359(string timestamp, bool open)
+    {
+        var settings = Defaults() with { Hours = Defaults().Hours.Select(hour => hour.Day >= 5 ? hour with { ClosesAt = "23:59" } : hour).ToArray() };
+        Assert.Equal(open, StoreAttendanceService.Evaluate(settings, DateTimeOffset.Parse(timestamp)).AcceptingOrders);
+    }
+
     [Fact]
     public async Task PublicSettingsHaveConfirmedCommercialDataWithoutInternalAuditOrWrites()
     {
@@ -73,7 +83,7 @@ public sealed class StoreAttendanceTests(AuthenticationFactory factory) : IClass
         var data = (await response.Content.ReadFromJsonAsync<PublicStoreAttendanceResponse>())!;
         Assert.Equal(7, data.Hours.Length);
         Assert.Equal("23:30", data.Hours[0].ClosesAt);
-        Assert.Equal("00:00", data.Hours[4].ClosesAt);
+        Assert.All(data.Hours.Where(hour => hour.Day >= 5), hour => Assert.Equal("23:59", hour.ClosesAt));
         Assert.Equal(new[] { "Card", "Cash", "Pix" }, data.PaymentMethods);
         Assert.Equal(Defaults().DeliveryEstimateMessage, data.DeliveryEstimateMessage);
         var json = JsonNode.Parse(await response.Content.ReadAsStringAsync())!;
@@ -140,7 +150,7 @@ public sealed class StoreAttendanceTests(AuthenticationFactory factory) : IClass
         (await admin.PutAsJsonAsync("/api/store-attendance", new SaveStoreAttendanceRequest(current.Revision, current.Settings with { IsPaused = true }))).EnsureSuccessStatusCode();
         using var guest = factory.CreateStaffClient();
         Assert.False((await guest.GetFromJsonAsync<PublicStoreAttendanceResponse>("/api/store-attendance/public"))!.AcceptingOrders);
-        var checkout = new PublicCheckoutRequest("Pessoa de teste", "31999998888", new PublicCartQuoteRequest([new(Guid.NewGuid(), 1)]));
+        var checkout = new PublicCheckoutRequest("Pessoa de teste", "31999998888", new PublicCartQuoteRequest([new(Guid.NewGuid(), 1)])) { PaymentPreference = "Pix" };
         foreach (var response in new[] {
             await guest.PostAsJsonAsync("/api/public-checkout/review", checkout),
             await guest.PostAsJsonAsync("/api/public-checkout/orders", new PublicOrderRequest(Guid.NewGuid(), new string('A', 64), checkout)) })

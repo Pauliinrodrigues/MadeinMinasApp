@@ -5,6 +5,7 @@
   "scripts": {
     "start": "ng serve --host localhost --port 8101",
     "build": "ng build",
+    "build:staging": "ng build --configuration staging",
     "build:development": "ng build --configuration development",
     "test:e2e": "playwright test",
     "lint": "eslint \"src/**/*.{ts,html}\" \"e2e/**/*.ts\" playwright.config.ts --max-warnings 0",
@@ -15,6 +16,11 @@
   "engines": {
     "node": "^22.22.3 || ^24.15.0",
     "npm": ">=10"
+  },
+  "overrides": {
+    "zod": "4.6.6",
+    "vite": "8.3.3",
+    "fast-uri": "3.1.9"
   },
   "dependencies": {
     "@angular/common": "22.2.1",
@@ -30,8 +36,8 @@
     "zone.js": "0.15.1"
   },
   "devDependencies": {
-    "@angular/build": "22.2.0",
-    "@angular/cli": "22.2.0",
+    "@angular/build": "22.2.4",
+    "@angular/cli": "22.2.4",
     "@angular/compiler-cli": "22.2.1",
     "@eslint/js": "10.0.1",
     "@playwright/test": "1.58.2",

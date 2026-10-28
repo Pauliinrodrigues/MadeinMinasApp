@@ -83,6 +83,8 @@ public sealed class AiChatCoordinator(AppDbContext database, IOptions<AiOptions>
                 state.Name,
                 hasPhone = state.Phone is not null,
                 state.Fulfillment,
+                state.PaymentPreference,
+                state.ChangeFor,
                 state.MissingFields,
                 state.NeedsReview,
                 items = state.Items.Select(item => new

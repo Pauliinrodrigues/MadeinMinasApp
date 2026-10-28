@@ -10,6 +10,10 @@ const formatted = (number) =>
   });
 
 export function rehearsalCases(snapshot) {
+  const payment = { Card: "cartão", Cash: "dinheiro", Pix: "Pix" }[
+    snapshot.attendance.paymentMethods[0]
+  ];
+  if (!payment) throw new Error("NoAcceptedRehearsalPayment");
   const product = snapshot.products.find((item) => item.isAvailable);
   if (!product) throw new Error("NoAvailableRehearsalProduct");
   const scenarios = [
@@ -102,7 +106,7 @@ export function rehearsalCases(snapshot) {
         "Retirada com preço real, alteração e nova revisão sem criar compra",
       steps: [
         {
-          message: `Quero um ${product.name} para retirada. Meu telefone fictício é (38) 99999-1357. Revise meu pedido.`,
+          message: `Quero um ${product.name} para retirada. Meu telefone fictício é (38) 99999-1357. Vou pagar por ${payment}. Revise meu pedido.`,
           verify: (state) => [
             check(
               "resumo de retirada correto",
@@ -162,7 +166,7 @@ export function rehearsalCases(snapshot) {
           ],
         },
         {
-          message: `Meu telefone fictício é (38) 99999-2468. Entrega em ${area.city}-${area.state}, Rua do Ensaio, número 120, bairro Centro. Revise meu pedido.`,
+          message: `Meu telefone fictício é (38) 99999-2468. Entrega em ${area.city}-${area.state}, Rua do Ensaio, número 120, bairro Centro. Vou pagar por ${payment}. Revise meu pedido.`,
           verify: (state) => [
             check(
               "endereço informado pelo cliente",

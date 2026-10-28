@@ -2,7 +2,7 @@
 
 ## Atendimento da loja — primeiro incremento da Fase 9A
 
-Configuração informada pelo responsável em 10/10/2026: segunda a quinta, das 18:30 às 23:30; sexta, sábado e domingo, das 18:30 até 00:00 (meia-noite ao final do dia). O backend usa `America/Sao_Paulo`: a abertura é inclusiva e o fechamento exclusivo. Pagamentos aceitos: cartão, dinheiro e Pix. Orientação comercial: “O prazo de entrega pode variar de acordo com a demanda.” Não há promessa automática de minutos ou agendamento.
+Configuração confirmada pelo responsável em 27/10/2026: segunda a quinta, das 18:30 às 23:30; sexta, sábado e domingo, das 18:30 até 23:59. O backend usa `America/Sao_Paulo`: a abertura é inclusiva e o fechamento exclusivo. Pagamentos aceitos: cartão, dinheiro e Pix. Orientação comercial: “O prazo de entrega pode variar de acordo com a demanda.” Não há promessa automática de minutos ou agendamento.
 
 Em **Gestão → Atendimento da loja**, somente o administrador edita os sete dias, dias fechados, pagamentos, orientação de prazo, pausa manual e recebimento fora do horário. A revisão precede o salvamento. Edição concorrente exige recarga; repetir o mesmo conteúdo após perda de resposta recupera o resultado. Autor, data e versão da última alteração ficam no registro administrativo.
 

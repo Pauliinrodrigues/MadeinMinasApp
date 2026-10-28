@@ -18,6 +18,11 @@
   box-sizing: border-box;
 }
 
+ion-app.has-environment-notice > .ion-page {
+  top: 32px;
+  height: calc(100% - 32px);
+}
+
 @media print {
   @page {
     size: auto;

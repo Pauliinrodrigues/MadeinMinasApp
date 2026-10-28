@@ -214,7 +214,7 @@ export const cases = [
     steps: [
       {
         message:
-          "Quero um Lanche piloto para retirada. Meu telefone fictício é (38) 99999-2468. Revise meu pedido.",
+          "Quero um Lanche piloto para retirada. Meu telefone fictício é (38) 99999-2468. Vou pagar por Pix. Revise meu pedido.",
         verify: (state) => [
           check(
             "resumo calculado no servidor",

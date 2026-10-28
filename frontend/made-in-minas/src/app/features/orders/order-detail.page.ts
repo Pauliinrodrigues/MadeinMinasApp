@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize, Subscription } from 'rxjs';
 import { apiError } from '../../core/api-error';
+import { RequestedPayment } from '../../shared/requested-payment.component';
 import { AuthSession } from '../../core/auth/auth-session.service';
 import {
   Order,
@@ -23,7 +24,7 @@ import {
 
 @Component({
   selector: 'app-order-detail',
-  imports: [FormsModule, RouterLink, DatePipe],
+  imports: [FormsModule, RouterLink, DatePipe, RequestedPayment],
   templateUrl: './order-detail.page.html',
   styles: `
     .order-content {

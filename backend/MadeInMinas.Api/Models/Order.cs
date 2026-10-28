@@ -25,6 +25,8 @@ public sealed class Order
     public int Version { get; set; } = 1;
     public string StockStatus { get; set; } = "Pending";
     public string? Notes { get; set; }
+    public string? PaymentPreference { get; set; }
+    public decimal? ChangeFor { get; set; }
     public decimal Subtotal { get; set; }
     public decimal DeliveryFee { get; set; }
     public decimal Total { get; set; }

@@ -1,5 +1,7 @@
 # Agente de IA no chat — protótipo incremental
 
+Atualização de 28/10/2026: a montagem exige pagamento (`Card`, `Cash` ou `Pix`) antes da revisão; `changeFor` informa o valor para troco em dinheiro. Escolha e troco só são aceitos quando informados pelo visitante; não representam recebimento. A IA principal continua desligada. Configuração, limitações e validação do incremento estão no [registro da V1](v1-release.md).
+
 Implementação de 10/10/2026. O chat público e o atendimento humano existentes foram ampliados, preservando histórico, credenciais, permissões, envio idempotente e atualização por polling. A integração permanece **desativada por padrão**. Não houve chamada paga para validar um modelo real, publicação em produção ou ativação automática de uma chave.
 
 ## Arquitetura encontrada e reaproveitada

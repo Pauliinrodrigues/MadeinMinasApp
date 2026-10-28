@@ -222,9 +222,11 @@ for (const [mode, count] of [
     await navigate(page, '/comanda/order-1542/' + mode);
     const preview = page.getByRole('article', { name: 'Prévia da comanda' });
     await expect(preview).toContainText(`Lanche de teste ${count}`);
+    await expect(page.getByRole('note', { name: 'Ambiente do sistema' })).toContainText('LOCAL');
     for (const width of ['80', '58']) {
       await page.getByLabel('Largura do papel').selectOption(width);
       await page.emulateMedia({ media: 'print' });
+      await expect(page.getByRole('note', { name: 'Ambiente do sistema' })).toBeHidden();
       const layout = await preview.evaluate((receipt) => ({
         height: receipt.getBoundingClientRect().height,
         top: receipt.getBoundingClientRect().top,

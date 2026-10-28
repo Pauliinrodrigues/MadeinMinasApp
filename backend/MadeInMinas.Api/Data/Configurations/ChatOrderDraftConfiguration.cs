@@ -10,6 +10,7 @@ public sealed class ChatOrderDraftConfiguration : IEntityTypeConfiguration<ChatO
     {
         builder.ToTable("ChatOrderDrafts", table =>
         {
+            table.HasCheckConstraint("CK_ChatOrderDrafts_RequestedPayment", "(\"PaymentPreference\" IS NULL OR \"PaymentPreference\" IN ('Card','Cash','Pix')) AND (\"ChangeFor\" IS NULL OR (\"PaymentPreference\" IS NOT NULL AND \"PaymentPreference\" = 'Cash' AND \"ChangeFor\" > 0 AND \"ChangeFor\" <= 999999.99))");
             table.HasCheckConstraint("CK_ChatOrderDrafts_Version", "\"Version\" >= 1");
             table.HasCheckConstraint("CK_ChatOrderDrafts_Fulfillment", "\"Fulfillment\" IS NULL OR \"Fulfillment\" IN ('Pickup','Delivery')");
             table.HasCheckConstraint("CK_ChatOrderDrafts_Receipt", "(\"ReceiptJson\" IS NULL AND \"OrderId\" IS NULL AND \"ConfirmationRequestId\" IS NULL AND \"ConfirmationHash\" IS NULL) OR (\"ReceiptJson\" IS NOT NULL AND \"OrderId\" IS NOT NULL AND \"OrderRequestId\" IS NOT NULL AND \"ConfirmationRequestId\" IS NOT NULL AND \"ConfirmationHash\" IS NOT NULL)");
@@ -19,6 +20,8 @@ public sealed class ChatOrderDraftConfiguration : IEntityTypeConfiguration<ChatO
         builder.Property(draft => draft.Phone).HasMaxLength(30);
         builder.Property(draft => draft.Fulfillment).HasMaxLength(10);
         builder.Property(draft => draft.Notes).HasMaxLength(500);
+        builder.Property(draft => draft.PaymentPreference).HasMaxLength(10);
+        builder.Property(draft => draft.ChangeFor).HasPrecision(12, 2);
         builder.Property(draft => draft.ConfirmationHash).HasMaxLength(64);
         builder.Property(draft => draft.ItemsJson).HasColumnType("jsonb").IsRequired();
         builder.Property(draft => draft.AddressJson).HasColumnType("jsonb");

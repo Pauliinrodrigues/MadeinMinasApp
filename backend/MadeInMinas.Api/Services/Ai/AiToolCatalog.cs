@@ -32,12 +32,14 @@ public static class AiToolCatalog
             new() { ["productId"] = Text(), ["quantity"] = Integer(1, 99), ["notes"] = Text(true) }),
         Tool("remover_item_pedido", "Remove da montagem um produto selecionado. Não cancela um pedido já criado.",
             new() { ["productId"] = Text() }),
-        Tool("definir_dados_pedido", "Registra somente dados informados pelo cliente. null preserva o campo atual. Retirada: fulfillment=Pickup e address=null, obrigatoriamente. Nunca copie o endereço da loja para o cliente. Entrega: fulfillment=Delivery e areaId obtido de consultar_taxa_entrega. Campos ainda não informados devem ser null. Não invente telefone, modalidade, endereço ou observações. Notas não representam adicionais cobrados ou descontos.",
+        Tool("definir_dados_pedido", "Registra somente dados informados pelo cliente. null preserva o campo atual, exceto no bloco de pagamento: ao definir paymentPreference=Cash, envie também o changeFor desejado; null nesse bloco significa sem troco. Ao alterar outros dados, deixe paymentPreference e changeFor null para preservar o pagamento. Retirada: fulfillment=Pickup e address=null, obrigatoriamente. Nunca copie o endereço da loja para o cliente. Entrega: fulfillment=Delivery e areaId obtido de consultar_taxa_entrega. Campos ainda não informados devem ser null. Não invente telefone, modalidade, endereço, pagamento ou observações. Notas não representam adicionais cobrados ou descontos.",
             new()
             {
                 ["name"] = Text(true), ["phone"] = Text(true),
                 ["fulfillment"] = new { type = new[] { "string", "null" }, @enum = new string?[] { "Pickup", "Delivery", null } },
                 ["notes"] = Text(true),
+                ["paymentPreference"] = new { type = new[] { "string", "null" }, @enum = new string?[] { "Card", "Cash", "Pix", null } },
+                ["changeFor"] = new { type = new[] { "number", "null" }, minimum = 0.01, maximum = 999999.99 },
                 ["address"] = new
                 {
                     type = new[] { "object", "null" },
@@ -55,6 +57,6 @@ public static class AiToolCatalog
         Tool("consultar_status_pedido", "Consulta somente o pedido criado e vinculado a ESTA conversa. Não aceita IDs, telefones ou tokens de terceiros."),
         Tool("solicitar_atendimento_humano", "Encaminha a conversa para a fila humana e interrompe o modo automático."),
         Tool("responder_cliente", "Conclui a resposta usando uma mensagem autorizada pelo servidor. Use ToolResult depois de uma consulta ou montagem bem-sucedida; nunca produza preços, nomes ou afirmações livres.",
-            new() { ["code"] = new { type = "string", @enum = new[] { "ToolResult", "Greeting", "AskProduct", "AskQuantity", "AskName", "AskPhone", "AskFulfillment", "AskAddress", "Clarify", "Unsupported", "DiscountNotAvailable", "PromotionNotAvailable", "Unknown", "AwaitConfirmation" } } })
+            new() { ["code"] = new { type = "string", @enum = new[] { "ToolResult", "Greeting", "AskProduct", "AskQuantity", "AskName", "AskPhone", "AskFulfillment", "AskAddress", "AskPayment", "Clarify", "Unsupported", "DiscountNotAvailable", "PromotionNotAvailable", "Unknown", "AwaitConfirmation" } } })
     ];
 }

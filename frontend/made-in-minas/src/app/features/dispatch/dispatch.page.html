@@ -75,6 +75,11 @@
       aria-label="Pagamento e troco"
     >
       <p>Total: <strong>{{ order.total | currency:'BRL' }}</strong></p>
+      <app-requested-payment
+        [method]="order.paymentPreference"
+        [changeFor]="order.changeFor"
+        [total]="order.total"
+      />
       @if (order.payment; as payment) {
       <p>
         {{ method(payment.method) }} · {{ payment.status === 'Received' ? 'Recebido' : 'Pendente —

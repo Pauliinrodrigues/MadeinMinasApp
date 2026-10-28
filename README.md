@@ -29,7 +29,7 @@ O projeto de console original foi reorganizado na API; abra `MadeinMinasApp.sln`
 
 Use `node --version` antes de instalar. O Node 24.19.0 fornecido pelo Rider é compatível; a instalação global antiga 22.16.0 não atende ao Angular 22. Se o terminal mostrar 22.16.0, selecione um Node compatível nas configurações do Rider/terminal. Os comandos npm abaixo usam o Angular CLI local; não precisam de Ionic CLI global.
 
-Dependências diretas fixadas: Angular 22.2.1, Angular CLI/build 22.2.0, TypeScript 6.0.3, Ionic 9.0.5, EF Core Design 10.0.12 e Npgsql EF 10.0.3. Preserve `package-lock.json` e `packages.lock.json`.
+Dependências diretas fixadas: Angular 22.2.1, Angular CLI/build 22.2.4, TypeScript 6.0.3, Ionic 9.0.5, EF Core Design 10.0.12 e Npgsql EF 10.0.3. Preserve `package-lock.json` e `packages.lock.json`.
 
 ## Iniciar o backend
 
@@ -131,6 +131,7 @@ O GitHub Actions executa as verificações em pushes para `master` e pull reques
 
 ## Configuração e segurança
 
+- Ambientes principais: **Local (`Development`)**, **Teste/Homologação (`Staging`)** e **Produção (`Production`)**, com dados e credenciais separados. Configuração, builds e promoção de versões: [ambientes](docs/environments.md).
 - Connection string em User Secrets (Development) ou `ConnectionStrings__DefaultConnection` (ambiente).
 - `appsettings.json` não contém senha. Não inclua segredos em nenhum arquivo versionado, inclusive `appsettings.Development.json`.
 - Nunca colocar chaves de IA ou credenciais no frontend.
@@ -166,6 +167,9 @@ O GitHub Actions executa as verificações em pushes para `master` e pull reques
 - [Decisões técnicas](docs/decisions.md)
 - [Regras de negócio](docs/business-rules.md)
 - [Assistente virtual: configuração, ferramentas e confirmação](docs/ai-chat.md)
+- [Prontidão da primeira versão e melhorias priorizadas](docs/v1-readiness.md)
+- [Implementação, homologação e preparação da V1](docs/v1-release.md)
+- [Ambientes local, teste e produção](docs/environments.md)
 - [Avaliação repetível do piloto com Gemini](docs/ai-evaluation.md)
 - [Ensaio com o catálogo comercial e clientes fictícios](docs/ai-rehearsal.md)
 - [Etapas](docs/roadmap.md)

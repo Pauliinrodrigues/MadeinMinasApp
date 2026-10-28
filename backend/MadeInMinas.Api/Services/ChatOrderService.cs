@@ -74,9 +74,18 @@ public sealed class ChatOrderService(AppDbContext database, PublicCartService ca
             var fulfillment = request.Fulfillment ?? draft.Fulfillment;
             var address = fulfillment == "Pickup" ? null : request.Address ?? Read<PublicDeliveryAddressRequest>(draft.AddressJson);
             var notes = request.Notes is null ? draft.Notes : Clean(request.Notes);
+            var payment = request.PaymentPreference ?? draft.PaymentPreference;
+            if (request.ChangeFor is not null && payment != "Cash")
+                throw Invalid("Troco só pode ser solicitado para dinheiro.");
+            var changeFor = payment != "Cash" ? null
+                : request.PaymentPreference is not null ? request.ChangeFor : request.ChangeFor ?? draft.ChangeFor;
+            if (MadeInMinas.Api.Validation.RequestedPayment.Validate(payment, changeFor).Any()
+                || changeFor is not null && payment != "Cash")
+                throw Invalid("Confira a forma de pagamento e o valor para troco.");
             var addressJson = address is null ? null : Serialize(address);
             if (name == draft.Name && phone == draft.Phone && fulfillment == draft.Fulfillment
-                && Serialize(Read<PublicDeliveryAddressRequest>(draft.AddressJson)) == Serialize(address) && notes == draft.Notes)
+                && Serialize(Read<PublicDeliveryAddressRequest>(draft.AddressJson)) == Serialize(address) && notes == draft.Notes
+                && payment == draft.PaymentPreference && changeFor == draft.ChangeFor)
                 return State(draft);
             var items = Read<CartItemRequest[]>(draft.ItemsJson)!;
             var quote = items.Length == 0 ? null : await cart.QuoteAsync(new(items, notes), cancellationToken);
@@ -85,6 +94,8 @@ public sealed class ChatOrderService(AppDbContext database, PublicCartService ca
             draft.Fulfillment = fulfillment;
             draft.AddressJson = addressJson;
             draft.Notes = notes;
+            draft.PaymentPreference = payment;
+            draft.ChangeFor = changeFor;
             draft.QuoteJson = quote is null ? null : Serialize(quote);
             Changed(draft);
             return await SaveAsync(draft, cancellationToken);
@@ -305,7 +316,7 @@ public sealed class ChatOrderService(AppDbContext database, PublicCartService ca
 
     private static PublicCheckoutRequest Checkout(ChatOrderDraft draft) =>
         new(draft.Name, draft.Phone!, new(Read<CartItemRequest[]>(draft.ItemsJson)!, draft.Notes))
-        { Fulfillment = draft.Fulfillment!, Address = Read<PublicDeliveryAddressRequest>(draft.AddressJson) };
+        { Fulfillment = draft.Fulfillment!, Address = Read<PublicDeliveryAddressRequest>(draft.AddressJson), PaymentPreference = draft.PaymentPreference, ChangeFor = draft.ChangeFor };
 
     private static ChatOrderStateResponse State(ChatOrderDraft draft)
     {
@@ -325,8 +336,11 @@ public sealed class ChatOrderService(AppDbContext database, PublicCartService ca
             missing.Add("fulfillment");
         if (draft.Fulfillment == "Delivery" && address is null)
             missing.Add("address");
+        if (draft.PaymentPreference is null)
+            missing.Add("paymentPreference");
         return new(draft.Version, quote?.Items ?? [], draft.Name, draft.Phone, draft.Fulfillment, address, draft.Notes,
-            quote, review, receipt, missing.ToArray(), receipt is null && review is null && items.Length != 0);
+            quote, review, receipt, missing.ToArray(), receipt is null && review is null && items.Length != 0)
+        { PaymentPreference = draft.PaymentPreference, ChangeFor = draft.ChangeFor };
     }
 
     // MVC validates HTTP bodies; tool invocations must perform the same nested validation explicitly.
@@ -379,6 +393,7 @@ public sealed class ChatOrderService(AppDbContext database, PublicCartService ca
         "phone" => "telefone com DDD",
         "fulfillment" => "entrega ou retirada",
         "address" => "endereço de entrega",
+        "paymentPreference" => "forma de pagamento",
         _ => field
     };
     private static T? Read<T>(string? json) => json is null ? default : JsonSerializer.Deserialize<T>(json);

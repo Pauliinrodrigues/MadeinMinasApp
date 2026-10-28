@@ -48,6 +48,8 @@ public sealed record OrderSummaryResponse(Guid Id, int Number, string CustomerNa
 {
     public string Origin { get; init; } = string.Empty;
     public string PaymentStatus { get; init; } = string.Empty;
+    public string? PaymentPreference { get; init; }
+    public decimal? ChangeFor { get; init; }
 }
 public sealed record OrderPageResponse(OrderSummaryResponse[] Items, int Page, int PageSize, int TotalCount);
 public sealed record OrderHistoryResponse(
@@ -64,6 +66,8 @@ public sealed record OrderResponse(Guid Id, int Number, string Origin, string St
     DateTimeOffset UpdatedAt, OrderHistoryResponse[] History)
 {
     public string StockStatus { get; init; } = "Pending";
+    public string? PaymentPreference { get; init; }
+    public decimal? ChangeFor { get; init; }
     public OrderStockComponentResponse[] StockComponents { get; init; } = [];
 }
 public sealed record OrderStockComponentResponse(Guid ProductId, string ProductName, Guid IngredientId,

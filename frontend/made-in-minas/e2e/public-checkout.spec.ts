@@ -94,8 +94,8 @@ async function setup(page: Page) {
       const input = request.postDataJSON() as PublicCheckoutInput;
       expect(Object.keys(input).sort()).toEqual(
         input.fulfillment === 'Delivery'
-          ? ['address', 'cart', 'fulfillment', 'name', 'phone']
-          : ['cart', 'name', 'phone'],
+          ? ['address', 'cart', 'changeFor', 'fulfillment', 'name', 'paymentPreference', 'phone']
+          : ['cart', 'changeFor', 'name', 'paymentPreference', 'phone'],
       );
       state.reviews.push(input);
       if (state.reviewStatus !== 200) {
@@ -115,6 +115,8 @@ async function setup(page: Page) {
         json: {
           name: input.name.trim(),
           phone: '+5531999991234',
+          paymentPreference: input.paymentPreference,
+          changeFor: input.changeFor,
           fulfillment: input.fulfillment ?? 'Pickup',
           address: area
             ? {
@@ -212,9 +214,55 @@ async function start(page: Page, fulfillment: 'Pickup' | 'Delivery' = 'Pickup') 
 async function review(page: Page) {
   await page.getByLabel('Seu nome', { exact: true }).fill('Maria');
   await page.getByLabel('Telefone com DDD', { exact: true }).fill('(31) 99999-1234');
+  await page.getByLabel('Forma de pagamento', { exact: true }).selectOption('Pix');
   await page.getByRole('button', { name: 'Revisar pedido para retirada', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Pedido revisado' })).toBeVisible();
 }
+
+test('pagamento rejeitado permite corrigir sem prender a tentativa em conferência', async ({
+  page,
+}) => {
+  const state = await setup(page);
+  await start(page);
+  await review(page);
+  state.orderStatus = 400;
+  state.code = 'InvalidRequestedPayment';
+  await page.getByRole('button', { name: 'Enviar pedido para retirada', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('pagamento');
+  await expect(page.getByLabel('Seu nome', { exact: true })).toHaveValue('Maria');
+  await expect(page.getByRole('button', { name: 'Conferir envio', exact: true })).toHaveCount(0);
+  state.orderStatus = 201;
+  await page.getByLabel('Forma de pagamento', { exact: true }).selectOption('Cash');
+  await page.getByRole('button', { name: 'Revisar pedido para retirada', exact: true }).click();
+  await page.getByRole('button', { name: 'Enviar pedido para retirada', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Pedido recebido' })).toBeVisible();
+  expect(state.orders[1].requestId).not.toBe(state.orders[0].requestId);
+});
+
+test('pagamento em dinheiro informa troco, invalida revisão e preserva a mesma tentativa', async ({
+  page,
+}) => {
+  const state = await setup(page);
+  await start(page);
+  await review(page);
+  await page.getByLabel('Forma de pagamento', { exact: true }).selectOption('Cash');
+  await expect(page.getByRole('region', { name: 'Pedido revisado' })).toHaveCount(0);
+  await page.getByLabel('Preciso de troco', { exact: true }).check();
+  await page.getByLabel('Troco para quanto?', { exact: true }).fill('100');
+  await page.getByRole('button', { name: 'Revisar pedido para retirada', exact: true }).click();
+  await expect(page.getByLabel('Pagamento escolhido pelo cliente')).toContainText('Dinheiro');
+  await expect(page.getByLabel('Pagamento escolhido pelo cliente')).toContainText('40,20');
+  state.loseResponse = true;
+  await page.getByRole('button', { name: 'Enviar pedido para retirada', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Conferir envio', exact: true })).toBeVisible();
+  state.loseResponse = false;
+  await page.getByRole('button', { name: 'Conferir envio', exact: true }).click();
+  await expect(page.getByRole('region', { name: 'Pedido recebido' })).toBeVisible();
+  expect(state.orders[0].checkout.paymentPreference).toBe('Cash');
+  expect(state.orders[0].checkout.changeFor).toBe(100);
+  expect(state.orders[1]).toEqual(state.orders[0]);
+  expect(state.receipts.size).toBe(1);
+});
 
 test('atendimento: loja fechada mantém o carrinho e impede envio até reabrir', async ({ page }) => {
   await page.clock.install();
@@ -227,7 +275,7 @@ test('atendimento: loja fechada mantém o carrinho e impede envio até reabrir',
   await expect(info).toContainText('O prazo de entrega pode variar de acordo com a demanda.');
   await expect(info).toContainText('Cartão, Dinheiro, Pix');
   await info.getByText('Horários de funcionamento', { exact: false }).click();
-  await expect(info).toContainText('Sexta-feira: 18:30 às 00:00 (meia-noite)');
+  await expect(info).toContainText('Sexta-feira: 18:30 às 23:59');
   await expect(
     page.getByRole('button', { name: 'Revisar pedido para retirada', exact: true }),
   ).toBeDisabled();
@@ -320,6 +368,7 @@ test('todos os bairros de Corinto: exige bairro real, revisa e recupera o mesmo 
   ).toBeVisible();
   await page.getByLabel('Seu nome').fill('Cliente de teste');
   await page.getByLabel('Telefone com DDD').fill('31999991234');
+  await page.getByLabel('Forma de pagamento', { exact: true }).selectOption('Pix');
   await page.getByLabel('Rua ou avenida').fill('Rua de teste');
   await page.getByLabel('Número (ou s/n)').fill('10');
   await page.getByRole('button', { name: 'Revisar pedido para entrega' }).click();
@@ -462,6 +511,7 @@ test('dados inválidos não são revisados e editar contato invalida a revisão'
   );
   await page.getByLabel('Seu nome').fill('Maria');
   await page.getByLabel('Telefone com DDD').fill('123');
+  await page.getByLabel('Forma de pagamento', { exact: true }).selectOption('Pix');
   await page.getByRole('button', { name: 'Revisar pedido para retirada' }).click();
   expect(state.reviews).toHaveLength(0);
   await expect(page.getByLabel('Telefone com DDD', { exact: true })).toBeFocused();
@@ -477,6 +527,7 @@ test('revisão falha sem criar pedido e pode ser repetida', async ({ page }) => 
   state.reviewStatus = 500;
   await page.getByLabel('Seu nome').fill('Maria');
   await page.getByLabel('Telefone com DDD').fill('31999991234');
+  await page.getByLabel('Forma de pagamento', { exact: true }).selectOption('Pix');
   await page.getByRole('button', { name: 'Revisar pedido para retirada' }).click();
   await expect(page.getByRole('alert')).toContainText('Não foi possível revisar');
   expect(state.orders).toHaveLength(0);
@@ -685,6 +736,7 @@ test('contato e observações são escapados e a revisão cabe no celular', asyn
   await start(page);
   await page.getByLabel('Seu nome').fill('<b>' + 'Maria '.repeat(15) + '</b>');
   await page.getByLabel('Telefone com DDD').fill('31999991234');
+  await page.getByLabel('Forma de pagamento', { exact: true }).selectOption('Pix');
   await page.getByRole('button', { name: 'Revisar pedido para retirada' }).click();
   await expect(page.getByRole('region', { name: 'Pedido revisado' })).toContainText('<b>');
   await expect(page.locator('[aria-label="Pedido revisado"] b')).toHaveCount(0);
@@ -697,6 +749,7 @@ test('contato e observações são escapados e a revisão cabe no celular', asyn
 async function delivery(page: Page) {
   await page.getByLabel('Seu nome', { exact: true }).fill('Maria');
   await page.getByLabel('Telefone com DDD', { exact: true }).fill('31999991234');
+  await page.getByLabel('Forma de pagamento', { exact: true }).selectOption('Pix');
   await page.getByLabel('Retirada ou entrega').selectOption('Delivery');
   await page.getByLabel('Região de entrega (bairro e cidade)').selectOption('test-center');
   await page.getByLabel('Rua ou avenida').fill('Rua informada');
@@ -744,6 +797,7 @@ test('entrega exige endereço e CEP válido; edição exige nova revisão e reti
   await start(page);
   await page.getByLabel('Seu nome').fill('Maria');
   await page.getByLabel('Telefone com DDD').fill('31999991234');
+  await page.getByLabel('Forma de pagamento', { exact: true }).selectOption('Pix');
   await page.getByLabel('Retirada ou entrega').selectOption('Delivery');
   await page.getByRole('button', { name: 'Revisar pedido para entrega' }).click();
   await expect(page.getByRole('alert')).toContainText('Selecione uma região');
@@ -773,6 +827,7 @@ test('sem cobertura configurada não cria entrega nem assume taxa gratuita', asy
   ).toBeVisible();
   await page.getByLabel('Seu nome').fill('Maria');
   await page.getByLabel('Telefone com DDD').fill('31999991234');
+  await page.getByLabel('Forma de pagamento', { exact: true }).selectOption('Pix');
   await page.getByRole('button', { name: 'Revisar pedido para entrega' }).click();
   expect(state.reviews).toHaveLength(0);
   expect(state.orders).toHaveLength(0);

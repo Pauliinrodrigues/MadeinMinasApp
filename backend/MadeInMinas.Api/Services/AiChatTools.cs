@@ -97,7 +97,7 @@ public sealed class AiChatTools(AppDbContext database, PublicMenuService menu, D
                     return await UpdatedOrderResultAsync(conversationId, leaseId, source,
                         await orders.RemoveItemAsync(conversationId, leaseId, source, ProductId(args), cancellationToken), cancellationToken);
                 case "definir_dados_pedido":
-                    Fields(args, "name", "phone", "fulfillment", "address", "notes");
+                    Fields(args, "name", "phone", "fulfillment", "address", "notes", "paymentPreference", "changeFor");
                     var details = JsonSerializer.Deserialize<ChatOrderDetailsRequest>(call.ArgumentsJson, Json)
                         ?? throw new JsonException();
                     var (missingCustomerInput, validatedDetails) = await ValidateCustomerInputAsync(conversationId, source, details, cancellationToken);
@@ -106,6 +106,7 @@ public sealed class AiChatTools(AppDbContext database, PublicMenuService menu, D
                         {
                             "name" => "Qual nome devo colocar no pedido? Preciso do nome informado por você.",
                             "phone" => "Qual é seu telefone com DDD? Não posso preencher um telefone que você ainda não informou.",
+                            "payment" => "Como prefere pagar? Informe a forma de pagamento e, se precisar de troco em dinheiro, diga o valor para troco.",
                             _ => "Para entrega, informe bairro, rua e número. Não posso preencher um endereço que você ainda não informou."
                         });
                     return await UpdatedOrderResultAsync(conversationId, leaseId, source,
@@ -135,6 +136,7 @@ public sealed class AiChatTools(AppDbContext database, PublicMenuService menu, D
                         "AskName" => "Qual nome devo colocar no pedido?",
                         "AskPhone" => "Qual é seu telefone com DDD para contato sobre o pedido?",
                         "AskFulfillment" => "Você prefere entrega ou retirada?",
+                        "AskPayment" => "Como prefere pagar? Se escolher dinheiro e precisar de troco, informe o valor para troco.",
                         "AskAddress" => "Para entrega, preciso do bairro, rua e número. Qual é o endereço?",
                         "Clarify" => "Não consegui identificar sua escolha com segurança. Pode explicar qual produto ou alteração deseja? Também posso chamar um atendente.",
                         "Unsupported" => "Essa opção não está cadastrada como uma operação disponível no sistema. Posso mostrar o cardápio ou encaminhar para um atendente.",
@@ -191,6 +193,21 @@ public sealed class AiChatTools(AppDbContext database, PublicMenuService menu, D
         var sources = messages.Select(NormalizeCustomerText).ToArray();
         bool Supplied(string? value) => value is null || NormalizeCustomerText(value) is { Length: > 2 } normalized
             && sources.Any(source => source.Contains(normalized, StringComparison.Ordinal));
+        var paymentWords = details.PaymentPreference switch
+        {
+            "Card" => new[] { " CARTAO ", " CREDITO ", " DEBITO " },
+            "Cash" => new[] { " DINHEIRO " },
+            "Pix" => new[] { " PIX " },
+            null => [],
+            _ => new[] { "__INVALID_PAYMENT__" }
+        };
+        if (paymentWords.Length > 0 && !sources.Any(source => paymentWords.Any(word => source.Contains(word, StringComparison.Ordinal))))
+            return ("payment", details);
+        if (details.ChangeFor is { } requestedChange && !messages.Any(message =>
+            Regex.Matches(message, @"(?i)troco\s*(?:para|pra|de)?\s*(?:R\$\s*)?(\d+(?:[.,]\d{1,2})?)(?!\d)")
+                .Cast<Match>().Any(match => decimal.TryParse(match.Groups[1].Value.Replace(',', '.'),
+                    NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var amount) && amount == requestedChange)))
+            return ("payment", details);
         if (details.Name is not null && NormalizeCustomerText(details.Name) != NormalizeCustomerText(visitorName) && !Supplied(details.Name))
             return ("name", details);
         if (details.Phone is not null)
@@ -243,6 +260,8 @@ public sealed class AiChatTools(AppDbContext database, PublicMenuService menu, D
             state.Name,
             hasPhone = state.Phone is not null,
             state.Fulfillment,
+            state.PaymentPreference,
+            state.ChangeFor,
             state.MissingFields,
             state.NeedsReview,
             state.Quote,
@@ -268,6 +287,7 @@ public sealed class AiChatTools(AppDbContext database, PublicMenuService menu, D
                 "phone" => "Qual é seu telefone com DDD?",
                 "fulfillment" => "Você prefere entrega ou retirada?",
                 "address" => "Qual é o bairro, rua e número para entrega?",
+                "paymentPreference" => "Como prefere pagar? Se precisar de troco em dinheiro, informe o valor para troco.",
                 "name" => "Qual nome devo colocar no pedido?",
                 _ => "Qual produto deseja escolher?"
             });

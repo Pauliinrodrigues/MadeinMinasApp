@@ -1,5 +1,7 @@
 # Checkout público para retirada — Fase 8C
 
+Registro histórico da 8C. O fluxo vigente também oferece entrega e exige preferência de pagamento, com troco opcional para dinheiro. Contrato e validações atuais: [preparação da V1](v1-release.md).
+
 Continuidade autorizada em 05/10/2026. A 8B foi preservada no commit local `15d8107`; `feat/public-checkout` parte dele. Sequência local: 8A (`4bcd978`) → 8B (`15d8107`) → 8C. Aceite manual e publicação continuam separados.
 
 O visitante monta o carrinho, acessa `/pedido/finalizar`, informa nome/telefone, revisa os dados e envia um pedido para **retirada no balcão**. A equipe recebe o pedido **Novo**, confere o contato e confirma o preparo pelo fluxo existente. O site não cobra nem registra recebimento. Pagamento é tratado na retirada pela equipe.

@@ -10,6 +10,8 @@ export interface PublicCheckoutInput {
   cart: PublicCartInput;
   fulfillment?: 'Pickup' | 'Delivery';
   address?: PublicDeliveryAddress;
+  paymentPreference?: 'Card' | 'Cash' | 'Pix' | null;
+  changeFor?: number | null;
 }
 export interface PublicDeliveryAddress {
   areaId: string;
@@ -45,6 +47,8 @@ export interface PublicCheckoutReview extends PublicCartQuote {
   deliveryFee: number;
   total: number;
   reviewToken: string;
+  paymentPreference?: 'Card' | 'Cash' | 'Pix' | null;
+  changeFor?: number | null;
 }
 export interface PublicOrderInput {
   requestId: string;

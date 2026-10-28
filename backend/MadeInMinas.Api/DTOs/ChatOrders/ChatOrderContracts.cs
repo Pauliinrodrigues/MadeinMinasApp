@@ -15,8 +15,12 @@ public sealed record ChatOrderDetailsRequest(
     PublicDeliveryAddressRequest? Address = null,
     [StringLength(500)] string? Notes = null) : IValidatableObject
 {
+    public string? PaymentPreference { get; init; }
+    public decimal? ChangeFor { get; init; }
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
+        foreach (var failure in RequestedPayment.Validate(PaymentPreference, ChangeFor))
+            yield return failure;
         if (Name is not null && string.IsNullOrWhiteSpace(Name))
             yield return new ValidationResult("Informe o nome para o pedido.", [nameof(Name)]);
         if (Phone is not null && !BrazilianPhone.TryNormalize(Phone, out _))
@@ -45,4 +49,8 @@ public sealed record ChatOrderConfirmationRequest(
 public sealed record ChatOrderStateResponse(int DraftVersion, CartItemResponse[] Items,
     string Name, string? Phone, string? Fulfillment, PublicDeliveryAddressRequest? Address, string? Notes,
     PublicCartQuoteResponse? Quote, PublicCheckoutReviewResponse? Review, PublicOrderReceipt? Receipt,
-    string[] MissingFields, bool NeedsReview);
+    string[] MissingFields, bool NeedsReview)
+{
+    public string? PaymentPreference { get; init; }
+    public decimal? ChangeFor { get; init; }
+}

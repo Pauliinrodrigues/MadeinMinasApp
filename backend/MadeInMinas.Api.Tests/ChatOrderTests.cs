@@ -108,7 +108,7 @@ public sealed class ChatOrderTests(AuthenticationFactory factory) : IClassFixtur
     private async Task<ChatOrderStateResponse> ReadyAsync(bool finishTurn = true)
     {
         await SetItemAsync(burger.Id, 2, "Sem cebola");
-        await DetailsAsync(new(Phone: "(31) 99999-1234", Fulfillment: "Pickup"));
+        await DetailsAsync(new(Phone: "(31) 99999-1234", Fulfillment: "Pickup") { PaymentPreference = "Pix" });
         var state = await WithOrdersAsync(service => service.ReviewForToolAsync(conversation.Id, conversation.AiLeaseId!.Value, 1, CancellationToken.None));
         if (finishTurn)
             await FinishTurnAsync();
@@ -133,6 +133,29 @@ public sealed class ChatOrderTests(AuthenticationFactory factory) : IClassFixtur
         var client = factory.CreateStaffClient();
         client.DefaultRequestHeaders.Add("X-Chat-Access", credential ?? token);
         return client;
+    }
+
+    [Fact]
+    public async Task ChangingPaymentInvalidatesPreviousConfirmationAndPersistsChangeRequest()
+    {
+        var previous = await ReadyAsync(finishTurn: false);
+        var changed = await DetailsAsync(new ChatOrderDetailsRequest { PaymentPreference = "Cash", ChangeFor = 100m });
+        Assert.Null(changed.Review);
+        Assert.True(changed.DraftVersion > previous.DraftVersion);
+        var current = await WithOrdersAsync(service => service.ReviewForToolAsync(conversation.Id, conversation.AiLeaseId!.Value, 1, CancellationToken.None));
+        Assert.Equal("Cash", current.Review!.PaymentPreference);
+        Assert.Equal(100m - current.Review.Total, current.Review.RequestedChange);
+        await FinishTurnAsync();
+        using var guest = VisitorClient();
+        await AssertProblemAsync(await guest.PostAsJsonAsync(ConfirmPath, Confirmation(previous)), "ChatDraftChanged");
+        (await guest.PostAsJsonAsync(ConfirmPath, Confirmation(current))).EnsureSuccessStatusCode();
+        await factory.WithDatabaseAsync(async database =>
+        {
+            var order = await database.Orders.SingleAsync();
+            Assert.Equal("Cash", order.PaymentPreference);
+            Assert.Equal(100m, order.ChangeFor);
+            Assert.False(await database.Payments.AnyAsync());
+        });
     }
 
     private static ChatOrderConfirmationRequest Confirmation(ChatOrderStateResponse state) =>
@@ -496,7 +519,8 @@ public sealed class ChatOrderTests(AuthenticationFactory factory) : IClassFixtur
         });
         await SetItemAsync(burger.Id);
         await DetailsAsync(new(Phone: "31999991234", Fulfillment: "Delivery",
-            Address: new PublicDeliveryAddressRequest("corinto", "Rua teste", "10") { Neighborhood = "Bairro informado" }));
+            Address: new PublicDeliveryAddressRequest("corinto", "Rua teste", "10") { Neighborhood = "Bairro informado" })
+        { PaymentPreference = "Pix" });
         var state = await WithOrdersAsync(service => service.ReviewForToolAsync(conversation.Id, conversation.AiLeaseId!.Value, 1, CancellationToken.None));
         await FinishTurnAsync();
         Assert.Equal(5m, state.Review!.DeliveryFee);

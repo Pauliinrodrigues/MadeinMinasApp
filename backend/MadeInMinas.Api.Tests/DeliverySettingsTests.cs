@@ -177,7 +177,7 @@ public sealed class DeliverySettingsTests(AuthenticationFactory factory) : IClas
             await database.SaveChangesAsync();
         });
         var delivery = new PublicCheckoutRequest("Cliente teste", "31999991234", new([new(product.Id, 1)]))
-        { Fulfillment = "Delivery", Address = new("legacy-center", "Rua de teste", "10") };
+        { PaymentPreference = "Pix", Fulfillment = "Delivery", Address = new("legacy-center", "Rua de teste", "10") };
         var reviewResponse = await guest.PostAsJsonAsync("/api/public-checkout/review", delivery);
         reviewResponse.EnsureSuccessStatusCode();
         var review = (await reviewResponse.Content.ReadFromJsonAsync<PublicCheckoutReviewResponse>())!;
@@ -193,7 +193,7 @@ public sealed class DeliverySettingsTests(AuthenticationFactory factory) : IClas
         var recovered = (await replay.Content.ReadFromJsonAsync<PublicOrderReceipt>())!;
         Assert.Equal(receipt.Number, recovered.Number);
         Assert.Equal(28.90m, recovered.Total);
-        var pickup = new PublicCheckoutRequest("Cliente teste", "31999991234", delivery.Cart);
+        var pickup = new PublicCheckoutRequest("Cliente teste", "31999991234", delivery.Cart) { PaymentPreference = "Pix" };
         var pickupResponse = await guest.PostAsJsonAsync("/api/public-checkout/review", pickup);
         pickupResponse.EnsureSuccessStatusCode();
         var pickupReview = (await pickupResponse.Content.ReadFromJsonAsync<PublicCheckoutReviewResponse>())!;
@@ -225,7 +225,7 @@ public sealed class DeliverySettingsTests(AuthenticationFactory factory) : IClas
         });
         using var guest = factory.CreateStaffClient();
         var checkout = new PublicCheckoutRequest("Cliente teste", "31999991234", new([new(product.Id, 1)]))
-        { Fulfillment = "Delivery", Address = new("legacy-center", "Rua de teste", "10") };
+        { PaymentPreference = "Pix", Fulfillment = "Delivery", Address = new("legacy-center", "Rua de teste", "10") };
         var reviewed = await guest.PostAsJsonAsync("/api/public-checkout/review", checkout);
         reviewed.EnsureSuccessStatusCode();
         var review = (await reviewed.Content.ReadFromJsonAsync<PublicCheckoutReviewResponse>())!;
@@ -404,7 +404,7 @@ public sealed class DeliverySettingsTests(AuthenticationFactory factory) : IClas
             await database.SaveChangesAsync();
         });
         var checkout = new PublicCheckoutRequest("Visitante teste", "31999991234", new([new(product.Id, 1)]))
-        { Fulfillment = "Delivery", Address = new("legacy-center", "Rua de teste", "10") };
+        { PaymentPreference = "Pix", Fulfillment = "Delivery", Address = new("legacy-center", "Rua de teste", "10") };
         var reviewResponse = await guest.PostAsJsonAsync("/api/public-checkout/review", checkout);
         reviewResponse.EnsureSuccessStatusCode();
         var review = (await reviewResponse.Content.ReadFromJsonAsync<PublicCheckoutReviewResponse>())!;
