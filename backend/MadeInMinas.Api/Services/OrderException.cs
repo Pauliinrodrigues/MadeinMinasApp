@@ -20,6 +20,7 @@ public enum OrderError
     StoreSettingsChanged,
     PublicDeliveryUnavailable,
     InvalidPublicDeliveryAddress,
+    InvalidRequestedPayment,
     InvalidSession,
     PermissionDenied
 }

@@ -17,9 +17,13 @@ public sealed record PublicCheckoutRequest(
     [Required, RegularExpression("^(Pickup|Delivery)$")]
     public string Fulfillment { get; init; } = "Pickup";
     public PublicDeliveryAddressRequest? Address { get; init; }
+    public string? PaymentPreference { get; init; }
+    public decimal? ChangeFor { get; init; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
+        foreach (var failure in RequestedPayment.Validate(PaymentPreference, ChangeFor))
+            yield return failure;
         if (!BrazilianPhone.TryNormalize(Phone, out _))
             yield return new ValidationResult("Informe telefone brasileiro com DDD.", [nameof(Phone)]);
         if (Fulfillment == "Delivery" && Address is null)
@@ -75,6 +79,9 @@ public sealed record PublicCheckoutReviewResponse(string Name, string Phone, str
 {
     public CartAddressResponse? Address { get; init; }
     public string? DeliveryAreaId { get; init; }
+    public string? PaymentPreference { get; init; }
+    public decimal? ChangeFor { get; init; }
+    public decimal? RequestedChange => ChangeFor - Total;
 }
 
 // Comprovante de recebimento, sem identificadores internos ou dados pessoais do cadastro.

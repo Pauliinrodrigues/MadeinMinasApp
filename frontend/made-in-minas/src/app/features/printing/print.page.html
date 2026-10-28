@@ -105,6 +105,11 @@
     Subtotal: {{ data.order.subtotal | currency:'BRL' }}<br />Entrega: {{ data.order.deliveryFee |
     currency:'BRL' }}<br /><strong>TOTAL: {{ data.order.total | currency:'BRL' }}</strong>
   </p>
+  <app-requested-payment
+    [method]="data.order.paymentPreference"
+    [changeFor]="data.order.changeFor"
+    [total]="data.order.total ?? 0"
+  />
   @if (data.order.payment; as payment) {
   <p>
     {{ method(payment.method) }} ·

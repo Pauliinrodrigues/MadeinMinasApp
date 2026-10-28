@@ -21,6 +21,7 @@ import {
 } from '../../core/services/chat-api.service';
 import { PublicChatState } from '../../core/services/public-chat-state.service';
 import { ChatMessagesComponent } from './chat-messages.component';
+import { RequestedPayment } from '../../shared/requested-payment.component';
 import { PublicCheckoutState } from '../../core/services/public-checkout-state.service';
 import { PublicOrderHistory } from '../../core/services/public-order-history.service';
 import { apiError } from '../../core/api-error';
@@ -29,13 +30,13 @@ import { environment } from '../../../environments/environment';
 @Component({
   selector: 'app-public-chat',
   host: { class: 'ion-page' },
-  imports: [FormsModule, RouterLink, IonContent, ChatMessagesComponent],
+  imports: [FormsModule, RouterLink, IonContent, ChatMessagesComponent, RequestedPayment],
   templateUrl: './public-chat.page.html',
   styleUrl: './public-chat.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PublicChatPage {
-  readonly testing = 'testing' in environment && environment.testing === true;
+  readonly testing = environment.testing;
   readonly state = inject(PublicChatState);
   private readonly checkout = inject(PublicCheckoutState);
   private readonly history = inject(PublicOrderHistory);
@@ -74,6 +75,7 @@ export class PublicChatPage {
       phone: 'telefone com DDD',
       fulfillment: 'entrega ou retirada',
       address: 'endereço completo para entrega',
+      paymentPreference: 'forma de pagamento e troco, se necessário',
     };
     return (this.order()?.missingFields ?? []).map(
       (field) => labels[field] ?? 'informações do pedido',
@@ -431,6 +433,7 @@ export class PublicChatPage {
     if (!value.pendingOrder) {
       if (
         !order?.review ||
+        order.missingFields.length > 0 ||
         order.receipt ||
         !this.fresh() ||
         this.orderProcessing() ||

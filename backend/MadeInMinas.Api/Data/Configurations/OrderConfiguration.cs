@@ -10,6 +10,7 @@ public sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
     {
         builder.ToTable("Orders", table =>
         {
+            table.HasCheckConstraint("CK_Orders_RequestedPayment", "(\"PaymentPreference\" IS NULL OR \"PaymentPreference\" IN ('Card','Cash','Pix')) AND (\"ChangeFor\" IS NULL OR (\"PaymentPreference\" IS NOT NULL AND \"PaymentPreference\" = 'Cash' AND \"ChangeFor\" >= \"Total\" AND \"ChangeFor\" <= 999999.99))");
             table.HasCheckConstraint("CK_Orders_Number", "\"Number\" > 0");
             table.HasCheckConstraint("CK_Orders_StockStatus", "\"StockStatus\" IN ('Pending','Consumed','Returned','Retained','Legacy','NotRequired')");
             table.HasCheckConstraint("CK_Orders_Status", "\"Status\" IN ('New','Confirmed','InPreparation','Ready','AwaitingDelivery','OutForDelivery','Delivered','Finalized','Cancelled') AND \"Version\" >= 1");
@@ -33,6 +34,8 @@ public sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(order => order.Status).HasMaxLength(20).IsRequired();
         builder.Property(order => order.StockStatus).HasMaxLength(12).IsRequired();
         builder.Property(order => order.Notes).HasMaxLength(500);
+        builder.Property(order => order.PaymentPreference).HasMaxLength(10);
+        builder.Property(order => order.ChangeFor).HasPrecision(12, 2);
         builder.Property(order => order.AddressStreet).HasMaxLength(120);
         builder.Property(order => order.AddressNumber).HasMaxLength(20);
         builder.Property(order => order.AddressNeighborhood).HasMaxLength(80);

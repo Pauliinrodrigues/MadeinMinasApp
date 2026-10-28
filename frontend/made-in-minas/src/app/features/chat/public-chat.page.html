@@ -86,7 +86,7 @@
         <p>Produtos: {{ price(quote.subtotal) }}</p>
         } @if (missingOrderFields().length) {
         <p>Informe na conversa: {{ missingOrderFields().join(', ') }}.</p>
-        } @if (currentOrder.review; as result) {
+        } @if (currentOrder.missingFields.length === 0 && currentOrder.review; as result) {
         <div role="region" aria-label="Resumo para confirmação">
           <h3>Confira antes de confirmar</h3>
           <p>{{ result.name }} · {{ result.phone }}</p>
@@ -111,9 +111,14 @@
             }}
           </p>
           <p><strong>Total: {{ price(result.total) }}</strong></p>
+          <app-requested-payment
+            [method]="result.paymentPreference"
+            [changeFor]="result.changeFor"
+            [total]="result.total"
+          />
           <p>
-            Este envio não realiza cobrança. Combine a forma de pagamento com a equipe. Para alterar
-            o pedido, escreva na conversa e revise novamente.
+            Este envio não realiza cobrança. O pagamento será conferido pela equipe. Para alterar o
+            pedido, escreva na conversa e revise novamente.
           </p>
           @if (!state.value().pendingOrder) {
           <button

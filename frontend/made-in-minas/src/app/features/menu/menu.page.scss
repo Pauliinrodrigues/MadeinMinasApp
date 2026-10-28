@@ -37,6 +37,12 @@ a {
   white-space: nowrap;
   padding: 12px 0;
 }
+.help-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-right: 20px;
+}
 .intro {
   padding: 24px 0 12px;
 }
@@ -331,6 +337,20 @@ footer span {
     max-width: none;
   }
   .intro {
-    padding-top: 24px;
+    padding-block: 12px 0;
+  }
+  .menu-shell {
+    padding: 16px;
+  }
+  h1 {
+    font-size: 34px;
+    margin-block: 10px;
+  }
+  .intro > p {
+    margin-block: 8px;
+    line-height: 1.35;
+  }
+  .cart-summary {
+    padding-block: 8px;
   }
 }

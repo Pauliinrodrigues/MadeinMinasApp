@@ -215,6 +215,10 @@ public sealed class PrintQueueService(AppDbContext database, TimeProvider clock)
             lines.Add("Produtos: " + order.Subtotal.ToString("C", Portuguese));
             lines.Add("Entrega: " + order.DeliveryFee.ToString("C", Portuguese));
             lines.Add("TOTAL: " + order.Total.ToString("C", Portuguese));
+            if (order.PaymentPreference is not null)
+                lines.Add("Cliente escolheu: " + MadeInMinas.Api.Validation.RequestedPayment.Label(order.PaymentPreference));
+            if (order.ChangeFor is { } requestedCash)
+                lines.Add($"Levar troco: {(requestedCash - order.Total).ToString("C", Portuguese)} para {requestedCash.ToString("C", Portuguese)}");
             var payment = await database.Payments.AsNoTracking().SingleOrDefaultAsync(payment => payment.OrderId == orderId
                 && (payment.Status == "Pending" || payment.Status == "Received"), ct);
             if (payment is null)

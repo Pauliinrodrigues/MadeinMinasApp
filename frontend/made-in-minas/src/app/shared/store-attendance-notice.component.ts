@@ -67,6 +67,17 @@ import { storeDayNames, storePaymentLabels } from '../core/services/store-attend
     ul {
       padding-left: 20px;
     }
+    @media (max-width: 760px) {
+      .store-notice {
+        padding: 10px 12px;
+        margin-block: 10px;
+        font-size: 13px;
+        line-height: 1.35;
+      }
+      p {
+        margin-block: 5px;
+      }
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

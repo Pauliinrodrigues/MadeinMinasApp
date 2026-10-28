@@ -213,7 +213,23 @@ footer {
   font-size: 12px;
 }
 @media (max-width: 760px) {
+  .checkout-shell {
+    padding: 16px;
+  }
+  .intro {
+    padding-block: 12px 0;
+  }
+  h1 {
+    font-size: 32px;
+    margin-block: 10px;
+  }
   .checkout-layout {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+input[type='checkbox'] {
+  width: 22px;
+  height: 22px;
+  vertical-align: middle;
+  margin-right: 8px;
 }

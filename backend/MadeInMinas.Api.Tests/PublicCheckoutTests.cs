@@ -55,7 +55,7 @@ public sealed class PublicCheckoutTests(AuthenticationFactory factory) : IClassF
         await database.SaveChangesAsync();
     });
     public Task DisposeAsync() => factory.WithDatabaseAsync(ClearAsync);
-    private PublicCheckoutRequest Input() => new("  Maria visitante  ", "(31) 99999-1234", new([new(burger.Id, 2, "  Sem cebola  ")], "  Embalar separado  "));
+    private PublicCheckoutRequest Input() => new("  Maria visitante  ", "(31) 99999-1234", new([new(burger.Id, 2, "  Sem cebola  ")], "  Embalar separado  ")) { PaymentPreference = "Pix" };
 
     private async Task<PublicOrderRequest> ReviewAsync(HttpClient client, PublicCheckoutRequest? input = null)
     {
@@ -97,6 +97,57 @@ public sealed class PublicCheckoutTests(AuthenticationFactory factory) : IClassF
         Assert.Equal(receipt.Number, (await recovered.Content.ReadFromJsonAsync<PublicOrderReceipt>())!.Number);
         await ProblemAsync(await guest.PostAsJsonAsync(OrdersPath, request with { RequestId = Guid.NewGuid() }), "StoreNotAcceptingOrders");
         await factory.WithDatabaseAsync(async database => Assert.Equal(1, await database.Orders.CountAsync()));
+    }
+
+    [Theory]
+    [InlineData(null, null)]
+    [InlineData("Crypto", null)]
+    [InlineData("Pix", 100d)]
+    [InlineData("Cash", 10d)]
+    [InlineData("Cash", 100.001)]
+    public async Task InvalidPaymentOrChangeCannotBeReviewed(string? method, double? cash)
+    {
+        using var guest = factory.CreateStaffClient();
+        var response = await guest.PostAsJsonAsync(ReviewPath, Input() with
+        { PaymentPreference = method, ChangeFor = cash is null ? null : (decimal)cash.Value });
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        await factory.WithDatabaseAsync(async database =>
+        {
+            Assert.False(await database.Orders.AnyAsync());
+            Assert.False(await database.Payments.AnyAsync());
+        });
+    }
+
+    [Theory]
+    [InlineData("Card", null)]
+    [InlineData("Cash", 100)]
+    [InlineData("Pix", null)]
+    public async Task PaymentChoiceIsPreservedWithoutReceivingMoneyAndRetryIsIdempotent(string method, int? cash)
+    {
+        using var guest = factory.CreateStaffClient();
+        var request = await ReviewAsync(guest, Input() with { PaymentPreference = method, ChangeFor = cash });
+        var created = await guest.PostAsJsonAsync(OrdersPath, request);
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await guest.PostAsJsonAsync(OrdersPath, request)).StatusCode);
+        await factory.WithDatabaseAsync(async database =>
+        {
+            var order = await database.Orders.SingleAsync();
+            Assert.Equal(method, order.PaymentPreference);
+            Assert.Equal(cash is null ? (decimal?)null : cash.Value, order.ChangeFor);
+            Assert.False(await database.Payments.AnyAsync());
+        });
+        await ProblemAsync(await guest.PostAsJsonAsync(OrdersPath,
+            request with { Checkout = request.Checkout with { PaymentPreference = method == "Pix" ? "Card" : "Pix", ChangeFor = null } }), "OrderRequestConflict");
+    }
+
+    [Fact]
+    public async Task PaymentChoiceChangeRequiresNewReview()
+    {
+        using var guest = factory.CreateStaffClient();
+        var request = await ReviewAsync(guest);
+        await ProblemAsync(await guest.PostAsJsonAsync(OrdersPath,
+            request with { Checkout = request.Checkout with { PaymentPreference = "Cash", ChangeFor = 100m } }), "OrderReviewChanged");
+        await factory.WithDatabaseAsync(async database => Assert.False(await database.Orders.AnyAsync()));
     }
 
     [Fact]

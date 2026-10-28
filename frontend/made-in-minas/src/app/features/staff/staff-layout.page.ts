@@ -117,15 +117,18 @@ import { StaffApi } from '../../core/services/staff-api.service';
       </nav>
       <main class="staff-body">
         @if (session.canManageOrders()) {
-          <div class="panel" aria-label="Aviso de pedidos">
+          <div class="panel order-alert" aria-label="Aviso de pedidos">
             <button type="button" (click)="alert.toggle()" [attr.aria-pressed]="alert.enabled()">
               {{ alert.enabled() ? 'Desativar aviso sonoro' : 'Ativar aviso sonoro' }}
             </button>
-            <p class="hint">
-              Apitos digitais a cada 30 segundos até aceitar ou cancelar as comandas pendentes. Toca
-              uma amostra ao ativar e continua ao abrir o pedido. Pausa enquanto a aba estiver
-              oculta.
-            </p>
+            <details class="alert-help">
+              <summary>Como funciona o aviso</summary>
+              <p class="hint">
+                Apitos digitais a cada 30 segundos até aceitar ou cancelar as comandas pendentes.
+                Toca uma amostra ao ativar e continua ao abrir o pedido. Pausa enquanto a aba
+                estiver oculta.
+              </p>
+            </details>
             @if (alert.enabled()) {
               <p class="hint">Comandas aguardando confirmação: {{ alert.pendingCount() }}.</p>
             }

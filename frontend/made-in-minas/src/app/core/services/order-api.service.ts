@@ -21,6 +21,8 @@ export interface OrderSummary {
   customerName: string;
   origin: 'Manual' | 'DirectLink';
   paymentStatus: OrderPaymentStatus;
+  paymentPreference?: 'Card' | 'Cash' | 'Pix' | null;
+  changeFor?: number | null;
   fulfillment: 'Pickup' | 'Delivery';
   status: OrderStatus;
   total: number;
@@ -33,6 +35,8 @@ export interface OrderPage {
   totalCount: number;
 }
 export interface Order extends Omit<CartQuote, 'calculatedAt' | 'reviewToken'> {
+  paymentPreference?: 'Card' | 'Cash' | 'Pix' | null;
+  changeFor?: number | null;
   id: string;
   number: number;
   origin: 'Manual' | 'DirectLink';

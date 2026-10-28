@@ -25,14 +25,14 @@
       <p class="pickup-location"><strong>Local de retirada</strong><br />{{ pickupAddress }}</p>
       }
       <p>
-        {{ receipt.fulfillment === 'Delivery' ? 'Combine a forma de pagamento com o atendimento.' :
-        'Pagamento na retirada.' }} Nenhuma cobrança foi realizada pelo site.
+        {{ receipt.fulfillment === 'Delivery' ? 'Pagamento na entrega.' : 'Pagamento na retirada.'
+        }} Nenhuma cobrança foi realizada pelo site.
       </p>
       @if (receipt.tracking?.token) {
       <p><a routerLink="/pedido/acompanhar">Acompanhar meu pedido</a></p>
       <p>
-        O acompanhamento fica nesta aba. Montar outro pedido remove este acesso. Fechar a aba também
-        pode perdê-lo.
+        Consulte este e os próximos pedidos em “Meus pedidos”. Os acessos ficam nesta aba por até
+        sete dias; use “Lembrar neste dispositivo” no acompanhamento para mantê-los ao fechar a aba.
       </p>
       } @else {
       <p>Anote o número do pedido. Para acompanhar este comprovante, procure o atendimento.</p>
@@ -143,7 +143,7 @@
             maxlength="30"
             [(ngModel)]="phone"
             (ngModelChange)="change()"
-            placeholder="(31) 99999-9999"
+            placeholder="(38) 99999-9999"
           />
           <span id="checkout-phone-error" class="field-error">{{ fieldError('phone') }}</span>
           @if (fulfillment === 'Delivery') {
@@ -248,10 +248,53 @@
             />
           </div>
           }
+          <h3>Como prefere pagar?</h3>
+          <label for="checkout-payment">Forma de pagamento</label>
+          <select
+            id="checkout-payment"
+            [(ngModel)]="paymentPreference"
+            (ngModelChange)="change()"
+            [attr.aria-invalid]="fieldError('payment') ? 'true' : null"
+            aria-describedby="checkout-payment-error"
+          >
+            <option value="">Selecione</option>
+            @for (method of attendance.data()?.paymentMethods ?? []; track method) {
+            <option [value]="method">
+              {{ method === 'Card' ? 'Cartão' : method === 'Cash' ? 'Dinheiro' : 'Pix' }}
+            </option>
+            }
+          </select>
+          <span id="checkout-payment-error" class="field-error">{{ fieldError('payment') }}</span>
+          @if (paymentPreference === 'Cash') {
+          <label for="checkout-needs-change"
+            ><input
+              id="checkout-needs-change"
+              type="checkbox"
+              [(ngModel)]="needsChange"
+              (ngModelChange)="change()"
+            />
+            Preciso de troco</label
+          >
+          @if (needsChange) {
+          <label for="checkout-change">Troco para quanto?</label>
+          <input
+            id="checkout-change"
+            type="number"
+            inputmode="decimal"
+            min="0.01"
+            max="999999.99"
+            step="0.01"
+            [(ngModel)]="changeFor"
+            (ngModelChange)="change()"
+            [attr.aria-invalid]="fieldError('change') ? 'true' : null"
+            aria-describedby="checkout-change-error"
+          />
+          <span id="checkout-change-error" class="field-error">{{ fieldError('change') }}</span>
+          } }
         </fieldset>
         <p class="notice">
-          {{ fulfillment === 'Delivery' ? 'A taxa será incluída na revisão. Combine a forma de
-          pagamento com o atendimento.' : 'Retirada no balcão, com pagamento na retirada.' }}
+          Pagamento {{ fulfillment === 'Delivery' ? 'na entrega' : 'na retirada' }}. Nenhuma
+          cobrança será realizada pelo site.
         </p>
         <a routerLink="/pedido/carrinho">Alterar produtos e observações</a>
       </section>
@@ -298,10 +341,15 @@
           <p class="pickup-location"><strong>Local de retirada</strong><br />{{ pickupAddress }}</p>
           } }
           <p class="total">Total <strong>{{ price(result.total) }}</strong></p>
+          <app-requested-payment
+            [method]="result.paymentPreference"
+            [changeFor]="result.changeFor"
+            [total]="result.total"
+          />
           <p>
             O atendimento confirmará a disponibilidade e o preparo. {{ result.fulfillment ===
-            'Delivery' ? 'Combine o pagamento com a equipe.' : 'Pague ao retirar.' }} Este envio não
-            realiza cobrança.
+            'Delivery' ? 'Pague na entrega.' : 'Pague ao retirar.' }} Este envio não realiza
+            cobrança.
           </p>
           <button type="button" (click)="send()" [disabled]="busy()">
             {{ result.fulfillment === 'Delivery' ? 'Enviar pedido para entrega' : 'Enviar pedido
@@ -315,7 +363,9 @@
     <p class="error" role="alert">{{ error() }}</p>
     }
     <div role="status" aria-live="polite">{{ busy() ? 'Aguarde a resposta…' : '' }}</div>
-    <footer>Made in Minas · Feito com cuidado.</footer>
+    <footer>
+      Made in Minas · Feito com cuidado. <a routerLink="/privacidade">Privacidade e atendimento</a>
+    </footer>
     <p><a routerLink="/pedido/atendimento">Falar com atendente</a></p>
   </main>
 </ion-content>

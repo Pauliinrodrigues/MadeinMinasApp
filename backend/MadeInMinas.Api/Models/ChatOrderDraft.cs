@@ -11,6 +11,8 @@ public sealed class ChatOrderDraft
     public string? Fulfillment { get; set; }
     public string? AddressJson { get; set; }
     public string? Notes { get; set; }
+    public string? PaymentPreference { get; set; }
+    public decimal? ChangeFor { get; set; }
     public string? QuoteJson { get; set; }
     public string? ReviewJson { get; set; }
     public Guid? OrderRequestId { get; set; }

@@ -118,13 +118,14 @@ public sealed class AiChatToolsTests(AuthenticationFactory factory) : IClassFixt
     public async Task AutomaticReviewPreservesDraftAndRespectsPausedStore()
     {
         pauseOrders = true;
-        var transcript = await ExecuteAsync("Meu telefone é (38) 99999-2468. Quero um Trem do Teste para retirada.",
+        var transcript = await ExecuteAsync("Meu telefone é (38) 99999-2468. Quero um Trem do Teste para retirada. Pagamento em Pix.",
             ("adicionar_item_pedido", new { productId = burger.Id, quantity = 1, notes = (string?)null }),
             ("definir_dados_pedido", new
             {
                 name = (string?)null,
                 phone = "38999992468",
                 fulfillment = "Pickup",
+                paymentPreference = "Pix",
                 address = (object?)null,
                 notes = (string?)null
             }));
@@ -139,6 +140,29 @@ public sealed class AiChatToolsTests(AuthenticationFactory factory) : IClassFixt
     }
 
     [Theory]
+    [InlineData("Quero pagar por Pix.", "Pix", null, true)]
+    [InlineData("Como funciona o atendimento?", "Pix", null, false)]
+    [InlineData("Dinheiro, troco para 100.", "Cash", 100, true)]
+    [InlineData("Dinheiro.", "Cash", 100, false)]
+    public async Task PaymentPreferenceAndChangeRequireVisitorInput(string message, string method, int? cash, bool supplied)
+    {
+        var transcript = await ExecuteAsync(message, ("definir_dados_pedido", new
+        {
+            name = (string?)null,
+            phone = (string?)null,
+            fulfillment = (string?)null,
+            address = (object?)null,
+            notes = (string?)null,
+            paymentPreference = method,
+            changeFor = cash
+        }));
+        Assert.Equal(supplied ? method : null, transcript.Order?.PaymentPreference);
+        if (supplied)
+            Assert.Equal(cash is null ? (decimal?)null : cash.Value, transcript.Order!.ChangeFor);
+        Assert.Null(transcript.Order?.Receipt);
+    }
+
+    [Theory]
     [InlineData("complete")]
     [InlineData("change")]
     [InlineData("remove")]
@@ -149,7 +173,7 @@ public sealed class AiChatToolsTests(AuthenticationFactory factory) : IClassFixt
             ("adicionar_item_pedido", new { productId = burger.Id, quantity = 1, notes = (string?)null }),
             ("definir_dados_pedido", new
             {
-                name = (string?)null, phone = "38999992468", fulfillment = "Pickup",
+                name = (string?)null, phone = "38999992468", fulfillment = "Pickup", paymentPreference = "Pix",
                 address = (object?)null, notes = (string?)null
             })
         };
@@ -158,7 +182,7 @@ public sealed class AiChatToolsTests(AuthenticationFactory factory) : IClassFixt
         if (scenario == "remove")
             calls.Add(("remover_item_pedido", new { productId = burger.Id }));
         calls.Add(("responder_cliente", new { code = "ToolResult" }));
-        var transcript = await ExecuteAsync("Meu telefone é (38) 99999-2468. Quero um Trem do Teste para retirada.", calls.ToArray());
+        var transcript = await ExecuteAsync("Meu telefone é (38) 99999-2468. Quero um Trem do Teste para retirada. Pagamento em Pix.", calls.ToArray());
         Assert.NotNull(transcript.Order);
         Assert.Null(transcript.Order.Receipt);
         if (scenario == "remove")

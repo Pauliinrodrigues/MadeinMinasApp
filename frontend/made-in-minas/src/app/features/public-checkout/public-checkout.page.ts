@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { StoreAttendanceStatus } from '../../core/services/store-attendance-status.service';
 import { StoreAttendanceNotice } from '../../shared/store-attendance-notice.component';
+import { RequestedPayment } from '../../shared/requested-payment.component';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { IonContent } from '@ionic/angular/ion-content';
@@ -23,7 +24,7 @@ import { PublicCheckoutState } from '../../core/services/public-checkout-state.s
 @Component({
   selector: 'app-public-checkout',
   host: { class: 'ion-page' },
-  imports: [FormsModule, RouterLink, IonContent, StoreAttendanceNotice],
+  imports: [FormsModule, RouterLink, IonContent, StoreAttendanceNotice, RequestedPayment],
   providers: [StoreAttendanceStatus],
   templateUrl: './public-checkout.page.html',
   styleUrl: './public-checkout.page.scss',
@@ -44,6 +45,9 @@ export class PublicCheckoutPage {
   private reviewedInput: PublicCheckoutInput | null = null;
   name = '';
   phone = '';
+  paymentPreference: 'Card' | 'Cash' | 'Pix' | '' = '';
+  needsChange = false;
+  changeFor: number | null = null;
   fulfillment: 'Pickup' | 'Delivery' = 'Delivery';
   address: PublicDeliveryAddress = this.emptyAddress();
   readonly areas = signal<PublicDeliveryArea[]>([]);
@@ -129,6 +133,21 @@ export class PublicCheckoutPage {
     if (!this.attempted()) {
       return '';
     }
+    if (field === 'payment' && !this.paymentPreference) {
+      return 'Escolha a forma de pagamento.';
+    }
+    if (
+      field === 'change' &&
+      this.paymentPreference === 'Cash' &&
+      this.needsChange &&
+      (this.changeFor === null ||
+        !Number.isFinite(this.changeFor) ||
+        this.changeFor <= 0 ||
+        this.changeFor > 999999.99 ||
+        Math.abs(Math.round(this.changeFor * 100) - this.changeFor * 100) > 0.00001)
+    ) {
+      return 'Informe o valor para troco, com até duas casas decimais.';
+    }
     if (field === 'name' && !this.name.trim()) {
       return 'Informe seu nome.';
     }
@@ -165,9 +184,17 @@ export class PublicCheckoutPage {
   }
 
   private focusInvalidField(): void {
-    const field = ['name', 'phone', 'area', 'neighborhood', 'street', 'number', 'postal'].find(
-      (field) => this.fieldError(field),
-    );
+    const field = [
+      'name',
+      'phone',
+      'area',
+      'neighborhood',
+      'street',
+      'number',
+      'postal',
+      'payment',
+      'change',
+    ].find((field) => this.fieldError(field));
     if (field) {
       setTimeout(() => document.getElementById('checkout-' + field)?.focus());
     }
@@ -209,7 +236,14 @@ export class PublicCheckoutPage {
       name: this.name,
       phone: this.phone,
       cart: this.cart.input(),
+      paymentPreference: this.paymentPreference || null,
+      changeFor: this.paymentPreference === 'Cash' && this.needsChange ? this.changeFor : null,
     };
+    if (this.fieldError('payment') || this.fieldError('change')) {
+      this.error.set(this.fieldError('payment') || this.fieldError('change'));
+      this.focusInvalidField();
+      return;
+    }
     if (this.fulfillment === 'Delivery') {
       input.fulfillment = 'Delivery';
       const { neighborhood, ...address } = this.address;
@@ -238,9 +272,12 @@ export class PublicCheckoutPage {
                 : error instanceof HttpErrorResponse &&
                     error.error?.code === 'PublicDeliveryUnavailable'
                   ? 'Essa região não está mais disponível. Atualize as regiões ou escolha retirada.'
-                  : error instanceof HttpErrorResponse && error.status === 400
-                    ? 'Confira os dados de contato e endereço antes de revisar.'
-                    : 'Não foi possível revisar. Confira sua conexão e tente novamente.',
+                  : error instanceof HttpErrorResponse &&
+                      error.error?.code === 'InvalidRequestedPayment'
+                    ? error.error.title
+                    : error instanceof HttpErrorResponse && error.status === 400
+                      ? 'Confira contato, endereço e pagamento antes de revisar.'
+                      : 'Não foi possível revisar. Confira sua conexão e tente novamente.',
           );
         },
       });
@@ -296,14 +333,15 @@ export class PublicCheckoutPage {
           const code = error instanceof HttpErrorResponse ? error.error?.code : null;
           if (
             error instanceof HttpErrorResponse &&
-            error.status === 409 &&
-            [
-              'OrderReviewChanged',
-              'CartProductUnavailable',
-              'PublicCheckoutUnavailable',
-              'StoreNotAcceptingOrders',
-              'PublicDeliveryUnavailable',
-            ].includes(code)
+            ((error.status === 409 &&
+              [
+                'OrderReviewChanged',
+                'CartProductUnavailable',
+                'PublicCheckoutUnavailable',
+                'StoreNotAcceptingOrders',
+                'PublicDeliveryUnavailable',
+              ].includes(code)) ||
+              (error.status === 400 && code === 'InvalidRequestedPayment'))
           ) {
             const pending = this.state.pending()!;
             const names = this.state.names();
@@ -312,14 +350,20 @@ export class PublicCheckoutPage {
               this.cart.restoreRejectedCheckout(pending.checkout.cart, names);
               this.name = pending.checkout.name;
               this.phone = pending.checkout.phone;
+              this.paymentPreference = pending.checkout.paymentPreference ?? '';
+              this.changeFor = pending.checkout.changeFor ?? null;
+              this.needsChange = this.changeFor !== null;
               this.fulfillment = pending.checkout.fulfillment ?? 'Pickup';
               this.address = pending.checkout.address
                 ? { ...pending.checkout.address }
                 : this.emptyAddress();
               this.change();
               this.error.set(
-                code === 'StoreNotAcceptingOrders'
-                  ? error.error.title
+                code === 'StoreNotAcceptingOrders' || code === 'InvalidRequestedPayment'
+                  ? (error.error.title ??
+                      (code === 'InvalidRequestedPayment'
+                        ? 'O pedido não foi enviado. Confira a forma de pagamento e o valor para troco e revise novamente.'
+                        : 'A loja não está recebendo pedidos no momento. Seu carrinho foi preservado.'))
                   : code === 'PublicCheckoutUnavailable'
                     ? 'O pedido não foi enviado. Procure o atendimento para continuar.'
                     : code === 'PublicDeliveryUnavailable'

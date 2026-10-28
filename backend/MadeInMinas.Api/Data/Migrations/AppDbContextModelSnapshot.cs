@@ -289,6 +289,10 @@ namespace MadeInMinas.Api.Data.Migrations
                     b.Property<string>("AddressJson")
                         .HasColumnType("jsonb");
 
+                    b.Property<decimal?>("ChangeFor")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
                     b.Property<string>("ConfirmationHash")
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
@@ -318,6 +322,10 @@ namespace MadeInMinas.Api.Data.Migrations
 
                     b.Property<Guid?>("OrderRequestId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("PaymentPreference")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
 
                     b.Property<string>("Phone")
                         .HasMaxLength(30)
@@ -351,6 +359,8 @@ namespace MadeInMinas.Api.Data.Migrations
                             t.HasCheckConstraint("CK_ChatOrderDrafts_Fulfillment", "\"Fulfillment\" IS NULL OR \"Fulfillment\" IN ('Pickup','Delivery')");
 
                             t.HasCheckConstraint("CK_ChatOrderDrafts_Receipt", "(\"ReceiptJson\" IS NULL AND \"OrderId\" IS NULL AND \"ConfirmationRequestId\" IS NULL AND \"ConfirmationHash\" IS NULL) OR (\"ReceiptJson\" IS NOT NULL AND \"OrderId\" IS NOT NULL AND \"OrderRequestId\" IS NOT NULL AND \"ConfirmationRequestId\" IS NOT NULL AND \"ConfirmationHash\" IS NOT NULL)");
+
+                            t.HasCheckConstraint("CK_ChatOrderDrafts_RequestedPayment", "(\"PaymentPreference\" IS NULL OR \"PaymentPreference\" IN ('Card','Cash','Pix')) AND (\"ChangeFor\" IS NULL OR (\"PaymentPreference\" IS NOT NULL AND \"PaymentPreference\" = 'Cash' AND \"ChangeFor\" > 0 AND \"ChangeFor\" <= 999999.99))");
 
                             t.HasCheckConstraint("CK_ChatOrderDrafts_Version", "\"Version\" >= 1");
                         });
@@ -541,6 +551,10 @@ namespace MadeInMinas.Api.Data.Migrations
                         .HasMaxLength(120)
                         .HasColumnType("character varying(120)");
 
+                    b.Property<decimal?>("ChangeFor")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -583,6 +597,10 @@ namespace MadeInMinas.Api.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
+
+                    b.Property<string>("PaymentPreference")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
 
                     b.Property<string>("RequestHash")
                         .IsRequired()
@@ -645,6 +663,8 @@ namespace MadeInMinas.Api.Data.Migrations
                             t.HasCheckConstraint("CK_Orders_Number", "\"Number\" > 0");
 
                             t.HasCheckConstraint("CK_Orders_Origin", "(\"Origin\" = 'Manual' AND \"CreatedById\" IS NOT NULL) OR (\"Origin\" = 'DirectLink' AND \"CreatedById\" IS NULL)");
+
+                            t.HasCheckConstraint("CK_Orders_RequestedPayment", "(\"PaymentPreference\" IS NULL OR \"PaymentPreference\" IN ('Card','Cash','Pix')) AND (\"ChangeFor\" IS NULL OR (\"PaymentPreference\" IS NOT NULL AND \"PaymentPreference\" = 'Cash' AND \"ChangeFor\" >= \"Total\" AND \"ChangeFor\" <= 999999.99))");
 
                             t.HasCheckConstraint("CK_Orders_Status", "\"Status\" IN ('New','Confirmed','InPreparation','Ready','AwaitingDelivery','OutForDelivery','Delivered','Finalized','Cancelled') AND \"Version\" >= 1");
 

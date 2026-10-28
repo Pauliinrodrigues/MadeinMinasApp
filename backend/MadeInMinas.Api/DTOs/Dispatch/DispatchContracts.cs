@@ -21,5 +21,9 @@ public sealed record DispatchPaymentResponse(string Method, string Status, decim
 public sealed record DispatchOrderResponse(Guid Id, int Number, string Status, int Version, string Fulfillment,
     string CustomerName, string CustomerPhone, CartAddressResponse? Address, CartItemResponse[] Items,
     string? Notes, decimal Subtotal, decimal DeliveryFee, decimal Total, DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt, DateTimeOffset? ReadyAt, DispatchPaymentResponse? Payment);
+    DateTimeOffset UpdatedAt, DateTimeOffset? ReadyAt, DispatchPaymentResponse? Payment)
+{
+    public string? PaymentPreference { get; init; }
+    public decimal? ChangeFor { get; init; }
+}
 public sealed record DispatchPageResponse(DateTimeOffset ServerTime, DispatchOrderResponse[] Items, int Page, int PageSize, int TotalCount);

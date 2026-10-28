@@ -1,4 +1,5 @@
 using MadeInMinas.Api.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace MadeInMinas.Api.Infrastructure;
@@ -19,8 +20,11 @@ public sealed class DatabaseHealthCheck(
         await using var scope = scopeFactory.CreateAsyncScope();
         var database = scope.ServiceProvider.GetRequiredService<AppDbContext>().Database;
         var canConnect = await database.CanConnectAsync(cancellationToken);
-        return canConnect
-            ? HealthCheckResult.Healthy()
-            : HealthCheckResult.Unhealthy("Database is unavailable.");
+        if (!canConnect)
+            return HealthCheckResult.Unhealthy("Database is unavailable.");
+        var pending = await database.GetPendingMigrationsAsync(cancellationToken);
+        return pending.Any()
+            ? HealthCheckResult.Unhealthy("Database schema requires an application update.")
+            : HealthCheckResult.Healthy();
     }
 }

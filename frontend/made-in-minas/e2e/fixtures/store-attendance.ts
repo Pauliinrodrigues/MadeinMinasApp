@@ -5,7 +5,7 @@ export function publicAttendanceFixture(): PublicStoreAttendance {
     hours: Array.from({ length: 7 }, (_, index) => ({
       day: index + 1,
       opensAt: '18:30',
-      closesAt: index < 4 ? '23:30' : '00:00',
+      closesAt: index < 4 ? '23:30' : '23:59',
       isClosed: false,
     })),
     paymentMethods: ['Card', 'Cash', 'Pix'],

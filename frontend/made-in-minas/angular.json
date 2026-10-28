@@ -45,6 +45,29 @@
                 }
               ]
             },
+            "staging": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "1MB",
+                  "maximumError": "1.5MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "6kB",
+                  "maximumError": "10kB"
+                }
+              ],
+              "optimization": true,
+              "sourceMap": false,
+              "outputHashing": "all",
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.staging.ts"
+                }
+              ]
+            },
             "pilot": {
               "optimization": false,
               "extractLicenses": false,
@@ -78,6 +101,9 @@
         "serve": {
           "builder": "@angular/build:dev-server",
           "configurations": {
+            "staging": {
+              "buildTarget": "made-in-minas:build:staging"
+            },
             "production": {
               "buildTarget": "made-in-minas:build:production"
             },

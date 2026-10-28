@@ -49,7 +49,7 @@ public sealed class OrderService(AppDbContext database, CartService cart, OrderS
             .Skip((request.Page - 1) * request.PageSize).Take(request.PageSize)
             .Select(item => new OrderSummaryResponse(item.Order.Id, item.Order.Number, item.Order.CustomerName, item.Order.Fulfillment,
                 item.Order.Status, item.Order.Total, item.Order.CreatedAt)
-            { Origin = item.Order.Origin, PaymentStatus = item.PaymentStatus }).ToArrayAsync(cancellationToken);
+            { Origin = item.Order.Origin, PaymentStatus = item.PaymentStatus, PaymentPreference = item.Order.PaymentPreference, ChangeFor = item.Order.ChangeFor }).ToArrayAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         return new OrderPageResponse(items, request.Page, request.PageSize, total);
     }
@@ -254,6 +254,8 @@ public sealed class OrderService(AppDbContext database, CartService cart, OrderS
             history.Version, history.FromStatus, history.ToStatus, history.ActorId, history.ActorName, history.Reason, history.OccurredAt)).ToArray())
     {
         StockStatus = order.StockStatus,
+        PaymentPreference = order.PaymentPreference,
+        ChangeFor = order.ChangeFor,
         StockComponents = order.StockComponents.OrderBy(item => item.ProductName).ThenBy(item => item.IngredientName)
             .ThenBy(item => item.ProductId).ThenBy(item => item.IngredientId)
             .Select(item => new OrderStockComponentResponse(item.ProductId, item.ProductName, item.IngredientId,

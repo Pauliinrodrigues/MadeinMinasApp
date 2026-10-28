@@ -38,10 +38,17 @@ public sealed class PublicCheckoutService(
             area.City, area.State, Clean(request.Address.Complement),
             Clean(request.Address.PostalCode)?.Replace("-", "", StringComparison.Ordinal), Clean(request.Address.Reference));
         var quote = await cart.QuoteAsync(request.Cart, cancellationToken);
+        var methods = (await attendance.PublicAsync(cancellationToken)).PaymentMethods;
+        var total = quote.Subtotal + (area?.Fee ?? 0);
+        if (request.PaymentPreference is null || !methods.Contains(request.PaymentPreference)
+            || RequestedPayment.Validate(request.PaymentPreference, request.ChangeFor).Any()
+            || request.ChangeFor < total)
+            throw new OrderException(OrderError.InvalidRequestedPayment,
+                "Escolha uma forma de pagamento aceita. Para dinheiro, o valor para troco deve cobrir o total do pedido.");
         BrazilianPhone.TryNormalize(request.Phone, out var phone);
         var review = new PublicCheckoutReviewResponse(request.Name.Trim().Normalize(), phone, request.Fulfillment, quote.Items,
             quote.Notes, quote.Subtotal, area?.Fee ?? 0, quote.Subtotal + (area?.Fee ?? 0), "", quote.CalculatedAt)
-        { Address = address, DeliveryAreaId = area?.Id };
+        { Address = address, DeliveryAreaId = area?.Id, PaymentPreference = request.PaymentPreference, ChangeFor = request.ChangeFor };
         return review with { ReviewToken = PublicCheckoutFingerprint.ForReview(review) };
     }
 
@@ -114,6 +121,8 @@ public sealed class PublicCheckoutService(
             AddressPostalCode = review.Address?.PostalCode,
             AddressReference = review.Address?.Reference,
             Notes = review.Notes,
+            PaymentPreference = review.PaymentPreference,
+            ChangeFor = review.ChangeFor,
             Subtotal = review.Subtotal,
             DeliveryFee = review.DeliveryFee,
             Total = review.Total,

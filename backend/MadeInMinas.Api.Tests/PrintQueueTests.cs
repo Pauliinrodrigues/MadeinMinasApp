@@ -123,6 +123,9 @@ public sealed class PrintQueueTests(AuthenticationFactory factory) : IClassFixtu
             var order = await Create(admin);
             await Confirm(admin, order.Id);
             await Confirm(admin, order.Id);
+            await factory.WithDatabaseAsync(async db =>
+                await db.Orders.Where(item => item.Id == order.Id).ExecuteUpdateAsync(update => update
+                    .SetProperty(item => item.PaymentPreference, "Cash").SetProperty(item => item.ChangeFor, 100m)));
             (await admin.PutAsJsonAsync($"/api/kitchen/orders/{order.Id}/status", new KitchenStatusRequest("InPreparation", 2))).EnsureSuccessStatusCode();
             (await admin.PutAsJsonAsync($"/api/kitchen/orders/{order.Id}/status", new KitchenStatusRequest("Ready", 3))).EnsureSuccessStatusCode();
             (await admin.PutAsJsonAsync($"/api/kitchen/orders/{order.Id}/status", new KitchenStatusRequest("Ready", 3))).EnsureSuccessStatusCode();
@@ -140,6 +143,8 @@ public sealed class PrintQueueTests(AuthenticationFactory factory) : IClassFixtu
                 var shipping = string.Join('\n', JsonSerializer.Deserialize<string[]>(dispatch.Payload)!);
                 Assert.Contains(customer.Name, shipping);
                 Assert.Contains("59,80", shipping);
+                Assert.Contains("Cliente escolheu: Dinheiro", shipping);
+                Assert.Contains("Levar troco: R$ 40,20 para R$ 100,00", shipping);
                 Assert.Contains("PAGAMENTO NÃO REGISTRADO", shipping);
                 await db.Customers.Where(c => c.Id == customer.Id).ExecuteUpdateAsync(u => u.SetProperty(c => c.Name, "Nome alterado"));
                 Assert.Equal(dispatch.Payload, (await db.PrintJobs.AsNoTracking().SingleAsync(j => j.Id == dispatch.Id)).Payload);

@@ -11,6 +11,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { finalize, interval } from 'rxjs';
 import { apiError } from '../../core/api-error';
+import { RequestedPayment } from '../../shared/requested-payment.component';
 import {
   DispatchApi,
   DispatchOrder,
@@ -22,7 +23,7 @@ import { orderStatusLabel } from '../../core/services/order-api.service';
 
 @Component({
   selector: 'app-dispatch',
-  imports: [DatePipe, CurrencyPipe, RouterLink],
+  imports: [DatePipe, CurrencyPipe, RouterLink, RequestedPayment],
   templateUrl: './dispatch.page.html',
   styles: `
     .destination,

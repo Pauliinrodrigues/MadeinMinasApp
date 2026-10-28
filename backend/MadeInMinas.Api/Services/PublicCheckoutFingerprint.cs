@@ -31,11 +31,21 @@ internal static class PublicCheckoutFingerprint
             DeliveryFee = Money(review.DeliveryFee),
             Total = Money(review.Total)
         });
-        return review.Fulfillment == "Pickup" ? original
+        var fulfillment = review.Fulfillment == "Pickup" ? original
             : Hash(new { Original = original, review.DeliveryAreaId, review.Address });
+        // Requests stored before payment preference was introduced remain recoverable.
+        return review.PaymentPreference is null && review.ChangeFor is null ? fulfillment
+            : Hash(new { Original = fulfillment, review.PaymentPreference, ChangeFor = review.ChangeFor is { } amount ? Money(amount) : null });
     }
 
     public static string ForRequest(PublicOrderRequest request)
+    {
+        var original = OriginalRequest(request);
+        return request.Checkout.PaymentPreference is null && request.Checkout.ChangeFor is null ? original
+            : Hash(new { Original = original, request.Checkout.PaymentPreference, ChangeFor = request.Checkout.ChangeFor is { } amount ? Money(amount) : null });
+    }
+
+    private static string OriginalRequest(PublicOrderRequest request)
     {
         BrazilianPhone.TryNormalize(request.Checkout.Phone, out var phone);
         var original = Hash(new

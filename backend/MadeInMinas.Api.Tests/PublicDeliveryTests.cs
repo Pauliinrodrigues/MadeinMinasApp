@@ -71,6 +71,7 @@ public sealed class PublicDeliveryTests(AuthenticationFactory factory) : IClassF
     public Task DisposeAsync() => factory.WithDatabaseAsync(ClearAsync);
     private PublicCheckoutRequest Input() => new("Maria", "31999991234", new([new(burger.Id, 2)]))
     {
+        PaymentPreference = "Pix",
         Fulfillment = "Delivery",
         Address = new("test-center", " Rua informada ", " s/n ", " Casa 2 ", "30100-000", " Portão azul ")
     };

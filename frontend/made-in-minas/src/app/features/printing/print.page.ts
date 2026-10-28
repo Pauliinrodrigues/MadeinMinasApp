@@ -16,10 +16,13 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subscription, finalize, interval, timeout } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { apiError } from '../../core/api-error';
+import { RequestedPayment } from '../../shared/requested-payment.component';
 import { DispatchOrder } from '../../core/services/dispatch-api.service';
 import { OrderStatus, orderStatusLabel } from '../../core/services/order-api.service';
 
 interface PrintOrder {
+  paymentPreference?: string | null;
+  changeFor?: number | null;
   id: string;
   number: number;
   status: OrderStatus;
@@ -49,7 +52,7 @@ interface PrintDocument {
 
 @Component({
   selector: 'app-print',
-  imports: [CurrencyPipe, DatePipe, RouterLink],
+  imports: [CurrencyPipe, DatePipe, RouterLink, RequestedPayment],
   templateUrl: './print.page.html',
   styleUrl: './print.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

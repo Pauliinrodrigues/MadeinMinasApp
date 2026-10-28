@@ -56,7 +56,7 @@ public sealed class PublicOrderTrackingTests(AuthenticationFactory factory) : IC
 
     private async Task<(PublicOrderReceipt Receipt, PublicOrderRequest Request)> CreateAsync(HttpClient client)
     {
-        var checkout = new PublicCheckoutRequest("Contato privado", "31999991234", new([new(burger.Id, 1, "Nota privada do item")], "Nota privada do pedido"));
+        var checkout = new PublicCheckoutRequest("Contato privado", "31999991234", new([new(burger.Id, 1, "Nota privada do item")], "Nota privada do pedido")) { PaymentPreference = "Pix" };
         var review = await client.PostAsJsonAsync("/api/public-checkout/review", checkout);
         review.EnsureSuccessStatusCode();
         var input = new PublicOrderRequest(Guid.NewGuid(), (await review.Content.ReadFromJsonAsync<PublicCheckoutReviewResponse>())!.ReviewToken, checkout);

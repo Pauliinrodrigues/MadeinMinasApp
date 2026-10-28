@@ -2,13 +2,13 @@ using MadeInMinas.Api.Data;
 using MadeInMinas.Api.Infrastructure;
 using MadeInMinas.Api.Security;
 using MadeInMinas.Api.Services.Ai;
-using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args.Where(arg => arg is not ("--create-admin" or "--create-print-station")).ToArray());
+DeploymentRegistration.ValidateDatabaseEnvironment(builder.Configuration, builder.Environment);
 builder.Services.AddControllers(options => options.Filters.Add(new AuthorizeFilter()));
 builder.Services.AddStaffAuthentication();
 builder.Services.AddOpenApi();
@@ -72,7 +72,7 @@ builder.Services.AddOptions<MadeInMinas.Api.Services.PublicDeliveryOptions>()
     .BindConfiguration("PublicDelivery")
     .Validate(options => options.IsValid(), "PublicDelivery exige regiões únicas, UF válida e taxa explícita de 0 a 9999.99, com até duas casas decimais.")
     .ValidateOnStart();
-builder.Services.AddDataProtection().SetApplicationName("MadeInMinas.Api");
+builder.Services.AddDeploymentProtection(builder.Configuration, builder.Environment);
 builder.Services.AddSingleton<PublicOrderAccess>();
 builder.Services.AddScoped<MadeInMinas.Api.Services.PublicOrderTrackingService>();
 builder.Services.AddRateLimiter(options => options.AddPolicy("public-tracking", context =>
@@ -125,6 +125,7 @@ if (args.Contains("--create-admin"))
 }
 
 app.UseExceptionHandler();
+app.UseForwardedHeaders();
 app.UseStatusCodePages();
 if (!app.Environment.IsDevelopment())
 {
